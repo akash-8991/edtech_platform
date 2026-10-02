@@ -1,0 +1,18 @@
+{
+  "topic_id": "demo-001",
+  "title": "Introduction to Sensors",
+  "languages": ["en", "hi"],
+  "glossary": {"IoT": "IoT"},
+  "outcomes": ["Explain what a sensor does"],
+  "scenes": [
+    {"id": "s1", "type": "avatar", "duration_sec": 8,
+     "narration": {"en": "A sensor turns a physical signal into data.", "hi": "सेंसर भौतिक संकेत को डेटा में बदलता है।"},
+     "visual_prompt": "Friendly instructor in a bright classroom, medium shot, facing camera",
+     "sources": ["curriculum:module-1/topic-1"],
+     "interactions": [{"kind": "pause_quiz", "at_sec": 6, "prompt": "Which is a sensor?", "branches": {"Thermistor": "s2"}}]},
+    {"id": "s2", "type": "animation", "duration_sec": 8,
+     "narration": {"en": "Here a thermistor changes resistance with heat.", "hi": "यहाँ थर्मिस्टर गर्मी के साथ प्रतिरोध बदलता है।"},
+     "visual_prompt": "Clean 3D animation of a thermistor circuit heating up",
+     "sources": ["curriculum:module-1/topic-1"]}
+  ]
+}
