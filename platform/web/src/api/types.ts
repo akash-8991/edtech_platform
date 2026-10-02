@@ -59,3 +59,13 @@ export interface GradeView {
   finalPercent?: number | null; rawPercent?: number | null; latePenaltyPercent?: number | null; passed?: boolean | null; passMark?: number;
   dimensions?: GradeDimension[]; feedback?: string | null; gradedBy?: string; appeal?: { eligible: boolean; deadline?: string | null; appealed: boolean };
 }
+
+// ---- privacy and account ----
+export interface Consent { purpose: 'PLATFORM_PROCESSING' | 'AI_TUTOR' | 'ANALYTICS' | string; granted: boolean; version: string | null; at: string | null; currentNoticeVersion: string; upToDate: boolean }
+export type RequestType = 'EXPORT' | 'CORRECTION' | 'ERASURE';
+export interface PrivacyRequest { id: string; type: RequestType | string; status: string; requestedAt: string; completedAt?: string | null; exportExpiresAt?: string | null; decisionReason?: string | null }
+export interface Prefs {
+  captions?: boolean; transcriptByDefault?: boolean; audioDescription?: boolean; highContrast?: boolean; reducedMotion?: boolean; lowBandwidth?: boolean; largeTargets?: boolean;
+  playbackSpeed?: number; fontScale?: number; language?: 'en' | 'hi'; captionLanguage?: 'en' | 'hi'; textSpacing?: 'normal' | 'wide' | 'wider';
+}
+export interface SessionInfo { id: string; current: boolean; method: string; mfa: boolean; device?: string; createdAt: string; lastSeenAt?: string; expiresAt: string }

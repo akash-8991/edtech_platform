@@ -3,13 +3,14 @@ import { api } from '../api/client';
 import type { Interaction, LearningEvent, Playback } from '../api/types';
 import { EventOutbox, HeartbeatTracker } from '../lib/heartbeat';
 import { fmtTime } from '../lib/format';
+import { usePrefs } from '../prefs';
 
 /**
  * Plays the lesson and reports genuine watch time. The server decides what counts: seeking is not watching, answers to in-video
  * questions are recorded, and low-bandwidth mode serves audio + transcript.
  */
 export function VideoPlayer({ topicId, playback, onProgress }: { topicId: string; playback: Playback; onProgress: () => void }) {
-  const media = useRef<HTMLVideoElement & HTMLAudioElement>(null);
+  const { prefs } = usePrefs(); const media = useRef<HTMLVideoElement & HTMLAudioElement>(null);
   const tracker = useMemo(() => new HeartbeatTracker(topicId, playback.assetId), [topicId, playback.assetId]);
   const outbox = useMemo(() => new EventOutbox((events) => api.post<{ results: { eventId: string; status: string }[] }>('/v1/learning-events', { events }).then((r) => r.results)), []);
   const [active, setActive] = useState<Interaction | null>(null);
@@ -23,6 +24,7 @@ export function VideoPlayer({ topicId, playback, onProgress }: { topicId: string
   const push = async (events: LearningEvent[]) => { outbox.add(events); const r = await outbox.flush(); if (r.some((x) => x.status === 'accepted')) onProgress(); };
   useEffect(() => { void outbox.flush(); const onHide = () => { if (document.visibilityState === 'hidden') void push(tracker.flush()); }; document.addEventListener('visibilitychange', onHide); return () => { document.removeEventListener('visibilitychange', onHide); void push(tracker.flush()); }; /* eslint-disable-next-line */ }, []);
   useEffect(() => { if (media.current && playback.resume.sec > 0) media.current.currentTime = playback.resume.sec; }, [playback]);
+  useEffect(() => { if (media.current) media.current.playbackRate = prefs.playbackSpeed ?? 1; }, [prefs.playbackSpeed, playback]);
   useEffect(() => { if (!transcriptUrl) return; fetch(transcriptUrl).then((r) => r.text()).then(setTranscript).catch(() => setTranscript(null)); }, [transcriptUrl]);
 
   const onTime = () => {
@@ -52,7 +54,7 @@ export function VideoPlayer({ topicId, playback, onProgress }: { topicId: string
             <div className="choices">{(active.options?.length ? active.options : ['Yes', 'No']).map((o, idx) => <button key={idx} autoFocus={idx === 0} onClick={() => void respond(active, idx)}>{o}</button>)}</div>
           </div>
         </div>)}
-      {transcript && <details><summary>Transcript</summary><pre className="transcript">{transcript}</pre></details>}
+      {transcript && <details open={!!prefs.transcriptByDefault}><summary>Transcript</summary><pre className="transcript">{transcript}</pre></details>}
     </div>
   );
 }

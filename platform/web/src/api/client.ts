@@ -46,7 +46,7 @@ export class ApiClient {
     return ok;
   }
 
-  async request<T = any>(method: string, path: string, opts: { body?: unknown; raw?: BodyInit; headers?: Record<string, string>; idempotencyKey?: string; auth?: boolean; _retried?: boolean } = {}): Promise<T> {
+  async request<T = any>(method: string, path: string, opts: { body?: unknown; raw?: BodyInit; headers?: Record<string, string>; idempotencyKey?: string; auth?: boolean; blob?: boolean; _retried?: boolean } = {}): Promise<T> {
     const headers: Record<string, string> = { ...opts.headers };
     if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
     if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey;
@@ -56,6 +56,7 @@ export class ApiClient {
       if (await this.refresh()) return this.request<T>(method, path, { ...opts, _retried: true });
       this.clear(); throw new ApiError(401, { error: 'unauthorized', message: 'Your session has ended. Please sign in again.' });
     }
+    if (opts.blob && res.ok) return (await res.blob()) as T;
     const text = await res.text(); let body: any = text; try { body = text ? JSON.parse(text) : null; } catch { /* plain text */ }
     if (!res.ok) throw new ApiError(res.status, body);
     return body as T;
@@ -64,6 +65,8 @@ export class ApiClient {
   get<T = any>(path: string) { return this.request<T>('GET', path); }
   post<T = any>(path: string, body?: unknown, idempotencyKey?: string) { return this.request<T>('POST', path, { body: body ?? {}, idempotencyKey }); }
   put<T = any>(path: string, body?: unknown) { return this.request<T>('PUT', path, { body }); }
+  /** Authenticated file download (the browser cannot attach a bearer token to a plain link). */
+  download(path: string) { return this.request<Blob>('GET', path, { blob: true }); }
   upload<T = any>(path: string, file: Blob) { return this.request<T>('PUT', path, { raw: file, headers: { 'Content-Type': 'application/octet-stream' } }); }
 
   // ---- auth ----

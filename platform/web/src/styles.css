@@ -8,7 +8,7 @@
     --ok: #6fe3a1; --ok-bg: #12301f; --warn: #ffc56b; --warn-bg: #3a2a0c; --err: #ff9a9a; --err-bg: #3a1515; }
 }
 * { box-sizing: border-box; }
-body { margin: 0; font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+body { margin: 0; font: 1rem/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
 h1 { font-size: 1.6rem; margin: 1rem 0 .5rem; } h2 { font-size: 1.15rem; margin: 0; }
 a { color: var(--accent); } a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
@@ -55,3 +55,14 @@ button.secondary { background: transparent; color: var(--accent); border: 2px so
 .exam-begin { max-width: 640px; margin: 4vh auto; }
 .dim { border-top: 1px solid var(--border); padding: 10px 0; } .dim h3 { margin: 0; font-size: 1rem; }
 blockquote { margin: 8px 0; padding: 6px 12px; border-left: 4px solid var(--accent); background: var(--bg); } blockquote footer { font-size: .85rem; }
+.switch { display: inline-flex; gap: 8px; align-items: center; margin: 0; font-weight: 600; } .switch input { width: 1.25rem; height: 1.25rem; }
+.card.inner { background: var(--bg); margin: 12px 0; }
+.who { color: var(--muted); }
+/* accessibility preferences, applied from the learner's saved settings */
+html { font-size: calc(100% * var(--font-scale, 1)); } /* rem units everywhere, so headings, buttons and body text scale together */
+html[data-spacing=wide] body { line-height: 1.8; letter-spacing: .06em; word-spacing: .12em; } html[data-spacing=wider] body { line-height: 2; letter-spacing: .12em; word-spacing: .16em; }
+html[data-targets=large] button, html[data-targets=large] input, html[data-targets=large] select, html[data-targets=large] a { min-height: 48px; } html[data-targets=large] input[type=checkbox], html[data-targets=large] input[type=radio] { width: 24px; height: 24px; }
+html[data-motion=reduced] *, html[data-motion=reduced] *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+html[data-contrast=high] { --bg: #ffffff; --surface: #ffffff; --text: #000000; --muted: #1a1a1a; --border: #000000; --accent: #0000cc; --accent-text: #ffffff; --ok: #004d1a; --warn: #5c3300; --err: #7a0000; }
+html[data-contrast=high] .card, html[data-contrast=high] input, html[data-contrast=high] select, html[data-contrast=high] textarea { border-width: 2px; }
+@media (prefers-color-scheme: dark) { html[data-contrast=high] { --bg: #000000; --surface: #000000; --text: #ffffff; --muted: #f0f0f0; --border: #ffffff; --accent: #8ab4ff; --accent-text: #000000; --ok: #7dff9f; --warn: #ffd37a; --err: #ff9d9d; } }
