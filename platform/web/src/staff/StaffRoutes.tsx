@@ -4,6 +4,8 @@ import StaffHome from './StaffHome';
 import Admissions from './Admissions';
 import LabDesk from './LabDesk';
 import Operations from './Operations';
+import Moderation from './Moderation';
+import ModerationCase from './ModerationCase';
 import Account from '../pages/Account';
 
 /** Everything under /staff. Each page also checks the role (and the API checks it again on every call). */
@@ -12,6 +14,8 @@ export default function StaffRoutes() {
     <Route path="staff" element={<StaffShell />}>
       <Route index element={<StaffHome />} />
       <Route path="admissions" element={<Admissions />} />
+      <Route path="moderation" element={<Moderation />} />
+      <Route path="moderation/:taskId" element={<ModerationCase />} />
       <Route path="labs" element={<LabDesk />} />
       <Route path="operations" element={<Operations />} />
       <Route path="account" element={<Account />} />

@@ -88,3 +88,20 @@ export interface LabActivityDef { id: string; code: string; title: string; locat
 export interface ConfigItem { key: string; doc: string; kind: 'boolean' | 'number' | 'string[]' | 'map' | 'numbermap' | string; value: unknown }
 export interface IntegrityReport { ok: boolean; checkedAt: string; audit: { events: number; intact: boolean; firstBroken: number | null }; examLogs: { attempts: number; broken: string[] }; counts: Record<string, number>; orphans: Record<string, number> }
 export interface ExamOpsStatus { inProgress: number; staleAutosave: number; expiringWithin5Min: number; highSessionSwitches: number; openIncidents: Record<string, number>; heldResults: number; awaitingRelease: number; remoteAwaitingProctorReport: number; openAppeals: number }
+
+// ---- grading moderation ----
+export interface ModerationRow { taskId: string; kind: 'BLOCKING' | 'SAMPLE' | 'APPEAL' | string; status: 'OPEN' | 'CLAIMED' | 'DONE' | string; reasons: string[]; ageMinutes: number; submissionId: string; learnerRef: string; aiPercent: number | null; claimedById: string | null }
+export interface RubricLevel { score: number; descriptor: string }
+export interface RubricDim { id: string; name: string; weight: number; min: number; max: number; levels?: RubricLevel[]; evidenceRequired?: boolean }
+export interface GradeRecordView {
+  seq: number; kind: 'AI' | 'MODERATED' | 'APPEAL' | 'OVERRIDE' | string; dimensions: { id: string; score: number; max: number; rationale?: string; evidence?: { quote: string; location?: string; verified?: boolean }[]; confidence?: number }[];
+  rawPercent: number; latePenaltyPercent: number; finalPercent: number; passed: boolean; confidence?: number | null; flags?: string[]; feedback?: string; model?: string | null; promptVersion?: number | null; createdById?: string | null; reason?: string | null; at: string;
+}
+export interface CaseFile {
+  task: { id: string; kind: string; status: string; reasons: string[]; claimedById: string | null };
+  learnerRef: string; attemptNo: number; submittedAt: string; assignment: { instructions: string };
+  policy: { dimensions: RubricDim[]; passPercent: number; appealWindowDays: number };
+  submission: { text: string; files: { name?: string; key?: string; size?: number }[]; contentHash: string; testResults: unknown };
+  state: string; reasons: string[]; records: GradeRecordView[]; similarity: { score: number; otherRef: string; excerpt: string }[];
+}
+export interface DecideResult { state: string; finalPercent: number; passed: boolean; seq: number }
