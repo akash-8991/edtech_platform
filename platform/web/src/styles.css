@@ -38,3 +38,18 @@ ol.topics, ul.plain, ol.plain { list-style: none; padding: 0; margin: 0; }
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; z-index: 20; padding: 16px; } .modal-body { background: var(--surface); padding: 20px; border-radius: 12px; max-width: 480px; width: 100%; }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; } .transcript { white-space: pre-wrap; background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px; max-height: 260px; overflow: auto; }
 @media (max-width: 520px) { h1 { font-size: 1.35rem; } .top { gap: 6px 12px; } .top nav { order: 3; flex-basis: 100%; gap: 4px 14px; } .brand { flex: 1; } }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+button.secondary { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+.exam { position: relative; padding-bottom: 32px; }
+.exam > .exam-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 0; margin-bottom: 8px; }
+.exam-bar button { margin: 0; }
+.timer { font: 700 1.5rem ui-monospace, Menlo, monospace; } .timer.low { color: var(--err); }
+.palette { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.pal { margin: 0; min-width: 40px; padding: 6px 10px; background: var(--surface); color: var(--text); border: 2px solid var(--border); }
+.pal.ans { border-color: var(--ok); } .pal.flag { border-style: dashed; border-color: var(--warn); } .pal.cur { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.qtext { font-size: 1.1rem; white-space: pre-wrap; }
+.watermark { position: fixed; inset: 0; pointer-events: none; z-index: 1; display: flex; flex-wrap: wrap; align-content: space-around; justify-content: space-around; opacity: .07; font: 700 1.1rem ui-monospace, Menlo, monospace; transform: rotate(-20deg); overflow: hidden; }
+.exam > *:not(.watermark) { position: relative; z-index: 2; }
+.session { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.exam-begin { max-width: 640px; margin: 4vh auto; }

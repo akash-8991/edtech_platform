@@ -2,9 +2,9 @@
 
 React 18 + TypeScript + Vite single-page app for **learners**. It talks only to the platform API (see `../docs/guides/03-user-guide.md`); the server decides all access, so the client never hides a security rule behind the UI.
 
-**Status: first slice.** Built and checked against the real API in a browser: sign in (session restore on reload), course list with progress, course/topic progress with locked topics, video playback with verified watch-time heartbeats and in-video questions, quiz, assignment (text and file), notifications, doubts (ask a teacher), AI tutor (with consent), low-bandwidth mode, responsive and keyboard-accessible layout, dark mode.
+**Status: learning loop and exams.** Built and checked against the real API in a browser: sign in (session restore on reload), course list with progress, course/topic progress with locked topics, video playback with verified watch-time heartbeats and in-video questions, quiz, assignment (text and file), notifications, doubts (ask a teacher), AI tutor (with consent), **exams (eligibility checklist, register/cancel, consent + device check + identity wait, the exam room with server-authoritative timer, resilient autosave, resume, integrity signals, submit with receipt, result and appeal, programme completion)**, low-bandwidth mode, responsive and keyboard-accessible layout, dark mode.
 
-**Not built yet:** offline download/playback (licences need a native or PWA wrapper), exams and lab booking screens, grade and feedback views and appeals, privacy centre (export/erasure), SSO button (needs the institute's identity provider), Hindi UI strings, captions (the API serves transcripts only), push notifications, staff consoles. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices (labels, focus, contrast, reduced motion) but has not been tested with assistive technology.
+**Not built yet:** offline download/playback (licences need a native or PWA wrapper), lab booking screens, assignment grade and feedback views and appeals, privacy centre (export/erasure), SSO button (needs the institute's identity provider), Hindi UI strings, captions (the API serves transcripts only), push notifications, staff consoles. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices (labels, focus, contrast, reduced motion) but has not been tested with assistive technology.
 
 ## Run it
 
@@ -21,7 +21,7 @@ Sign in with a learner account. Locally, create one: approve an application (use
 ## Check it
 
 ```bash
-npm run typecheck && npm test      # 29 unit/component tests (API client, heartbeat tracker, outbox, quiz, assignment, login, gating)
+npm run typecheck && npm test      # 60 tests: API client, heartbeat tracker, outbox, quiz, assignment, login, gating, and the exam stack (clock, autosave, device check, signals, runner, list, check-in, result)
 npm run build                      # production bundle in dist/ (~190 kB, 63 kB gzipped)
 ```
 
@@ -40,3 +40,16 @@ npm run build                      # production bundle in dist/ (~190 kB, 63 kB 
 ## Dependency audit
 
 `npm audit --omit=dev` (what ships to learners) is clean (react-router upgraded to 7.x for two advisories). `npm audit` still reports issues in **development tooling** (the Vite 5 / Vitest 2 dev server and test runner); they affect only a developer's machine while the dev server runs, not the built app. Upgrade Vite/Vitest to the current major when convenient.
+
+## Exams: how the client behaves (and what it does not claim)
+
+- **The server owns everything that matters:** paper, answer sheet, deadline and result. The timer is computed against the server's clock (a wrong or changed laptop clock cannot extend the exam), and the exam is auto-submitted when the *server* deadline passes.
+- **Autosave never drops an answer:** answers are written to a local backup the instant they change, sent debounced with an increasing sequence number, retried with backoff while offline, resent if the server was ahead, and restored after a crash or reload. `Autosaver` has 7 dedicated tests.
+- **One window at a time:** resuming rotates the session token; the older window is paused and offered "Continue here instead".
+- **Signals, not verdicts:** leaving the window, exiting full screen, copy and paste are reported; the server raises an incident for human review only past thresholds. The client does not block or punish.
+- **Device check:** probes camera/microphone only for remote proctored exams, gives each probe a deadline (an unanswered permission prompt does not hang the page), measures bandwidth by timing a download of the app's own bundle (a coarse estimate), and cannot see how many physical screens exist beyond the browser's `isExtended` hint.
+- **Limits:** camera/microphone *capture* for proctoring is the proctoring vendor's job (the page opens the vendor's window from `launchUrl`); this has only been exercised against the in-process mock provider. Full-screen is requested but a browser may refuse; the learner is reminded and it is recorded. Not tested with a screen reader or on real phones.
+
+## Test coverage (web)
+
+`npm run test:cov`: statements about 72%, branches about 80%. The covered areas are the logic that must not fail (API client, watch-time tracker and outbox, quiz, assignment, login, the whole exam stack). **Not covered by automated tests:** the course list/progress pages, the topic page and video player (verified by hand in a browser), notifications, doubts, tutor, programme completion. There are no end-to-end browser tests in CI; the exam journey was exercised manually against a real API on 2026-10-02.
