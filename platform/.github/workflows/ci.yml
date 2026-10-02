@@ -33,6 +33,19 @@ jobs:
         with: { name: coverage, path: platform/api/coverage/lcov-report }
       - name: Dependency audit (runtime, fail on high)
         run: npm audit --omit=dev --audit-level=high
+  web:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: platform/web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: platform/web/package-lock.json }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Dependency audit (runtime, fail on high)
+        run: npm audit --omit=dev --audit-level=high
   security:
     runs-on: ubuntu-latest
     steps:

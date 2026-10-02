@@ -2,7 +2,7 @@
 
 An AI-assisted, multidisciplinary learning-delivery platform: governed course authoring and publishing, admissions-to-entitlement, gated learning with verified video progress, an AI content factory, a grounded AI tutor and doubt centre, AI-assisted grading with human moderation, labs, proctored exams, and a tamper-evident audit trail, built on a modular NestJS monolith with PostgreSQL.
 
-> **Status: server side complete, not production-launched.** All seven build phases are implemented and tested (360+ automated tests against a real PostgreSQL). **There is no web or mobile client yet** (a learner web client is in progress in `platform/web`). AI providers, the proctoring vendor, the identity provider and the code sandbox have only been run against test doubles. See [`platform/docs/release/gate-evidence.md`](platform/docs/release/gate-evidence.md) for the honest status of every launch gate.
+> **Status: server side complete, not production-launched.** All seven build phases are implemented and tested (360+ automated tests against a real PostgreSQL). **Only a first slice of the learner web client exists** (`platform/web`: sign-in, courses, video with verified watch time, quiz, assignment, notifications, doubts, tutor); there is no mobile app and no staff console. AI providers, the proctoring vendor, the identity provider and the code sandbox have only been run against test doubles. See [`platform/docs/release/gate-evidence.md`](platform/docs/release/gate-evidence.md) for the honest status of every launch gate.
 
 ## Where to start
 
@@ -23,7 +23,7 @@ An AI-assisted, multidisciplinary learning-delivery platform: governed course au
 ```
 platform/
   api/             NestJS 11 + Prisma 6 + PostgreSQL 16 service (API and background worker), tests, scripts
-  web/             learner web client (in progress)
+  web/             learner web client, first slice (React + Vite)
   docs/            guides, architecture, security, privacy, operations, release evidence, quality (coverage)
   ops/             Prometheus alert rules, Grafana dashboard
   docker-compose*.yml   local stack (and a MinIO + ClamAV overlay)

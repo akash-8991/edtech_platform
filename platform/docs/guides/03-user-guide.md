@@ -1,6 +1,6 @@
 # User guide: how to use the platform
 
-This guide walks through every role's day-to-day work using the platform's HTTP API with `curl`. **There is no web or mobile client yet** (the learner web client is being built in `platform/web`, see its README); everything here is also what a client does under the hood.
+This guide walks through every role's day-to-day work using the platform's HTTP API with `curl`. **There is no production web or mobile client yet** (a first slice of the learner web client exists in `platform/web`; see its README for what it covers); everything here is also what a client does under the hood.
 
 How to read the status markers:
 
