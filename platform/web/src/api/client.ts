@@ -1,5 +1,7 @@
 import type { Tokens } from './types';
 
+export type LoginResult = { status: 'ok'; roles: string[] } | { status: 'mfa'; mfaToken: string } | { status: 'enroll'; enrollmentToken: string };
+
 export class ApiError extends Error {
   constructor(public status: number, public body: any, message?: string) { super(message ?? body?.message ?? `HTTP ${status}`); }
   /** Machine-readable code from the API (`error`), e.g. consent_required, validation_failed, rate_limited. */
@@ -46,7 +48,7 @@ export class ApiClient {
     return ok;
   }
 
-  async request<T = any>(method: string, path: string, opts: { body?: unknown; raw?: BodyInit; headers?: Record<string, string>; idempotencyKey?: string; auth?: boolean; blob?: boolean; _retried?: boolean } = {}): Promise<T> {
+  async request<T = any>(method: string, path: string, opts: { body?: unknown; raw?: BodyInit; headers?: Record<string, string>; idempotencyKey?: string; auth?: boolean; blob?: boolean; withHeaders?: boolean; _retried?: boolean } = {}): Promise<T> {
     const headers: Record<string, string> = { ...opts.headers };
     if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
     if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey;
@@ -57,6 +59,7 @@ export class ApiClient {
       this.clear(); throw new ApiError(401, { error: 'unauthorized', message: 'Your session has ended. Please sign in again.' });
     }
     if (opts.blob && res.ok) return (await res.blob()) as T;
+    if (opts.withHeaders && res.ok) { const t = await res.text(); return { body: t ? JSON.parse(t) : null, headers: res.headers } as T; }
     const text = await res.text(); let body: any = text; try { body = text ? JSON.parse(text) : null; } catch { /* plain text */ }
     if (!res.ok) throw new ApiError(res.status, body);
     return body as T;
@@ -69,12 +72,20 @@ export class ApiClient {
   download(path: string) { return this.request<Blob>('GET', path, { blob: true }); }
   upload<T = any>(path: string, file: Blob) { return this.request<T>('PUT', path, { raw: file, headers: { 'Content-Type': 'application/octet-stream' } }); }
 
+  /** A paginated list: the body is an array and the next cursor travels in the `X-Next-Cursor` header. */
+  async page<T>(path: string): Promise<{ items: T[]; next: string | null }> { const r = await this.request<{ body: T[]; headers: Headers }>('GET', path, { withHeaders: true }); return { items: r.body, next: r.headers.get('X-Next-Cursor') }; }
+
   // ---- auth ----
-  async login(email: string, password: string): Promise<{ status: 'ok' } | { status: 'staff'; reason: 'mfa' | 'enroll' }> {
+  async login(email: string, password: string): Promise<LoginResult> {
     const r = await this.request<any>('POST', '/v1/auth/login', { body: { email, password }, auth: false });
-    if (r.accessToken) { this.setTokens(r); return { status: 'ok' }; }
-    return { status: 'staff', reason: r.mfaRequired ? 'mfa' : 'enroll' };
+    if (r.accessToken) { this.setTokens(r); return { status: 'ok', roles: r.roles ?? [] }; }
+    if (r.mfaRequired) return { status: 'mfa', mfaToken: r.mfaToken };
+    return { status: 'enroll', enrollmentToken: r.enrollmentToken };
   }
+  async verifyMfa(mfaToken: string, code: string) { const r = await this.request<Tokens>('POST', '/v1/auth/mfa/verify', { body: { mfaToken, code: code.trim() }, auth: false }); this.setTokens(r); return r; }
+  /** Enrolment calls authenticate with the short-lived enrolment token from sign-in, not an access token. */
+  enrollStart(token: string) { return this.request<{ secret: string; otpauthUri: string }>('POST', '/v1/auth/mfa/enroll/start', { body: {}, auth: false, headers: { Authorization: `Bearer ${token}` } }); }
+  async enrollConfirm(token: string, code: string) { const r = await this.request<Partial<Tokens> & { enabled: boolean; backupCodes: string[] }>('POST', '/v1/auth/mfa/enroll/confirm', { body: { code: code.trim() }, auth: false, headers: { Authorization: `Bearer ${token}` } }); if (r.accessToken && r.refreshToken) this.setTokens({ accessToken: r.accessToken, refreshToken: r.refreshToken }); return r; }
   async logout() { try { await this.request('POST', '/v1/auth/logout', { body: {} }); } catch { /* already gone */ } this.clear(); }
 }
 

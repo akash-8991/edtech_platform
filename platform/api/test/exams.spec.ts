@@ -111,6 +111,10 @@ describe('labs (LAB-001..003)', () => {
     const race = await Promise.all(['m1', 'm2', 'm3'].map((k) => http.post(`/v1/labs/slots/${slotId}/book`).set(as(k)))); // capacity 2, one seat taken
     expect(race.filter((x: any) => x.status === 201)).toHaveLength(1); expect(race.filter((x: any) => x.status === 409)).toHaveLength(2);
     expect((await http.get(`/v1/labs/slots?activityId=${LAB}`).set(as('l1'))).body[0].seatsLeft).toBe(0);
+    // coordinators can list ongoing and past slots too (needed to run a session); learners never see them or the extra scope
+    const past = (await prisma.labSlot.create({ data: { activityId: LAB, batchCode: 'past', startsAt: new Date(Date.now() - 3 * 3600_000), endsAt: new Date(Date.now() - 2 * 3600_000), capacity: 5, createdById: uid.lab1 } })).id;
+    const coord = (await http.get(`/v1/labs/slots?activityId=${LAB}&scope=all`).set(as('lab1')).expect(200)).body; expect(coord.map((x: any) => x.id)).toContain(past); expect(coord.find((x: any) => x.id === past)).toHaveProperty('status');
+    expect((await http.get(`/v1/labs/slots?activityId=${LAB}&scope=all`).set(as('l1')).expect(200)).body.map((x: any) => x.id)).not.toContain(past);
     // the learner's own bookings carry the slot details the client needs to show where and when (even after the slot has started)
     const mine = (await http.get('/v1/me/labs').set(as('l1')).expect(200)).body[0].bookings[0]; expect(mine).toMatchObject({ slotId, status: 'BOOKED', completed: false, evidenceSubmitted: false, slot: { batchCode: expect.any(String), cancelled: false } }); expect(new Date(mine.slot.startsAt).getTime()).toBeGreaterThan(Date.now());
   });

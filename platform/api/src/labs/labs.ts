@@ -209,12 +209,14 @@ export class LabsController {
   }
   private svcNotify(tx: Prisma.TransactionClient, userId: string, slotId: string) { return tx.notification.create({ data: { userId, type: 'lab.slot_cancelled', payload: { slotId } } }); }
 
+  /** Learners see open future slots. Coordinators may pass `scope=all` to also see ongoing, past (last 30 days) and cancelled slots, which they need to run a session. */
   @Get('labs/slots') @Roles(...COORD, 'LEARNER')
-  async slots(@Query('activityId') activityId: string, @CurrentActor() a: Actor) {
+  async slots(@Query('activityId') activityId: string, @Query('scope') scope: string | undefined, @CurrentActor() a: Actor) {
     if (!activityId) throw new BadRequestException('activityId required');
-    const rows = await this.prisma.labSlot.findMany({ where: { activityId, status: 'OPEN', startsAt: { gt: new Date() } }, orderBy: { startsAt: 'asc' } });
+    const all = scope === 'all' && a.roles.some((r) => COORD.includes(r));
+    const rows = await this.prisma.labSlot.findMany({ where: all ? { activityId, startsAt: { gt: new Date(Date.now() - 30 * 86_400_000) } } : { activityId, status: 'OPEN', startsAt: { gt: new Date() } }, orderBy: { startsAt: all ? 'desc' : 'asc' }, take: 200 });
     const used = await this.prisma.labBooking.groupBy({ by: ['slotId'], where: { slotId: { in: rows.map((r) => r.id) }, status: { in: ['BOOKED', 'ATTENDED'] } }, _count: true });
-    return rows.map((r) => ({ id: r.id, batchCode: r.batchCode, startsAt: r.startsAt, endsAt: r.endsAt, location: r.location, capacity: r.capacity, seatsLeft: r.capacity - (used.find((u) => u.slotId === r.id)?._count ?? 0) }));
+    return rows.map((r) => ({ id: r.id, batchCode: r.batchCode, startsAt: r.startsAt, endsAt: r.endsAt, location: r.location, capacity: r.capacity, seatsLeft: r.capacity - (used.find((u) => u.slotId === r.id)?._count ?? 0), ...(all && { status: r.status }) }));
   }
 
   @Get('labs/slots/:id/roster') @Roles(...COORD)

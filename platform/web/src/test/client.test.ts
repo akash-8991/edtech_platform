@@ -39,10 +39,21 @@ describe('ApiClient', () => {
     const { c, f } = mk(() => json(200, { key: 'k' })); c.setTokens({ accessToken: 'A', refreshToken: 'R' }); const blob = new Blob(['x']);
     await c.upload('/v1/u', blob); const init = f.mock.calls[0][1] as any; expect(init.headers['Content-Type']).toBe('application/octet-stream'); expect(init.body).toBe(blob);
   });
-  it('login stores tokens for learners and reports staff accounts without signing them in', async () => {
-    const a = mk(() => json(201, { accessToken: 'A', refreshToken: 'R', expiresIn: 900, roles: ['LEARNER'] })); expect(await a.c.login('a@b.c', 'pw')).toEqual({ status: 'ok' }); expect(a.c.signedIn).toBe(true);
-    const b = mk(() => json(201, { mfaRequired: true, mfaToken: 't' })); expect(await b.c.login('a@b.c', 'pw')).toEqual({ status: 'staff', reason: 'mfa' }); expect(b.c.signedIn).toBe(false);
-    const d = mk(() => json(201, { mfaEnrollmentRequired: true })); expect(await d.c.login('a@b.c', 'pw')).toEqual({ status: 'staff', reason: 'enroll' });
+  it('login stores tokens when no second factor is needed, and otherwise returns the next step without signing in', async () => {
+    const a = mk(() => json(201, { accessToken: 'A', refreshToken: 'R', expiresIn: 900, roles: ['LEARNER'] })); expect(await a.c.login('a@b.c', 'pw')).toEqual({ status: 'ok', roles: ['LEARNER'] }); expect(a.c.signedIn).toBe(true);
+    const b = mk(() => json(201, { mfaRequired: true, mfaToken: 't' })); expect(await b.c.login('a@b.c', 'pw')).toEqual({ status: 'mfa', mfaToken: 't' }); expect(b.c.signedIn).toBe(false);
+    const d = mk(() => json(201, { mfaEnrollmentRequired: true, enrollmentToken: 'e1' })); expect(await d.c.login('a@b.c', 'pw')).toEqual({ status: 'enroll', enrollmentToken: 'e1' });
+  });
+  it('completes the second factor and enrolment with the right credentials in the right places', async () => {
+    const m = mk((u) => (u.endsWith('/mfa/verify') ? json(201, { accessToken: 'A2', refreshToken: 'R2', expiresIn: 900, roles: ['AUDITOR'] }) : json(201, {}))); await m.c.verifyMfa('mfa-token', ' 123456 ');
+    expect(JSON.parse((m.f.mock.calls[0][1] as any).body)).toEqual({ mfaToken: 'mfa-token', code: '123456' }); expect((m.f.mock.calls[0][1] as any).headers.Authorization).toBeUndefined(); expect(m.c.signedIn).toBe(true);
+    const e = mk((u) => (u.endsWith('/enroll/start') ? json(201, { secret: 'SECRET', otpauthUri: 'otpauth://totp/x' }) : json(201, { enabled: true, backupCodes: ['aaaa-bbbb'], accessToken: 'A3', refreshToken: 'R3' })));
+    expect(await e.c.enrollStart('enroll-token')).toMatchObject({ secret: 'SECRET' }); expect((e.f.mock.calls[0][1] as any).headers.Authorization).toBe('Bearer enroll-token'); // the enrolment token, not an access token
+    const r = await e.c.enrollConfirm('enroll-token', '654321'); expect(r.backupCodes).toEqual(['aaaa-bbbb']); expect(e.c.signedIn).toBe(true); expect(sessionStorage.getItem('edtech.rt')).toBe('R3');
+  });
+  it('reads a paginated list: the body plus the next-cursor header', async () => {
+    const m = mk(() => new Response(JSON.stringify([{ id: 1 }]), { status: 200, headers: { 'X-Next-Cursor': 'c2' } })); m.c.setTokens({ accessToken: 'A', refreshToken: 'R' }); expect(await m.c.page('/v1/x')).toEqual({ items: [{ id: 1 }], next: 'c2' });
+    const last = mk(() => json(200, [])); last.c.setTokens({ accessToken: 'A', refreshToken: 'R' }); expect(await last.c.page('/v1/x')).toEqual({ items: [], next: null });
   });
   it('wrong credentials surface as ApiError without a refresh loop', async () => {
     const { c, f } = mk(() => json(401, { message: 'Unauthorized' })); await expect(c.login('a@b.c', 'bad')).rejects.toBeInstanceOf(ApiError); expect(f).toHaveBeenCalledTimes(1);

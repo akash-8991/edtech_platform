@@ -78,3 +78,13 @@ export interface LabActivity {
 }
 export interface LabSlot { id: string; batchCode: string; startsAt: string; endsAt: string; location?: string; capacity: number; seatsLeft: number }
 export interface UploadedFile { key: string; name: string; size: number; checksum: string }
+
+// ---- staff console ----
+export interface Application { id: string; externalRef: string; email: string; name: string; programmeCode: string; duration: 'M12' | 'M18' | string; cohort: string; status: 'RECEIVED' | 'APPROVED' | 'REJECTED' | 'RETURNED' | string; reason?: string | null; createdAt: string; decidedAt?: string | null }
+export interface ImportResult { summary: { created: number; duplicate: number; invalid: number }; results: { externalRef?: string; result: 'created' | 'duplicate' | 'invalid'; errors?: string[]; id?: string }[] }
+export interface RosterRow { bookingId: string; learnerId: string; name?: string; status: string; attendanceMethod?: string | null; evidenceFiles: number; completed: boolean }
+export interface StaffSlot extends LabSlot { status?: 'OPEN' | 'CANCELLED' | string }
+export interface LabActivityDef { id: string; code: string; title: string; location?: string; versionId: string; requireEvidence: boolean; mandatory: boolean }
+export interface ConfigItem { key: string; doc: string; kind: 'boolean' | 'number' | 'string[]' | 'map' | 'numbermap' | string; value: unknown }
+export interface IntegrityReport { ok: boolean; checkedAt: string; audit: { events: number; intact: boolean; firstBroken: number | null }; examLogs: { attempts: number; broken: string[] }; counts: Record<string, number>; orphans: Record<string, number> }
+export interface ExamOpsStatus { inProgress: number; staleAutosave: number; expiringWithin5Min: number; highSessionSwitches: number; openIncidents: Record<string, number>; heldResults: number; awaitingRelease: number; remoteAwaitingProctorReport: number; openAppeals: number }

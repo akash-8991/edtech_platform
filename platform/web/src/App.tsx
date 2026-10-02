@@ -20,11 +20,14 @@ import Privacy from './pages/Privacy';
 import Topic from './pages/Topic';
 import Tutor from './pages/Tutor';
 import { Loading } from './components/ui';
+import { isLearner } from './lib/roles';
+import StaffRoutes from './staff/StaffRoutes';
 
 function Shell() {
   const { me, loading, signOut } = useAuth();
   if (loading) return <Loading what="Starting" />;
   if (!me) return <Navigate to="/login" replace />;
+  if (!isLearner(me.roles)) return <Navigate to="/staff" replace />; // staff use the console, not the learner portal
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
@@ -62,6 +65,7 @@ export default function App() {
         <Route path="privacy" element={<Privacy />} />
         <Route path="account" element={<Account />} />
       </Route>
+      {StaffRoutes()}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

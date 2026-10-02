@@ -57,10 +57,10 @@ describe('Assignment', () => {
 
 describe('Login', () => {
   const ui = () => render(<MemoryRouter><AuthProvider><Login /></AuthProvider></MemoryRouter>);
-  it('keeps staff accounts out of the learner portal', async () => {
-    route({ 'POST /v1/auth/login': () => res(201, { mfaRequired: true, mfaToken: 't' }), 'POST /v1/auth/refresh': () => res(401, {}) });
+  it('asks staff accounts for their second factor instead of signing them straight in', async () => {
+    route({ 'POST /v1/auth/login': () => res(201, { mfaRequired: true, mfaToken: 't' }) });
     const u = userEvent.setup(); ui(); await u.type(await screen.findByLabelText('Email'), 'admin@x.test'); await u.type(screen.getByLabelText('Password'), 'pw'); await u.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/for learners/); expect(api.signedIn).toBe(false);
+    expect(await screen.findByRole('form', { name: 'Two-step verification' })).toBeInTheDocument(); expect(api.signedIn).toBe(false);
   });
   it('shows a generic message for wrong credentials and requires both fields', async () => {
     route({ 'POST /v1/auth/login': () => res(401, { error: 'invalid_credentials', message: 'Invalid credentials or account temporarily locked' }) });

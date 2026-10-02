@@ -1,6 +1,6 @@
-# Learner web client
+# Learner web client and staff console
 
-React 18 + TypeScript + Vite single-page app for **learners**. It talks only to the platform API (see `../docs/guides/03-user-guide.md`); the server decides all access, so the client never hides a security rule behind the UI.
+React 18 + TypeScript + Vite single-page app: the **learner portal** (`/`) and a first **staff console** (`/staff`) in one build; sign-in sends each person to the right one by role. It talks only to the platform API (see `../docs/guides/03-user-guide.md`); the server decides all access, so the client never hides a security rule behind the UI.
 
 **Status: learning loop, exams, assignment grades, labs, and the privacy centre.** Built and checked against the real API in a browser: sign in (session restore on reload), course list with progress, course/topic progress with locked topics, video playback with verified watch-time heartbeats and in-video questions, quiz, assignment (text and file), notifications, doubts (ask a teacher), AI tutor (with consent), **exams (eligibility checklist, register/cancel, consent + device check + identity wait, the exam room with server-authoritative timer, resilient autosave, resume, integrity signals, submit with receipt, result and appeal, programme completion)**, **assignment grades (list, live status while being evaluated or reviewed, score, late penalty, rubric breakdown with the quoted evidence, written feedback, who graded it, appeal with deadline), notification links**, **privacy centre (versioned consents with withdrawal, data download / correction / erasure requests with password confirmation and status tracking, authenticated download of the export, accessibility and language preferences applied across the app, active sessions with sign-out, password change)**, **lab booking (status per lab with what is blocking you, lab manual, safety-notice acceptance, session list with seats left and booking, cancel, QR check-in by pasted code or by opening the QR link, evidence upload, completion)**, low-bandwidth mode, responsive and keyboard-accessible layout, dark mode.
 
@@ -21,7 +21,7 @@ Sign in with a learner account. Locally, create one: approve an application (use
 ## Check it
 
 ```bash
-npm run typecheck && npm test      # 107 tests: API client, heartbeat tracker, outbox, quiz, assignment, login, gating, and the exam stack (clock, autosave, device check, signals, runner, list, check-in, result)
+npm run typecheck && npm test      # 131 tests: API client, heartbeat tracker, outbox, quiz, assignment, login, gating, and the exam stack (clock, autosave, device check, signals, runner, list, check-in, result)
 npm run build                      # production bundle in dist/ (~190 kB, 63 kB gzipped)
 ```
 
@@ -75,3 +75,18 @@ npm run build                      # production bundle in dist/ (~190 kB, 63 kB 
 - **Evidence** (up to 5 files, 10 MB each, malware-scanned) is uploaded before the submission is sent, so a failed upload sends nothing; a lab completes when attendance is recorded and, if required, evidence is accepted.
 - This needed one **small API addition**: `GET /v1/me/labs` now includes each booking's slot (time, place, batch, cancelled), because a booking whose session has already started was otherwise impossible to show.
 - Verified in a browser on 2026-10-02 against the real API: accept notice, book, check in via the QR link, upload evidence, lab completed, programme completion and notifications updated. Using an uploaded real photo, a full session, a refused cancellation and a cancelled session were covered by tests only. The lab and slots were created by SQL / the coordinator API as fixtures (lab authoring on a draft version is covered by the API's own tests).
+
+## Staff console (`/staff`): what exists and what does not
+
+**Built:**
+- **Staff sign-in with two-step verification:** password, then an authenticator-app code or a one-time backup code; first sign-in walks through setting up the authenticator (QR code and manual key) and shows the backup codes once. Production enforces this for every staff role; locally set `MFA_ENFORCE=1` to rehearse it.
+- **Role-aware shell:** each person sees only the areas their role allows (the server enforces every call regardless). A staff-only account never sees the learner portal; a learner is sent away from the console.
+- **Admissions** (academic and platform admins decide; support staff read): queue by status with paging, approve / return / reject (reason required for the last two, the server's refusal shown as is), CSV import with created / duplicate / invalid reporting.
+- **Lab desk** (lab coordinators and academic admins): pick a lab, plan sessions with local validation, see ongoing, past and cancelled sessions, run a session: a **check-in code shown as a QR that refreshes before it expires**, a live roster, mark present or no-show, complete a booking by exception (reason required, audited), cancel a session (warns that learners are notified; reason required).
+- **Operations** (platform admins, auditors and others by role): live exam numbers, the full integrity check (clear failure presentation and what to do), and platform settings editable by type with live validation, emergency controls (AI kill switch, exam change freeze) first and behind a confirmation.
+
+**Not built yet (use the API, see the user guide):** content authoring and review, grading moderation, exam operations beyond the dashboard (incidents, results release, appeals), the doubt desk for teachers, privacy-request handling, user management (users are still created by `npm run user:create` or by approving an application), reports, entitlement management.
+
+One **small API addition** supports this: `GET /v1/labs/slots?scope=all` (coordinators only) also returns ongoing, past (30 days) and cancelled sessions; without it a session already in progress could not be listed. Covered by an API test.
+
+Verified in a browser on 2026-10-02 against the real API with `MFA_ENFORCE=1`: a lab coordinator and a platform admin each completed first-time authenticator enrolment (the code computed from the shown key), the lab desk showed the live roster and a refreshing QR, the integrity check passed on the real database, the AI kill switch was changed through its confirmation and changed back, and approving an application for a non-existent programme showed the server's refusal. Approvals, rejections, imports, attendance changes and cancellations are covered by tests only. No screen-reader testing.
