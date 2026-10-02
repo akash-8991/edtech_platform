@@ -236,9 +236,10 @@ export class LabsController {
     const ents = await this.prisma.entitlement.findMany({ where: { learnerId: a.id } });
     const acts = await this.prisma.labActivity.findMany({ where: { versionId: { in: ents.map((e) => e.versionId) } }, orderBy: { code: 'asc' } });
     const bookings = await this.prisma.labBooking.findMany({ where: { learnerId: a.id } });
+    const slots = new Map((await this.prisma.labSlot.findMany({ where: { id: { in: bookings.map((b) => b.slotId) } } })).map((x) => [x.id, x]));
     return Promise.all(acts.map(async (act) => { const e = await this.svc.eligibility(a.id, act); const bs = bookings.filter((b) => b.activityId === act.id);
       return { activityId: act.id, code: act.code, title: act.title, mandatory: act.mandatory, location: act.location, manual: act.manual, safetyText: act.safetyText, safetyHash: act.safetyHash, requireEvidence: act.requireEvidence,
-        eligibility: { eligible: e.eligible, missingPrerequisiteTopics: e.missingTopicIds, safetyAcknowledged: e.acked }, bookings: bs.map((b) => ({ id: b.id, slotId: b.slotId, status: b.status, completed: !!b.completedAt })), completed: bs.some((b) => !!b.completedAt) }; }));
+        eligibility: { eligible: e.eligible, missingPrerequisiteTopics: e.missingTopicIds, safetyAcknowledged: e.acked }, bookings: bs.map((b) => { const sl = slots.get(b.slotId); return { id: b.id, slotId: b.slotId, status: b.status, completed: !!b.completedAt, evidenceSubmitted: ((b.evidence as any[]) ?? []).length > 0, slot: sl && { startsAt: sl.startsAt, endsAt: sl.endsAt, location: sl.location || act.location, batchCode: sl.batchCode, cancelled: sl.status === 'CANCELLED' } }; }), completed: bs.some((b) => !!b.completedAt) }; }));
   }
   @Post('labs/activities/:id/ack') @Roles('LEARNER') ack(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) { need(b, { textHash: 'string' }); return this.svc.ack(id, a, b.textHash); }
   @Post('labs/slots/:id/book') @Roles('LEARNER') book(@Param('id') id: string, @CurrentActor() a: Actor) { return this.svc.book(id, a); }

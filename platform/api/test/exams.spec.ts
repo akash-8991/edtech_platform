@@ -111,6 +111,8 @@ describe('labs (LAB-001..003)', () => {
     const race = await Promise.all(['m1', 'm2', 'm3'].map((k) => http.post(`/v1/labs/slots/${slotId}/book`).set(as(k)))); // capacity 2, one seat taken
     expect(race.filter((x: any) => x.status === 201)).toHaveLength(1); expect(race.filter((x: any) => x.status === 409)).toHaveLength(2);
     expect((await http.get(`/v1/labs/slots?activityId=${LAB}`).set(as('l1'))).body[0].seatsLeft).toBe(0);
+    // the learner's own bookings carry the slot details the client needs to show where and when (even after the slot has started)
+    const mine = (await http.get('/v1/me/labs').set(as('l1')).expect(200)).body[0].bookings[0]; expect(mine).toMatchObject({ slotId, status: 'BOOKED', completed: false, evidenceSubmitted: false, slot: { batchCode: expect.any(String), cancelled: false } }); expect(new Date(mine.slot.startsAt).getTime()).toBeGreaterThan(Date.now());
   });
   it('learners cannot cancel inside the cut-off; coordinators can; cancelling a slot notifies everyone', async () => {
     const near = (await prisma.labSlot.create({ data: { activityId: LAB, batchCode: 'near', startsAt: new Date(Date.now() + 3 * 3600_000), endsAt: new Date(Date.now() + 6 * 3600_000), capacity: 5, createdById: uid.lab1 } })).id;

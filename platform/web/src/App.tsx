@@ -11,6 +11,9 @@ import ExamRunner from './pages/ExamRunner';
 import Exams from './pages/Exams';
 import GradeDetail from './pages/GradeDetail';
 import Grades from './pages/Grades';
+import LabAttend from './pages/LabAttend';
+import LabDetail from './pages/LabDetail';
+import Labs from './pages/Labs';
 import Login from './pages/Login';
 import Notifications from './pages/Notifications';
 import Privacy from './pages/Privacy';
@@ -27,7 +30,7 @@ function Shell() {
       <a className="skip" href="#main">Skip to content</a>
       <header className="top">
         <Link to="/" className="brand">Learning Portal</Link>
-        <nav aria-label="Main"><NavLink to="/" end>Courses</NavLink><NavLink to="/grades">Grades</NavLink><NavLink to="/exams">Exams</NavLink><NavLink to="/tutor">AI tutor</NavLink><NavLink to="/doubts">Ask a teacher</NavLink><NavLink to="/notifications">Notifications</NavLink></nav>
+        <nav aria-label="Main"><NavLink to="/" end>Courses</NavLink><NavLink to="/labs">Labs</NavLink><NavLink to="/grades">Grades</NavLink><NavLink to="/exams">Exams</NavLink><NavLink to="/tutor">AI tutor</NavLink><NavLink to="/doubts">Ask a teacher</NavLink><NavLink to="/notifications">Notifications</NavLink></nav>
         <NavLink to="/privacy">Privacy</NavLink><NavLink to="/account" className="who">{me.name}</NavLink><button className="link" onClick={() => void signOut()}>Sign out</button>
       </header>
       <main id="main" tabIndex={-1}><Outlet /></main>
@@ -43,6 +46,9 @@ export default function App() {
         <Route index element={<Courses />} />
         <Route path="courses/:entitlementId" element={<Course />} />
         <Route path="courses/:entitlementId/topics/:topicId" element={<Topic />} />
+        <Route path="labs" element={<Labs />} />
+        <Route path="labs/attend" element={<LabAttend />} />
+        <Route path="labs/:activityId" element={<LabDetail />} />
         <Route path="grades" element={<Grades />} />
         <Route path="grades/:submissionId" element={<GradeDetail />} />
         <Route path="exams" element={<Exams />} />

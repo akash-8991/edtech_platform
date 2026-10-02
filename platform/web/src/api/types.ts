@@ -69,3 +69,12 @@ export interface Prefs {
   playbackSpeed?: number; fontScale?: number; language?: 'en' | 'hi'; captionLanguage?: 'en' | 'hi'; textSpacing?: 'normal' | 'wide' | 'wider';
 }
 export interface SessionInfo { id: string; current: boolean; method: string; mfa: boolean; device?: string; createdAt: string; lastSeenAt?: string; expiresAt: string }
+
+// ---- labs ----
+export interface LabBookingInfo { id: string; slotId: string; status: 'BOOKED' | 'ATTENDED' | 'NO_SHOW' | 'CANCELLED' | string; completed: boolean; evidenceSubmitted: boolean; slot?: { startsAt: string; endsAt: string; location?: string; batchCode?: string; cancelled: boolean } }
+export interface LabActivity {
+  activityId: string; code: string; title: string; mandatory: boolean; location?: string; manual?: string; safetyText: string; safetyHash: string; requireEvidence: boolean;
+  eligibility: { eligible: boolean; missingPrerequisiteTopics: string[]; safetyAcknowledged: boolean }; bookings: LabBookingInfo[]; completed: boolean;
+}
+export interface LabSlot { id: string; batchCode: string; startsAt: string; endsAt: string; location?: string; capacity: number; seatsLeft: number }
+export interface UploadedFile { key: string; name: string; size: number; checksum: string }
