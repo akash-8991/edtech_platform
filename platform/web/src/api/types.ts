@@ -115,3 +115,21 @@ export interface ExamCaseFile {
   timeline: { seq: number; type: string; at: string; payload: Record<string, unknown> }[];
 }
 export interface LogCheck { events: number; intact: boolean; firstBrokenIndex: number | null }
+
+export type VersionState = 'DRAFT' | 'FACULTY_REVIEW' | 'FACULTY_APPROVED' | 'ADMIN_APPROVAL' | 'PUBLISHED' | 'RETIRED';
+export interface VersionSummary { id: string; version: number; state: VersionState; hours: number; authorId: string; authorName: string | null; languages: string[]; provenance: Record<string, unknown>; createdAt: string; publishedAt: string | null }
+export interface ProgrammeRow { id: string; code: string; title: string; discipline: string; versions: VersionSummary[] }
+export interface AuthoredQuestion { id?: string; position: number; type: 'MCQ_SINGLE' | 'MCQ_MULTI' | 'NUMERIC' | string; text: string; options: string[]; answer: number | number[]; tolerance?: number; points: number; rationale?: string | null; i18n?: unknown }
+export interface AuthoredAsset { id: string; kind: string; language: string; durationSec: number | null; files: Record<string, { checksum: string; size: number }>; interactions: { id: string; atSec: number; prompt?: string }[]; provenance: Record<string, unknown>; rights: Record<string, unknown>; createdById: string }
+export interface AuthoredAssignment { instructions: string; rubric: { criteria?: { criterion: string; weight: number; description?: string }[] }; maxSubmissions: number; policy: Record<string, unknown>; i18n?: unknown }
+export interface AuthoredTopic { id: string; position: number; title: string; hours: number; outcomes: string[]; prerequisites: string[]; mandatory: boolean; quiz: { passPercent: number; maxAttempts: number; questions: AuthoredQuestion[] } | null; assignment: AuthoredAssignment | null; assets: AuthoredAsset[] }
+export interface AuthoredModule { id: string; position: number; title: string; topics: AuthoredTopic[] }
+export interface VersionTree {
+  id: string; version: number; state: VersionState; hours: number; outcomes: string[]; languages: string[]; provenance: Record<string, unknown>; authorId: string; createdAt: string; publishedAt: string | null;
+  programme: { id: string; code: string; title: string; discipline: string }; modules: AuthoredModule[];
+  approvals: { id: string; fromState: VersionState; toState: VersionState; actorId: string; reason: string | null; createdAt: string }[];
+  comments: { id: string; authorId: string; target: string | null; body: string; createdAt: string }[]; people: Record<string, string>;
+}
+export interface QualityFinding { id: string; topicId: string | null; gate: string; severity: string; blocking: boolean; message: string; resolvedAt: string | null; resolution: string | null }
+export interface A11yReport { blocking: number; advisory: number; enforced: boolean; issues: { topic: string; language?: string; severity: 'BLOCKING' | 'ADVISORY'; rule: string; message: string }[] }
+export interface DiffChange { path: string; change: 'added' | 'removed' | 'changed'; from?: unknown; to?: unknown }

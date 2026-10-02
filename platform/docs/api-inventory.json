@@ -332,6 +332,19 @@
    ]
   },
   {
+   "method": "GET",
+   "path": "/v1/authoring/programmes",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
    "method": "POST",
    "path": "/v1/authoring/programmes",
    "public": false,
@@ -474,6 +487,19 @@
   {
    "method": "POST",
    "path": "/v1/authoring/versions/:id/transition",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/versions/:id/tree",
    "public": false,
    "roles": [
     "ACADEMIC_ADMIN",

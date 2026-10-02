@@ -15,7 +15,7 @@ const tree = (modules: any[], createdById = '') => modules.map((m, i) => ({
   position: i + 1, title: m.title,
   topics: { create: (m.topics ?? []).map((t: any, j: number) => ({
     position: j + 1, title: t.title, hours: t.hours ?? 1, outcomes: t.outcomes ?? [], prerequisites: t.prerequisites ?? [], mandatory: t.mandatory ?? true,
-    ...(t.quiz && { quiz: { create: { passPercent: t.quiz.passPercent, maxAttempts: t.quiz.maxAttempts, questions: { create: t.quiz.questions.map((q: any) => ({ position: q.position, type: q.type, text: q.text, options: q.options, answer: q.answer, tolerance: q.tolerance, points: q.points, rationale: q.rationale })) } } } }),
+    ...(t.quiz && { quiz: { create: { passPercent: t.quiz.passPercent, maxAttempts: t.quiz.maxAttempts, questions: { create: t.quiz.questions.map((q: any) => ({ position: q.position, type: q.type, text: q.text, options: q.options, answer: q.answer, tolerance: q.tolerance, points: q.points, rationale: q.rationale, ...(q.i18n && { i18n: q.i18n }) })) } } } }),
     ...(t.assignment && { assignment: { create: { instructions: t.assignment.instructions, rubric: t.assignment.rubric, maxSubmissions: t.assignment.maxSubmissions, policy: t.assignment.policy ?? {}, i18n: t.assignment.i18n ?? {} } } }),
     ...(t.assets?.length && { assets: { create: t.assets.map((a: any) => ({ kind: a.kind, language: a.language, durationSec: a.durationSec, files: a.files, interactions: a.interactions, provenance: a.provenance, rights: a.rights, createdById: createdById || a.createdById })) } }),
   })) },
@@ -141,6 +141,26 @@ export class AuthoringController {
     const v = await this.prisma.programmeVersion.findUnique({ where: { id }, include: { modules: { orderBy: { position: 'asc' }, include: { topics: { orderBy: { position: 'asc' } } } }, approvals: { orderBy: { createdAt: 'asc' } }, comments: true } });
     if (!v) throw new NotFoundException();
     return v;
+  }
+
+  /** Staff index of every programme and its versions (the catalogue lists only published ones). */
+  @Get('programmes') @Roles(...AUTHORING)
+  async programmes() {
+    const rows = await this.prisma.programme.findMany({ orderBy: { code: 'asc' }, include: { versions: { orderBy: { version: 'desc' }, select: { id: true, version: true, state: true, hours: true, authorId: true, languages: true, provenance: true, createdAt: true, publishedAt: true } } } });
+    const users = await this.prisma.user.findMany({ where: { id: { in: [...new Set(rows.flatMap((p) => p.versions.map((v) => v.authorId)))] } }, select: { id: true, name: true } });
+    const name = new Map(users.map((u) => [u.id, u.name]));
+    return rows.map((p) => ({ id: p.id, code: p.code, title: p.title, discipline: p.discipline, versions: p.versions.map((v) => ({ ...v, authorName: name.get(v.authorId) ?? null })) }));
+  }
+
+  /** The whole version for review and editing: components, approval history, comments, and who is who. */
+  @Get('versions/:id/tree') @Roles(...AUTHORING)
+  async fullTree(@Param('id') id: string) {
+    const v = await this.prisma.programmeVersion.findUnique({ where: { id }, include: { programme: true, approvals: { orderBy: { createdAt: 'asc' } }, comments: { orderBy: { createdAt: 'asc' } },
+      modules: { orderBy: { position: 'asc' }, include: { topics: { orderBy: { position: 'asc' }, include: { quiz: { include: { questions: { orderBy: { position: 'asc' } } } }, assignment: true, assets: { orderBy: { createdAt: 'asc' } } } } } } } });
+    if (!v) throw new NotFoundException();
+    const ids = [...new Set([v.authorId, ...v.approvals.map((a) => a.actorId), ...v.comments.map((c) => c.authorId)])];
+    const people = Object.fromEntries((await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } })).map((u) => [u.id, u.name]));
+    return { ...v, people };
   }
 
   @Get('versions/:id/diff') @Roles(...AUTHORING)

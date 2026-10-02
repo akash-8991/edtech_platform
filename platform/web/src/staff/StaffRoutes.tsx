@@ -8,6 +8,8 @@ import Moderation from './Moderation';
 import ModerationCase from './ModerationCase';
 import ExamOps from './ExamOps';
 import ExamCase from './ExamCase';
+import Content from './Content';
+import ContentVersion from './ContentVersion';
 import Account from '../pages/Account';
 
 /** Everything under /staff. Each page also checks the role (and the API checks it again on every call). */
@@ -18,6 +20,8 @@ export default function StaffRoutes() {
       <Route path="admissions" element={<Admissions />} />
       <Route path="moderation" element={<Moderation />} />
       <Route path="moderation/:taskId" element={<ModerationCase />} />
+      <Route path="content" element={<Content />} />
+      <Route path="content/versions/:versionId" element={<ContentVersion />} />
       <Route path="examops" element={<ExamOps />} />
       <Route path="examops/attempts/:attemptId" element={<ExamCase />} />
       <Route path="labs" element={<LabDesk />} />

@@ -31,7 +31,7 @@ export class ContentController {
     const qs = b.questions.map((q: any, i: number) => {
       if (!['MCQ_SINGLE', 'MCQ_MULTI', 'NUMERIC'].includes(q.type) || typeof q.text !== 'string' || q.answer === undefined) throw new BadRequestException(`question ${i + 1} invalid`);
       if (q.type !== 'NUMERIC' && (!Array.isArray(q.options) || q.options.length < 2)) throw new BadRequestException(`question ${i + 1}: options required`);
-      return { position: i + 1, type: q.type, text: q.text, options: q.options ?? [], answer: q.answer, tolerance: q.tolerance ?? 0, points: q.points ?? 1, rationale: q.rationale };
+      return { position: i + 1, type: q.type, text: q.text, options: q.options ?? [], answer: q.answer, tolerance: q.tolerance ?? 0, points: q.points ?? 1, rationale: q.rationale, ...(q.i18n && { i18n: q.i18n }) };
     });
     return this.prisma.$transaction(async (tx) => {
       await this.draftTopic(tx, id, a);
