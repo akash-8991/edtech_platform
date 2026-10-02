@@ -1,0 +1,1818 @@
+{
+ "generatedBy": "npm run inventory",
+ "routes": [
+  {
+   "method": "GET",
+   "path": "/health/ready",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/health",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/metrics",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/admin/config/:key",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/admin/config",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/admin/users/:id/mfa-reset",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/admin/users/:id/revoke-sessions",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/admissions/applications",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/ai/curriculum-jobs",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/ai/jobs/:id/cancel",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/ai/jobs/:id",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/ai/jobs",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/ai/prompts/:id/approve",
+   "public": false,
+   "roles": [
+    "APPROVER_PUBLISHER",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/ai/prompts/:id/evaluate",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/ai/prompts/:key",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/ai/prompts",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/ai/quality/:id/resolve",
+   "public": false,
+   "roles": [
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/ai/quality",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/ai/topic-jobs",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/ai/usage",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/applications/:id/decision",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/applications/import",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/applications",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/appointments/:id/cancel",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "DOUBT_TEACHER",
+    "LEARNER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/audit/verify",
+   "public": false,
+   "roles": [
+    "AUDITOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/audit",
+   "public": false,
+   "roles": [
+    "AUDITOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/auth/login",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/auth/logout",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/auth/me",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/auth/mfa/enroll/confirm",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/auth/mfa/enroll/start",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/auth/mfa/verify",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/auth/password",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/auth/refresh",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/auth/sso/callback",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/auth/sso/start",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/authoring/assets/:id/files/:label",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/authoring/programmes/:code/versions",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/authoring/programmes",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/authoring/topics/:id/assets",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/topics/:id/assignment-policy",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/authoring/topics/:id/assignment-policy",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/authoring/topics/:id/assignment",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/topics/:id/manifest",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/authoring/topics/:id/quiz",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/versions/:id/accessibility",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/authoring/versions/:id/clone",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/authoring/versions/:id/comments",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/versions/:id/diff",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/authoring/versions/:id/labs/:code",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/versions/:id/labs",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "LAB_COORDINATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/authoring/versions/:id/transition",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/versions/:id",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/authoring/versions/:id",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/catalogue/versions/:id",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/catalogue",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/doubt-centre/sweep",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/doubt-centre/teachers/:userId",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/doubt-centre/teachers",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/doubt-centre/tickets/:id/reassign",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/doubts/upload",
+   "public": false,
+   "roles": [
+    "DOUBT_TEACHER",
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/doubts",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/entitlements/:id/access",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LEARNER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/entitlements/:id/exceptions",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/entitlements/:id/pause",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LEARNER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/entitlements/:id/progression-overrides",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/entitlements/:id/resume",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LEARNER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/entitlements/:id/revoke",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/exam-attempts/:id/answers",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-attempts/:id/device-check",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-attempts/:id/resume",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-attempts/:id/signals",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-attempts/:id/start",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-attempts/:id/submit",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-ops/appeals/:id/decide",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exam-ops/appeals",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exam-ops/attempts/:id/case",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-ops/attempts/:id/outcome",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-ops/attempts/:id/release",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exam-ops/attempts/:id/result",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exam-ops/attempts/:id/verify-log",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-ops/attempts/:id/waive-report",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-ops/incidents/:id/decide",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exam-ops/incidents",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-ops/sessions/:id/release-ready",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exam-ops/status",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-ops/sweep",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-sessions/:id/check-in",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exam-sessions/:id/unregister",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/:id/eligibility-overrides",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/:id/publish",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/:id/register",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exams/:id/sessions",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/:id/sessions",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/accommodations",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exams/bank/:programmeId/coverage",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/bank/:programmeId/questions",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/bank/questions/:id/retire",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams/integrity-cases/:submissionId/resolve",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/exams",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/faq/:id/retire",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/faq/:id/review",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/faq",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "DOUBT_TEACHER",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/grading/benchmark",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/grading/overrides/:id/decide",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/grading/overrides",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/grading/submissions/:id/complete",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/grading/submissions/:id/history",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/grading/submissions/:id/overrides",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/grading/sweep",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/incidents/:id/evidence",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/activities/:id/ack",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/attendance",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/bookings/:id/cancel",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR",
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/bookings/:id/complete",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/bookings/:id/evidence",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/labs/evidence/upload",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/slots/:id/attendance",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/slots/:id/book",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/slots/:id/cancel",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/labs/slots/:id/qr",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/labs/slots/:id/roster",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/labs/slots",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR",
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/labs/slots",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "LAB_COORDINATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/learning-events",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/completion",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/consents",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/me/consents",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/doubts/:id/appointments",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/doubts/:id/messages",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/doubts/:id/rating",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/doubts/:id/reopen",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/doubts/:id",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/doubts",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/entitlements/:id/progress",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/entitlements",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/exam-attempts/:id/appeal",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/exam-attempts/:id",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/exams",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/labs",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/notifications/:id/read",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/notifications",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/preferences",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/me/preferences",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/privacy/requests/:id/download",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/privacy/requests",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/privacy/requests",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "DELETE",
+   "path": "/v1/me/sessions/:id",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/sessions",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/submissions/:id/appeal",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/submissions/:id",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/submissions",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/media/stream/:token",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/moderation/queue",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/moderation/tasks/:id/claim",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/moderation/tasks/:id/decide",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/moderation/tasks/:id/release",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/moderation/tasks/:id",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/offline/devices/:deviceId/revoke",
+   "public": false,
+   "roles": [
+    "LEARNER",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/offline/devices",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/offline/licenses",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/offline/licenses",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/ops/integrity",
+   "public": false,
+   "roles": [
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/privacy/process",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/privacy/requests/:id/decide",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/privacy/requests/on-behalf",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/privacy/requests",
+   "public": false,
+   "roles": [
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/privacy/retention/run",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/privacy/users/:id/legal-hold",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/proctor/attempts/:id/incidents",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/proctor/attempts/:id/verify-id",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/proctoring/webhook",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/quiz-attempts/:id/submit",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/reports/doubts",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/reports/exams",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/reports/grading",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/reports/progress",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/reports/tutor",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/teacher/appointments/:id/confirm",
+   "public": false,
+   "roles": [
+    "DOUBT_TEACHER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/teacher/appointments",
+   "public": false,
+   "roles": [
+    "DOUBT_TEACHER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/teacher/profile",
+   "public": false,
+   "roles": [
+    "DOUBT_TEACHER"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/teacher/profile",
+   "public": false,
+   "roles": [
+    "DOUBT_TEACHER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/teacher/tickets/:id/claim",
+   "public": false,
+   "roles": [
+    "DOUBT_TEACHER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/teacher/tickets/:id/propose-faq",
+   "public": false,
+   "roles": [
+    "DOUBT_TEACHER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/teacher/tickets/:id/reply",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "DOUBT_TEACHER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/teacher/tickets/:id/resolve",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "DOUBT_TEACHER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/teacher/tickets/:id",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "DOUBT_TEACHER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/teacher/tickets",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "DOUBT_TEACHER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/topics/:id/assignment/submit",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/v1/topics/:id/assignment/upload",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/topics/:id/playback",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/topics/:id/quiz/start",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/topics/:id/remediation",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/topics/:id",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/tutor/ask",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/tutor/benchmark",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/tutor/conversations/:id/escalate",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/tutor/conversations/:id",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/tutor/conversations",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/tutor/index/:versionId",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/tutor/index/:versionId",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/tutor/messages/:id/feedback",
+   "public": false,
+   "roles": [
+    "LEARNER"
+   ]
+  }
+ ]
+}

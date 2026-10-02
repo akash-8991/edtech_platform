@@ -1,0 +1,32 @@
+# Overlay that makes the local stack mirror production components: S3-compatible storage (MinIO) and a real malware scanner (ClamAV).
+#   docker compose -f docker-compose.yml -f docker-compose.full.yml up --build -d
+# ClamAV downloads its signature database on first start (1-3 minutes); uploads are refused (503) until it reports healthy.
+services:
+  minio:
+    image: minio/minio
+    command: server /data
+    environment: { MINIO_ROOT_USER: edtech, MINIO_ROOT_PASSWORD: edtech-minio-dev }
+    volumes: ["miniodata:/data"]
+    healthcheck: { test: ["CMD", "mc", "ready", "local"], interval: 5s, retries: 10 }
+  minio-init:
+    image: minio/mc
+    entrypoint: ["sh", "-c", "mc alias set local http://minio:9000 edtech edtech-minio-dev && mc mb --ignore-existing local/edtech"]
+    depends_on: { minio: { condition: service_healthy } }
+  clamav:
+    image: clamav/clamav:stable
+    platform: linux/amd64        # the image has no arm64 build: runs under emulation on Apple Silicon (slower start)
+    healthcheck: { test: ["CMD", "/usr/local/bin/clamdcheck.sh"], interval: 15s, retries: 20, start_period: 60s }
+  api:
+    environment: &s3
+      STORAGE_DRIVER: s3
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: edtech
+      AWS_ACCESS_KEY_ID: edtech
+      AWS_SECRET_ACCESS_KEY: edtech-minio-dev
+      SCANNER: clamav
+      CLAMD_HOST: clamav
+    depends_on: { minio-init: { condition: service_completed_successfully }, clamav: { condition: service_healthy } }
+  worker:
+    environment: *s3
+    depends_on: { minio-init: { condition: service_completed_successfully }, clamav: { condition: service_healthy } }
+volumes: { miniodata: {} }

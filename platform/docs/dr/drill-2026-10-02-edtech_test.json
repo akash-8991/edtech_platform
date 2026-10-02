@@ -1,0 +1,17 @@
+{
+ "when": "2026-10-02T08:26:36.837016+00:00",
+ "sourceDatabase": "edtech_test",
+ "backupSeconds": 0,
+ "restoreSeconds": 1,
+ "verifySeconds": 0.146,
+ "measuredRtoSeconds": 1.146,
+ "tables": 68,
+ "rows": 633,
+ "auditEventsVerified": 62,
+ "examLogChainsVerified": 0,
+ "immutabilityTriggersPresent": 11,
+ "rowCountMismatches": [],
+ "integrityOk": true,
+ "passed": true,
+ "scope": "single-node logical backup/restore on a developer machine; NOT a cloud DR drill (no cross-region, no PITR, no media restore at scale)"
+}

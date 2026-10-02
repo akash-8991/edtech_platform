@@ -1,0 +1,88 @@
+# Prometheus alert rules for the EdTech platform. Metric names are checked against the code by test/ops.spec.ts.
+# Scrape jobs expected: job="edtech-api" (/metrics, bearer METRICS_TOKEN) and job="edtech-worker" (worker health port /metrics).
+groups:
+  - name: edtech-availability
+    rules:
+      - alert: ApiErrorBudgetBurnFast
+        expr: |
+          sum(rate(http_requests_total{job="edtech-api",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="edtech-api"}[5m])) > 14 * 0.001
+          and sum(rate(http_requests_total{job="edtech-api",status=~"5.."}[1h])) / sum(rate(http_requests_total{job="edtech-api"}[1h])) > 14 * 0.001
+        for: 2m
+        labels: { severity: page }
+        annotations: { summary: "99.9% availability SLO burning at >14x", runbook: "docs/ops/runbooks.md#api-errors" }
+      - alert: ApiErrorBudgetBurnSlow
+        expr: |
+          sum(rate(http_requests_total{job="edtech-api",status=~"5.."}[6h])) / sum(rate(http_requests_total{job="edtech-api"}[6h])) > 6 * 0.001
+        for: 15m
+        labels: { severity: ticket }
+        annotations: { summary: "99.9% availability SLO burning at >6x over 6h", runbook: "docs/ops/runbooks.md#api-errors" }
+      - alert: ApiLatencyP95High
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job="edtech-api"}[5m]))) > 2
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "API p95 latency above 2s", runbook: "docs/ops/runbooks.md#latency" }
+      - alert: EventLoopLagHigh
+        expr: nodejs_eventloop_lag_p99_seconds{job=~"edtech-api|edtech-worker"} > 0.25
+        for: 5m
+        labels: { severity: ticket }
+        annotations: { summary: "Node event loop p99 lag above 250ms (CPU-bound work or saturation)" }
+      - alert: WorkerDown
+        expr: absent(process_uptime_seconds{job="edtech-worker"})
+        for: 3m
+        labels: { severity: page }
+        annotations: { summary: "No worker is reporting: queues, exam sweeps and privacy processing are stopped", runbook: "docs/ops/runbooks.md#worker" }
+  - name: edtech-dependencies
+    rules:
+      - alert: ExternalDependencyFailing
+        expr: |
+          sum by (service) (rate(external_calls_total{outcome!="ok"}[10m])) / sum by (service) (rate(external_calls_total[10m])) > 0.2
+          and sum by (service) (rate(external_calls_total[10m])) > 0.05
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "{{ $labels.service }} failing >20% of calls (AI provider, proctoring vendor, IdP, storage, scanner or sandbox)" }
+      - alert: ExternalDependencySlow
+        expr: histogram_quantile(0.95, sum by (le, service) (rate(external_call_duration_seconds_bucket[10m]))) > 30
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "{{ $labels.service }} p95 latency above 30s" }
+      - alert: RedisFallbackActive
+        expr: sum(rate(redis_fallback_total[5m])) > 0 or sum(rate(redis_errors_total[5m])) > 0
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "Rate limiting / session revocation running on per-instance state: Redis unreachable", runbook: "docs/ops/runbooks.md#redis" }
+  - name: edtech-security
+    rules:
+      - alert: AuthFailureSpike
+        expr: sum(rate(auth_failures_total[5m])) > 5 * sum(rate(auth_failures_total[1d] offset 1d)) and sum(rate(auth_failures_total[5m])) > 0.5
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "Failed sign-ins at >5x the same time yesterday (credential stuffing?)" }
+      - alert: RateLimitingHeavy
+        expr: sum(rate(rate_limited_total[5m])) > 5
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "Sustained rate-limit rejections" }
+  - name: edtech-integrity-and-queues
+    rules:
+      - alert: IntegrityCheckFailed
+        expr: min(integrity_ok) == 0
+        labels: { severity: page }
+        annotations: { summary: "Tamper-evident chain or referential integrity check FAILED", runbook: "docs/ops/dr-plan.md" }
+      - alert: IntegrityCheckStale
+        expr: time() - max(integrity_last_run_timestamp_seconds) > 12 * 3600 or absent(integrity_last_run_timestamp_seconds)
+        labels: { severity: ticket }
+        annotations: { summary: "Integrity check has not run for 12h" }
+      - alert: JobQueueBacklog
+        expr: max(sum by (kind) (jobs_queue_depth)) > 200
+        for: 15m
+        labels: { severity: ticket }
+        annotations: { summary: "Background job queue deep and not draining" }
+      - alert: GradingBacklog
+        expr: max(grading_pending_submissions) > 500
+        for: 30m
+        labels: { severity: ticket }
+        annotations: { summary: "Grading backlog above 500 submissions for 30m" }
+      - alert: AiSpendNearCap
+        expr: max(ai_cost_usd_today) > 0.8 * max(ai_budget_usd_daily)
+        labels: { severity: ticket }
+        annotations: { summary: "AI spend above 80% of the daily cap (ai.daily_budget_usd)" }

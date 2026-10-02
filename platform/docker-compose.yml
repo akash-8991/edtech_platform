@@ -1,0 +1,51 @@
+# Local, self-contained stack: PostgreSQL, Redis, one-shot migrate+seed, API and worker. DEVELOPMENT ONLY (synthetic seed data, dev secrets).
+# Production uses managed services and a secret store: see docs/guides/02-cloud-deployment.md.
+#   docker compose up --build -d            # start
+#   docker compose --profile full ... see docker-compose.full.yml for MinIO (S3) + ClamAV
+#   curl localhost:3000/health/ready
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_USER: edtech, POSTGRES_PASSWORD: edtech, POSTGRES_DB: edtech }
+    ports: ["${DB_PORT:-5433}:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U edtech"], interval: 5s, retries: 10 }
+  redis:
+    image: redis:7
+    ports: ["${REDIS_PORT:-6380}:6379"]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 10 }
+  migrate:
+    build: { context: ./api, target: build }
+    command: ["sh", "-c", "npx prisma migrate deploy && npx ts-node prisma/seed.ts"]
+    environment: { DATABASE_URL: "postgresql://edtech:edtech@db:5432/edtech" }
+    depends_on: { db: { condition: service_healthy } }
+  api:
+    build: ./api
+    ports: ["${API_PORT:-3000}:3000"]
+    environment:
+      PROCESS_ROLE: api
+      DATABASE_URL: postgresql://edtech:edtech@db:5432/edtech
+      NODE_ENV: development
+      JWT_SECRET: dev-only-change-me-dev-only-change-me
+      ADMISSIONS_HMAC_SECRET: dev-only-hmac-secret-change-me
+      REDIS_URL: redis://redis:6379
+      STORAGE_DRIVER: local
+      SCANNER: noop
+    volumes: ["media:/data/media"]
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_healthy } }
+  worker:
+    build: ./api
+    command: ["node", "dist/src/worker.js"]
+    healthcheck: { disable: true }
+    environment:
+      PROCESS_ROLE: worker
+      DATABASE_URL: postgresql://edtech:edtech@db:5432/edtech
+      NODE_ENV: development
+      JWT_SECRET: dev-only-change-me-dev-only-change-me
+      ADMISSIONS_HMAC_SECRET: dev-only-hmac-secret-change-me
+      REDIS_URL: redis://redis:6379
+      STORAGE_DRIVER: local
+      SCANNER: noop
+    volumes: ["media:/data/media"]
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_healthy } }
+volumes: { pgdata: {}, media: {} }

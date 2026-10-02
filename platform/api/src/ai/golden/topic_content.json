@@ -1,0 +1,4 @@
+[
+  { "name": "sensors-intro", "topic": { "title": "What is a sensor?", "outcomes": ["Describe what a sensor measures", "Name three sensor types"] }, "languages": ["en"],
+    "references": [ { "id": "r1", "title": "Sensor primer", "text": "A sensor converts a physical quantity such as temperature, light or pressure into an electrical signal that a circuit can read. Common types include thermistors, photodiodes and strain gauges." } ] }
+]

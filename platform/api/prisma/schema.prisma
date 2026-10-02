@@ -1,0 +1,1143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  PLATFORM_ADMIN
+  ACADEMIC_ADMIN
+  CONTENT_AUTHOR
+  FACULTY_REVIEWER
+  APPROVER_PUBLISHER
+  ASSESSMENT_ADMIN
+  EXAM_ADMIN
+  DOUBT_TEACHER
+  SUPPORT_OPERATOR
+  AUDITOR
+  LEARNER
+  LAB_COORDINATOR
+}
+
+enum DurationType {
+  M12
+  M18
+}
+enum ApplicationStatus {
+  RECEIVED
+  APPROVED
+  REJECTED
+  RETURNED
+}
+enum EntitlementStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+  REVOKED
+}
+enum VersionState {
+  DRAFT
+  FACULTY_REVIEW
+  FACULTY_APPROVED
+  ADMIN_APPROVAL
+  PUBLISHED
+  RETIRED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  externalId   String?  @unique
+  email        String   @unique
+  name         String
+  language     String   @default("en")
+  status       String   @default("ACTIVE")
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  // Phase 7: authentication hardening + privacy
+  failedLogins   Int       @default(0)
+  lockedUntil    DateTime?
+  lastLoginAt    DateTime?
+  mfaEnabled     Boolean   @default(false)
+  mfaSecretEnc   String?   // TOTP secret, AES-256-GCM under DATA_ENC_KEY
+  mfaLastStep    Int       @default(0) // replay protection: a TOTP step is accepted once
+  mfaBackupHashes String[]
+  legalHold      Boolean   @default(false)
+  erasedAt       DateTime?
+  roles        UserRole[]
+  entitlements Entitlement[]
+}
+
+model UserRole {
+  id          String  @id @default(uuid())
+  userId      String
+  role        Role
+  // object-level scope (IAM-007): null = global; else programme or cohort code
+  programmeId String?
+  cohort      String?
+  user        User    @relation(fields: [userId], references: [id])
+  @@unique([userId, role, programmeId, cohort])
+}
+
+model LearnerApplication {
+  id          String            @id @default(uuid())
+  externalRef String            @unique // admissions-side id: idempotency key
+  email       String
+  name        String
+  programmeCode String
+  duration    DurationType
+  cohort      String
+  language    String            @default("en")
+  status      ApplicationStatus @default(RECEIVED)
+  reason      String?
+  decidedById String?
+  decidedAt   DateTime?
+  learnerId   String?
+  createdAt   DateTime          @default(now())
+}
+
+model Programme {
+  id         String             @id @default(uuid())
+  code       String             @unique
+  title      String
+  discipline String
+  createdAt  DateTime           @default(now())
+  versions   ProgrammeVersion[]
+}
+
+model ProgrammeVersion {
+  id          String       @id @default(uuid())
+  programmeId String
+  version     Int
+  state       VersionState @default(DRAFT)
+  authorId    String
+  hours       Int
+  outcomes    Json         @default("[]")
+  languages   Json         @default("[\"en\"]")
+  // provenance of AI-generated content (TRD §7)
+  provenance  Json         @default("{}")
+  createdAt   DateTime     @default(now())
+  publishedAt DateTime?
+  programme   Programme    @relation(fields: [programmeId], references: [id])
+  modules     Module[]
+  approvals   ApprovalRecord[]
+  comments    ReviewComment[]
+  entitlements Entitlement[]
+  @@unique([programmeId, version])
+}
+
+model Module {
+  id        String           @id @default(uuid())
+  versionId String
+  position  Int
+  title     String
+  version   ProgrammeVersion @relation(fields: [versionId], references: [id])
+  topics    Topic[]
+  @@unique([versionId, position])
+}
+
+model Topic {
+  id            String @id @default(uuid())
+  moduleId      String
+  position      Int
+  title         String
+  hours         Int    @default(1)
+  outcomes      Json   @default("[]")
+  prerequisites Json   @default("[]")
+  mandatory     Boolean @default(true)
+  module        Module @relation(fields: [moduleId], references: [id])
+  quiz          Quiz?
+  assignment    Assignment?
+  assets        ContentAsset[]
+  @@unique([moduleId, position])
+}
+
+// Immutable history of state transitions (REV-003)
+model ApprovalRecord {
+  id        String       @id @default(uuid())
+  versionId String
+  fromState VersionState
+  toState   VersionState
+  actorId   String
+  reason    String?
+  createdAt DateTime     @default(now())
+  version   ProgrammeVersion @relation(fields: [versionId], references: [id])
+}
+
+model ReviewComment {
+  id        String   @id @default(uuid())
+  versionId String
+  authorId  String
+  target    String?
+  body      String
+  createdAt DateTime @default(now())
+  version   ProgrammeVersion @relation(fields: [versionId], references: [id])
+}
+
+model Entitlement {
+  id            String            @id @default(uuid())
+  learnerId     String
+  versionId     String
+  duration      DurationType
+  cohort        String
+  status        EntitlementStatus @default(ACTIVE)
+  startAt       DateTime
+  endAt         DateTime
+  pauseCount    Int               @default(0)
+  pausedDays    Int               @default(0)
+  pausedAt      DateTime?
+  approvedById  String
+  createdAt     DateTime          @default(now())
+  learner       User              @relation(fields: [learnerId], references: [id])
+  version       ProgrammeVersion  @relation(fields: [versionId], references: [id])
+  pauses        EntitlementPause[]
+  exceptions    EntitlementException[]
+  @@unique([learnerId, versionId])
+}
+
+model EntitlementPause {
+  id            String      @id @default(uuid())
+  entitlementId String
+  startedAt     DateTime
+  endedAt       DateTime?
+  reason        String?
+  entitlement   Entitlement @relation(fields: [entitlementId], references: [id])
+}
+
+// Pause never extends endAt unless one of these is recorded (build prompt)
+model EntitlementException {
+  id            String      @id @default(uuid())
+  entitlementId String
+  extendDays    Int
+  reason        String
+  approvedById  String
+  createdAt     DateTime    @default(now())
+  entitlement   Entitlement @relation(fields: [entitlementId], references: [id])
+}
+
+// Append-only, hash-chained (AUD-001). UPDATE/DELETE blocked by trigger in migration.
+model AuditEvent {
+  seq           BigInt   @id @default(autoincrement())
+  actorId       String?
+  actorRole     String?
+  action        String
+  objectType    String
+  objectId      String
+  before        Json?
+  after         Json?
+  reason        String?
+  ip            String?
+  correlationId String?
+  prevHash      String
+  hash          String
+  createdAt     DateTime @default(now())
+  @@index([objectType, objectId])
+}
+
+enum QType {
+  MCQ_SINGLE
+  MCQ_MULTI
+  NUMERIC
+}
+enum OverrideType {
+  UNLOCK_TOPIC
+  EXTRA_QUIZ_ATTEMPTS
+  DEADLINE_EXTENSION
+}
+
+// Learning components belong to a Topic and therefore freeze with the ProgrammeVersion (immutable once past DRAFT).
+model ContentAsset {
+  id           String   @id @default(uuid())
+  topicId      String
+  kind         String   @default("VIDEO")
+  language     String   @default("en")
+  durationSec  Float?
+  // label -> {key, checksum, size}; labels: master, 720p, 360p, audio, transcript, slides
+  files        Json     @default("{}")
+  // interactive nodes (PRD §7). `correct` is server-only and stripped for learners.
+  interactions Json     @default("[]")
+  provenance   Json     @default("{}")
+  rights       Json     @default("{}")
+  createdById  String
+  createdAt    DateTime @default(now())
+  topic        Topic    @relation(fields: [topicId], references: [id])
+  @@index([topicId])
+}
+
+model Quiz {
+  id          String     @id @default(uuid())
+  topicId     String     @unique
+  passPercent Int        @default(70)
+  maxAttempts Int        @default(3)
+  topic       Topic      @relation(fields: [topicId], references: [id])
+  questions   Question[]
+}
+
+model Question {
+  id        String  @id @default(uuid())
+  quizId    String
+  position  Int
+  type      QType
+  text      String
+  options   Json    @default("[]")
+  answer    Json    // server-only: index | index[] | number
+  tolerance Float   @default(0)
+  points    Int     @default(1)
+  rationale String?
+  i18n      Json    @default("{}") // { hi: { text, options, rationale } }
+  quiz      Quiz    @relation(fields: [quizId], references: [id])
+  @@unique([quizId, position])
+}
+
+model Assignment {
+  id             String @id @default(uuid())
+  topicId        String @unique
+  instructions   String
+  rubric         Json   @default("{}")
+  maxSubmissions Int    @default(3)
+  i18n           Json   @default("{}") // { hi: { instructions } }
+  // Grading policy (ASN-002), version-pinned with the assignment: dimensions, pass mark, confidence threshold, late rules,
+  // unlock rule, prohibited patterns, reference evidence (server-only), code tests. See domain/grading.ts.
+  policy         Json   @default("{}")
+  topic          Topic  @relation(fields: [topicId], references: [id])
+}
+
+model QuizAttempt {
+  id            String    @id @default(uuid())
+  quizId        String
+  topicId       String
+  learnerId     String
+  entitlementId String
+  status        String    @default("IN_PROGRESS")
+  answers       Json?
+  scorePercent  Float?
+  passed        Boolean?
+  startedAt     DateTime  @default(now())
+  submittedAt   DateTime?
+  @@index([entitlementId, topicId])
+}
+
+model Submission {
+  id            String   @id @default(uuid())
+  assignmentId  String
+  topicId       String
+  learnerId     String
+  entitlementId String
+  attemptNo     Int
+  content       Json
+  contentHash   String?  // sha256 of the canonical submitted content (ASN-005)
+  createdAt     DateTime @default(now())
+  @@unique([assignmentId, learnerId, attemptNo])
+}
+
+// Client-generated eventId = idempotency + offline dedupe (TRD §6). Append-only.
+model LearningEvent {
+  id            String   @id @default(uuid())
+  eventId       String   @unique
+  learnerId     String
+  entitlementId String
+  topicId       String?
+  type          String
+  payload       Json
+  occurredAt    DateTime
+  deviceId      String?
+  seq           Int?
+  receivedAt    DateTime @default(now())
+  @@index([entitlementId, topicId])
+}
+
+model TopicProgress {
+  id                  String    @id @default(uuid())
+  entitlementId       String
+  topicId             String
+  videoRanges         Json      @default("{}") // assetId -> merged [from,to][]
+  responses           Json      @default("{}") // assetId -> interactionId -> response
+  resumeAssetId       String?
+  resumeSec           Float     @default(0)
+  resumeAt            DateTime?
+  videoDone           Boolean   @default(false)
+  quizPassed          Boolean   @default(false)
+  assignmentSubmitted Boolean   @default(false)
+  completedAt         DateTime?
+  updatedAt           DateTime  @updatedAt
+  @@unique([entitlementId, topicId])
+}
+
+model ProgressionOverride {
+  id            String       @id @default(uuid())
+  entitlementId String
+  topicId       String
+  type          OverrideType
+  value         Int          @default(0)
+  reason        String
+  approvedById  String
+  createdAt     DateTime     @default(now())
+  @@index([entitlementId, topicId])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  @@index([userId, createdAt])
+}
+
+model Device {
+  id           String   @id @default(uuid())
+  userId       String
+  deviceId     String
+  publicKeyPem String
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  @@unique([userId, deviceId])
+}
+
+// One AES-256-GCM encrypted copy per (asset,label); content key wrapped by server master key.
+model OfflinePackage {
+  id          String   @id @default(uuid())
+  assetId     String
+  label       String
+  storageKey  String
+  wrappedKey  String
+  iv          String
+  tag         String
+  createdAt   DateTime @default(now())
+  @@unique([assetId, label])
+}
+
+// Device-bound licence: content key wrapped with the device's RSA public key (RSA-OAEP).
+model OfflineLicense {
+  id            String    @id @default(uuid())
+  deviceRowId   String
+  entitlementId String
+  assetId       String
+  packageId     String
+  wrappedKey    String
+  status        String    @default("ACTIVE")
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  revokedAt     DateTime?
+  revokeReason  String?
+  @@index([entitlementId])
+  @@index([deviceRowId])
+}
+
+// ---- Phase 3: AI platform --------------------------------------------------------------------------
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+// Immutable-ish evidence of every generation: input, output, prompt/model versions, cost (TRD §7 provenance).
+model GenerationJob {
+  id            String    @id @default(uuid())
+  kind          String    // CURRICULUM | TOPIC_CONTENT
+  status        JobStatus @default(QUEUED)
+  input         Json
+  result        Json?
+  error         String?
+  attempts      Int       @default(0)
+  versionId     String?
+  topicId       String?
+  requestedById String
+  costUsd       Float     @default(0)
+  runAfter      DateTime? // backoff for jobs waiting on an unavailable model
+  createdAt     DateTime  @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  @@index([status, createdAt])
+  @@index([versionId])
+}
+
+// One row per model call: provider, model, tokens, cost, latency, outcome (cost telemetry, rate/budget enforcement).
+model AiCall {
+  id            String   @id @default(uuid())
+  useCase       String
+  provider      String
+  model         String
+  promptKey     String?
+  promptVersion Int?
+  jobId         String?
+  actorId       String?
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  costUsd       Float    @default(0)
+  latencyMs     Int      @default(0)
+  status        String   // OK | ERROR | REFUSAL | FALLBACK_SKIPPED
+  errorCode     String?
+  piiRedactions Int      @default(0)
+  createdAt     DateTime @default(now())
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+model PromptTemplate {
+  id          String   @id @default(uuid())
+  key         String
+  version     Int
+  system      String
+  user        String
+  schemaName  String
+  status      String   @default("DRAFT") // DRAFT | APPROVED | RETIRED
+  builtin     Boolean  @default(false)
+  hash        String
+  createdById String?
+  approvedById String?
+  evalScore   Float?
+  evalReport  Json?
+  createdAt   DateTime @default(now())
+  @@unique([key, version])
+}
+
+model QualityFinding {
+  id           String    @id @default(uuid())
+  versionId    String
+  topicId      String?
+  jobId        String
+  gate         String
+  severity     String    // INFO | WARN | FAIL
+  blocking     Boolean   @default(false)
+  message      String
+  evidence     Json      @default("{}")
+  current      Boolean   @default(true)
+  resolvedById String?
+  resolvedAt   DateTime?
+  resolution   String?
+  createdAt    DateTime  @default(now())
+  @@index([versionId, current])
+}
+
+// Append-only revisions of the video script manifest (video_engine format). Prior revisions are never overwritten.
+model ScriptManifest {
+  id        String   @id @default(uuid())
+  topicId   String
+  rev       Int
+  manifest  Json
+  provenance Json    @default("{}")
+  jobId     String
+  createdAt DateTime @default(now())
+  @@unique([topicId, rev])
+}
+
+// Admin-configurable values without a release (ADM-001): productivity tools, glossary, prohibited terms, AI limits.
+model PlatformConfig {
+  key         String   @id
+  value       Json
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+}
+
+// ---- Phase 4: grounded tutor + doubt centre ------------------------------------------------------------
+// Versioned retrieval chunks built only from approved content: published version scripts/outcomes/assignment text
+// and APPROVED FAQs. Strictly filtered by versionId (or programme for FAQs) at query time.
+model TutorChunk {
+  id             String   @id @default(uuid())
+  versionId      String?  // null for programme-level FAQ chunks
+  programmeId    String
+  topicId        String?
+  kind           String   // SCENE | TOPIC | ASSIGNMENT | FAQ
+  ref            String   // stable citation key: e.g. "<topicId>#s2@rev3" or "faq:<id>"
+  language       String
+  title          String
+  text           String
+  sourceHash     String
+  faqId          String?
+  embedding      Float[]
+  embeddingModel String?
+  createdAt      DateTime @default(now())
+  @@index([versionId])
+  @@index([programmeId, kind])
+  @@unique([ref, language, versionId])
+}
+
+model TutorConversation {
+  id            String   @id @default(uuid())
+  learnerId     String
+  entitlementId String
+  versionId     String
+  topicId       String?
+  unsupportedStreak Int  @default(0)
+  ticketId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([learnerId, updatedAt])
+}
+
+// Evidence per answer (TRD data model): retrieved chunks + scores, citations, confidence, safety, escalation.
+model TutorMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  learnerId      String
+  role           String   // LEARNER | TUTOR
+  content        String
+  status         String?  // ANSWERED | UNSUPPORTED | REFUSED | UNAVAILABLE
+  confidence     String?  // high | medium | low
+  citations      Json     @default("[]")
+  retrieved      Json     @default("[]")
+  groundedness   Float?
+  safetyFlags    Json     @default("[]")
+  provider       String?
+  model          String?
+  promptVersion  Int?
+  costUsd        Float    @default(0)
+  helpful        Boolean?
+  feedback       String?
+  topicId        String?
+  createdAt      DateTime @default(now())
+  @@index([conversationId, createdAt])
+  @@index([status, createdAt])
+}
+
+model FaqEntry {
+  id           String    @id @default(uuid())
+  programmeId  String
+  topicId      String?
+  kind         String    @default("FAQ") // FAQ | REMEDIATION
+  language     String    @default("en")
+  question     String
+  answer       String
+  status       String    @default("DRAFT") // DRAFT | APPROVED | REJECTED | RETIRED
+  sourceTicketId String?
+  proposedById String
+  reviewedById String?
+  reviewReason String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  @@index([programmeId, status])
+}
+
+model TeacherProfile {
+  userId         String   @id
+  active         Boolean  @default(true)
+  available      Boolean  @default(true)
+  disciplines    String[]
+  skills         String[]
+  languages      String[]
+  capacity       Int      @default(10)
+  windows        Json     @default("[]") // [{day:0-6, start:"09:00", end:"17:00"}] in IST; empty = always
+  lastAssignedAt DateTime?
+  updatedAt      DateTime @updatedAt
+}
+
+model DoubtTicket {
+  id             String    @id @default(uuid())
+  number         Int       @default(autoincrement())
+  learnerId      String
+  entitlementId  String
+  versionId      String
+  topicId        String?
+  category       String    // CONTENT | ASSIGNMENT | QUIZ | TECHNICAL | OTHER
+  priority       String    // P1 | P2 | P3
+  language       String    @default("en")
+  subject        String
+  source         String    // MANUAL | TUTOR | AUTO
+  status         String    @default("NEW") // NEW | ASSIGNED | IN_PROGRESS | WAITING_LEARNER | RESOLVED | CLOSED
+  assignedTeacherId String?
+  routingNote    String?
+  contextBundle  Json      @default("{}")
+  conversationId String?
+  firstResponseDueAt DateTime
+  firstResponseAt DateTime?
+  resolvedAt     DateTime?
+  resolutionSummary String?
+  slaBreachedAt  DateTime?
+  rerouteCount   Int       @default(0)
+  rating         Int?
+  ratingComment  String?
+  reopenCount    Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  @@index([status, assignedTeacherId])
+  @@index([learnerId, createdAt])
+}
+
+model TicketMessage {
+  id          String   @id @default(uuid())
+  ticketId    String
+  authorId    String?
+  authorRole  String   // LEARNER | TEACHER | SYSTEM
+  internal    Boolean  @default(false)
+  body        String
+  attachments Json     @default("[]")
+  createdAt   DateTime @default(now())
+  @@index([ticketId, createdAt])
+}
+
+model Appointment {
+  id         String   @id @default(uuid())
+  ticketId   String
+  teacherId  String
+  learnerId  String
+  startsAt   DateTime
+  endsAt     DateTime
+  status     String   @default("REQUESTED") // REQUESTED | CONFIRMED | CANCELLED | COMPLETED
+  meetingRef String?
+  createdAt  DateTime @default(now())
+  @@index([teacherId, startsAt])
+}
+
+// ---- Phase 5: grading, moderation, integrity, appeals ---------------------------------------------------------------
+// Deterministic extraction of what the grader and moderators actually see (text, parse status per file).
+model SubmissionArtifact {
+  submissionId String   @id
+  text         String
+  textHash     String
+  files        Json     @default("[]") // [{name, parsed, bytes, note}]
+  testResults  Json?
+  createdAt    DateTime @default(now())
+}
+
+// Immutable history of every grade ever computed for a submission (AI, moderated, appeal, override).
+model GradeRecord {
+  id                 String   @id @default(uuid())
+  submissionId       String
+  seq                Int
+  kind               String   // AI | MODERATED | APPEAL | OVERRIDE
+  dimensions         Json     // [{id, score, max, rationale, evidence:[{quote,location,verified}], confidence}]
+  rawPercent         Float
+  latePenaltyPercent Float    @default(0)
+  finalPercent       Float
+  passed             Boolean
+  confidence         Float?
+  flags              Json     @default("[]")
+  feedback           String   @default("")
+  provider           String?
+  model              String?
+  promptKey          String?
+  promptVersion      Int?
+  promptHash         String?
+  samples            Int      @default(1)
+  costUsd            Float    @default(0)
+  createdById        String?
+  reason             String?
+  createdAt          DateTime @default(now())
+  @@unique([submissionId, seq])
+}
+
+// Current state of a submission's grading lifecycle (FRD: Submitted -> AI Evaluated -> Moderation Required/Graded -> Appealed -> Final)
+model SubmissionGrade {
+  submissionId      String    @id
+  assignmentId      String
+  topicId           String
+  learnerId         String
+  entitlementId     String
+  versionId         String
+  state             String    @default("PENDING_AI") // PENDING_AI | MODERATION_REQUIRED | GRADED | APPEALED | FINAL
+  currentSeq        Int?
+  finalPercent      Float?
+  passed            Boolean?
+  aiPercent         Float?
+  humanPercent      Float?
+  moderationReasons Json      @default("[]")
+  aiAttempts        Int       @default(0)
+  releasedAt        DateTime?
+  appealDeadline    DateTime?
+  appealCount       Int       @default(0)
+  integrityOutcome  String?   // CLEARED | CONFIRMED_CONCERN (set by a human only)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  @@index([state, updatedAt])
+  @@index([versionId, assignmentId])
+  @@index([learnerId, topicId])
+}
+
+model ModerationTask {
+  id                  String    @id @default(uuid())
+  submissionId        String
+  kind                String    // BLOCKING | SAMPLE | APPEAL
+  reasons             Json      @default("[]")
+  status              String    @default("OPEN") // OPEN | CLAIMED | DONE
+  claimedById         String?
+  excludedModeratorId String?   // appeals are never heard by the original grader
+  outcome             String?
+  createdAt           DateTime  @default(now())
+  completedAt         DateTime?
+  @@index([status, kind, createdAt])
+  @@index([submissionId])
+}
+
+model SimilarityMatch {
+  id             String   @id @default(uuid())
+  submissionId   String
+  otherSubmissionId String?
+  kind           String   // CROSS_LEARNER | REFERENCE
+  score          Float
+  createdAt      DateTime @default(now())
+  @@index([submissionId])
+}
+
+// Grade overrides need two people (maker-checker): one proposes, a different one approves.
+model GradeOverride {
+  id             String    @id @default(uuid())
+  submissionId   String
+  proposedById   String
+  dimensions     Json
+  feedback       String    @default("")
+  reason         String
+  status         String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  decidedById    String?
+  decisionReason String?
+  createdAt      DateTime  @default(now())
+  decidedAt      DateTime?
+  @@index([submissionId, status])
+}
+
+// ---- Phase 6: labs, exams, proctoring ----------------------------------------------------------------------------
+// Lab activities belong to a course version (frozen with it); slots/bookings are operational data.
+model LabActivity {
+  id                   String   @id @default(uuid())
+  versionId            String
+  topicId              String?
+  code                 String
+  title                String
+  description          String   @default("")
+  location             String   @default("")
+  manual               String   @default("")
+  safetyText           String
+  safetyHash           String
+  prerequisiteTopicIds String[]
+  outcomes             Json     @default("[]")
+  requireEvidence      Boolean  @default(true)
+  mandatory            Boolean  @default(true)
+  createdById          String
+  createdAt            DateTime @default(now())
+  @@unique([versionId, code])
+}
+
+model LabSlot {
+  id          String   @id @default(uuid())
+  activityId  String
+  batchCode   String
+  startsAt    DateTime
+  endsAt      DateTime
+  capacity    Int
+  location    String   @default("")
+  status      String   @default("OPEN") // OPEN | CANCELLED
+  createdById String
+  createdAt   DateTime @default(now())
+  @@index([activityId, startsAt])
+}
+
+model LabAck {
+  id         String   @id @default(uuid())
+  activityId String
+  learnerId  String
+  textHash   String
+  at         DateTime @default(now())
+  @@unique([activityId, learnerId, textHash])
+}
+
+model LabBooking {
+  id               String    @id @default(uuid())
+  slotId           String
+  activityId       String
+  learnerId        String
+  entitlementId    String
+  status           String    @default("BOOKED") // BOOKED | CANCELLED | ATTENDED | NO_SHOW
+  attendedAt       DateTime?
+  attendanceMethod String?   // TEACHER | QR
+  markedById       String?
+  evidence         Json      @default("[]")
+  evidenceAt       DateTime?
+  completedAt      DateTime?
+  completionNote   String?
+  createdAt        DateTime  @default(now())
+  cancelledAt      DateTime?
+  @@unique([slotId, learnerId])
+  @@index([activityId, learnerId])
+}
+
+model ExamDefinition {
+  id          String    @id @default(uuid())
+  versionId   String
+  code        String
+  title       String
+  status      String    @default("DRAFT") // DRAFT | PUBLISHED | RETIRED
+  durationMin Int
+  passPercent Int       @default(50)
+  maxAttempts Int       @default(2)
+  cooldownDays Int      @default(7)
+  eligibility Json
+  blueprint   Json
+  proctoring  Json
+  shuffle     Boolean   @default(true)
+  createdById String
+  approvedById String?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  @@unique([versionId, code])
+}
+
+// Exam bank is physically separate from learning quizzes (TRD: question-bank segregation). Keys never leave the server.
+model ExamQuestion {
+  id          String   @id @default(uuid())
+  programmeId String
+  tag         String
+  difficulty  Int      @default(2)
+  type        QType
+  text        String
+  options     Json     @default("[]")
+  answer      Json
+  tolerance   Float    @default(0)
+  points      Int      @default(1)
+  i18n        Json     @default("{}")
+  status      String   @default("ACTIVE") // ACTIVE | RETIRED
+  usedCount   Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  @@index([programmeId, tag, status])
+}
+
+model ExamSession {
+  id          String   @id @default(uuid())
+  examId      String
+  startsAt    DateTime
+  endsAt      DateTime
+  mode        String   // REMOTE | CENTRE
+  centre      String?
+  capacity    Int
+  status      String   @default("SCHEDULED") // SCHEDULED | CANCELLED
+  createdById String
+  createdAt   DateTime @default(now())
+  @@index([examId, startsAt])
+}
+
+model ExamRegistration {
+  id            String   @id @default(uuid())
+  examId        String
+  sessionId     String
+  learnerId     String
+  entitlementId String
+  status        String   @default("REGISTERED") // REGISTERED | CANCELLED
+  createdAt     DateTime @default(now())
+  @@unique([sessionId, learnerId])
+  @@index([examId, learnerId])
+}
+
+model ExamAccommodation {
+  id               String   @id @default(uuid())
+  learnerId        String
+  examId           String?
+  type             String   // EXTRA_TIME | BREAKS | ASSISTIVE
+  extraTimePercent Int      @default(0)
+  reason           String
+  approvedById     String
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  @@index([learnerId, active])
+}
+
+model EligibilityOverride {
+  id           String   @id @default(uuid())
+  examId       String
+  learnerId    String
+  reason       String
+  approvedById String
+  createdAt    DateTime @default(now())
+  @@index([examId, learnerId])
+}
+
+model ExamAttempt {
+  id                String    @id @default(uuid())
+  examId            String
+  sessionId         String
+  registrationId    String
+  learnerId         String
+  entitlementId     String
+  attemptNo         Int
+  status            String    @default("CHECKED_IN") // CHECKED_IN | READY | IN_PROGRESS | SUBMITTED
+  consentAt         DateTime?
+  consentHash       String?
+  deviceCheck       Json?
+  idCheck           Json?     // {status: PENDING|VERIFIED|FAILED, method, byId, at}
+  providerSessionId String?
+  launchUrl         String?
+  proctorReportFinal Boolean  @default(false)
+  sessionTokenHash  String?
+  sessionSwitches   Int       @default(0)
+  paper             Json?
+  answers           Json      @default("{}")
+  saveSeq           Int       @default(0)
+  lastSavedAt       DateTime?
+  startedAt         DateTime?
+  deadlineAt        DateTime?
+  submittedAt       DateTime?
+  autoSubmitted     Boolean   @default(false)
+  extraTimePercent  Int       @default(0)
+  watermark         String?
+  score             Json?
+  passed            Boolean?
+  resultState       String    @default("NONE") // NONE | HELD | READY | RELEASED | INVALIDATED
+  outcome           String?   // VALID | INVALIDATED (set by a human)
+  outcomeReason     String?
+  outcomeById       String?
+  releasedAt        DateTime?
+  releasedById      String?
+  createdAt         DateTime  @default(now())
+  @@unique([examId, learnerId, attemptNo])
+  @@index([sessionId, status])
+  @@index([resultState])
+}
+
+// Per-attempt hash chain (tamper-evident exam log). Append-only.
+model ExamEvent {
+  id        String   @id @default(uuid())
+  attemptId String
+  seq       Int
+  type      String
+  payload   Json     @default("{}")
+  prevHash  String
+  hash      String
+  at        DateTime @default(now())
+  @@unique([attemptId, seq])
+}
+
+// The immutable submission receipt (EXM-002).
+model ExamSubmission {
+  attemptId   String   @id
+  receiptCode String
+  answersHash String
+  answers     Json
+  submittedAt DateTime @default(now())
+}
+
+model Incident {
+  id                String    @id @default(uuid())
+  attemptId         String
+  source            String    // PROVIDER | PROCTOR | SYSTEM
+  type              String
+  severity          String    // LOW | MEDIUM | HIGH | CRITICAL
+  status            String    @default("OPEN") // OPEN | NEEDS_INFO | DISMISSED | CONFIRMED_MINOR | CONFIRMED_MAJOR
+  occurredAt        DateTime
+  providerEventId   String?   @unique
+  evidenceUrl       String?
+  evidenceExpiresAt DateTime?
+  detail            Json      @default("{}")
+  decidedById       String?
+  decisionReason    String?
+  decidedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  @@index([attemptId])
+  @@index([status, severity])
+}
+
+model ProctorWebhookEvent {
+  id         String   @id @default(uuid())
+  provider   String
+  eventId    String   @unique
+  payload    Json
+  receivedAt DateTime @default(now())
+}
+
+model ExamAppeal {
+  id              String    @id @default(uuid())
+  attemptId       String
+  learnerId       String
+  reason          String
+  status          String    @default("OPEN") // OPEN | UPHELD | OVERTURNED
+  excludedAdjudicators String[]
+  decidedById     String?
+  decision        String?
+  filedAt         DateTime  @default(now())
+  decidedAt       DateTime?
+  @@index([attemptId])
+}
+
+// ---- Phase 7: sessions, SSO, privacy, preferences -------------------------------------------------------------------------
+model UserSession {
+  id           String    @id @default(uuid())
+  userId       String
+  authMethod   String    // PASSWORD | OIDC
+  mfa          Boolean   @default(false)
+  deviceLabel  String    @default("")
+  ip           String?
+  uaHash       String?
+  createdAt    DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  revokeReason String?
+  @@index([userId, revokedAt])
+}
+
+// Rotating refresh tokens: each is single-use; presenting a used one revokes the whole session (theft detection).
+model RefreshToken {
+  id           String    @id @default(uuid())
+  sessionId    String
+  tokenHash    String    @unique
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+  usedAt       DateTime?
+  @@index([sessionId])
+}
+
+model OidcLogin {
+  state     String   @id
+  nonce     String
+  verifier  String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model ConsentRecord {
+  id        String   @id @default(uuid())
+  userId    String
+  purpose   String   // PLATFORM_PROCESSING | AI_TUTOR | PROCTORING | ANALYTICS
+  granted   Boolean
+  version   String
+  ip        String?
+  at        DateTime @default(now())
+  @@index([userId, purpose, at])
+}
+
+model DataSubjectRequest {
+  id              String    @id @default(uuid())
+  userId          String
+  type            String    // EXPORT | CORRECTION | ERASURE
+  status          String    @default("REQUESTED") // REQUESTED | APPROVED | REJECTED | PROCESSING | COMPLETED | BLOCKED
+  details         Json      @default("{}")
+  requestedById   String
+  decidedById     String?
+  decisionReason  String?
+  exportKey       String?
+  exportCrypto    Json?
+  exportExpiresAt DateTime?
+  result          Json?
+  requestedAt     DateTime  @default(now())
+  completedAt     DateTime?
+  @@index([userId, type])
+  @@index([status])
+}
+
+model UserPreference {
+  userId    String   @id
+  prefs     Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+/// Replay protection for client retries (Idempotency-Key header). Short-lived; purged by the retention sweep.
+model IdempotencyKey {
+  id          String   @id @default(uuid())
+  actorId     String   @default("")
+  key         String
+  method      String
+  path        String
+  requestHash String
+  state       String   @default("IN_PROGRESS")
+  status      Int?
+  body        Json?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@unique([actorId, key])
+  @@index([expiresAt])
+}

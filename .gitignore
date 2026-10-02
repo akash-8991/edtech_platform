@@ -1,0 +1,32 @@
+# dependencies, build output, coverage
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+# local databases and uploaded files (synthetic or not, never commit)
+.pgdata/
+.media/
+**/.media/
+*.dump
+*.sql.gz
+# secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+# python
+__pycache__/
+*.pyc
+.venv/
+video_engine/out/
+# load-test / drill scratch
+platform/api/.loadtest/
+# Business requirement documents (BRD/PRD/FRD/TRD/build prompt) are confidential inputs, not part of the code repository.
+# Remove these lines only if the owner decides to publish them.
+/0[1-5]_*.docx
+/0[1-5]_*.pdf

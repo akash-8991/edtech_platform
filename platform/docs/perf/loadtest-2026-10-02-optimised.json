@@ -1,0 +1,118 @@
+{
+ "when": "2026-10-02T08:19:46.089Z",
+ "machine": "Apple M2",
+ "cpus": 8,
+ "seconds": 8,
+ "concurrency": 64,
+ "users": 600,
+ "note": "client+server+postgres on one machine: indicative only",
+ "results": [
+  {
+   "scenario": "health (floor: framework overhead)",
+   "concurrency": 64,
+   "requests": 109832,
+   "rps": 13729,
+   "errors": 0,
+   "p50": 3.9,
+   "p95": 8.1,
+   "p99": 10.8,
+   "max": 78,
+   "statuses": {
+    "200": 109832
+   },
+   "serverRssMB": 123
+  },
+  {
+   "scenario": "GET auth/me (guard + 1 query)",
+   "concurrency": 64,
+   "requests": 34129,
+   "rps": 4266,
+   "errors": 0,
+   "p50": 13.9,
+   "p95": 22.1,
+   "p99": 32.5,
+   "max": 149,
+   "statuses": {
+    "200": 34129
+   },
+   "serverRssMB": 241
+  },
+  {
+   "scenario": "GET progress (unlock computation)",
+   "concurrency": 64,
+   "requests": 9922,
+   "rps": 1240,
+   "errors": 0,
+   "p50": 49.3,
+   "p95": 78.5,
+   "p99": 91.7,
+   "max": 141,
+   "statuses": {
+    "200": 9922
+   },
+   "serverRssMB": 233
+  },
+  {
+   "scenario": "GET topic + playback manifest",
+   "concurrency": 64,
+   "requests": 8700,
+   "rps": 1088,
+   "errors": 0,
+   "p50": 57.9,
+   "p95": 81.8,
+   "p99": 128,
+   "max": 146,
+   "statuses": {
+    "200": 8700
+   },
+   "serverRssMB": 243
+  },
+  {
+   "scenario": "POST learning-events (4 heartbeats)",
+   "concurrency": 64,
+   "requests": 3101,
+   "rps": 388,
+   "errors": 0,
+   "p50": 160.8,
+   "p95": 217.2,
+   "p99": 270.9,
+   "max": 321,
+   "statuses": {
+    "201": 3101
+   },
+   "serverRssMB": 250
+  },
+  {
+   "scenario": "PUT exam autosave",
+   "concurrency": 64,
+   "requests": 6497,
+   "rps": 812,
+   "errors": 0,
+   "p50": 72.8,
+   "p95": 120.7,
+   "p99": 138.6,
+   "max": 187,
+   "statuses": {
+    "200": 6497
+   },
+   "serverRssMB": 261
+  },
+  {
+   "scenario": "POST login (scrypt, CPU-bound)",
+   "concurrency": 32,
+   "requests": 485,
+   "rps": 61,
+   "errors": 0,
+   "p50": 549.7,
+   "p95": 615.5,
+   "p99": 640.8,
+   "max": 702,
+   "statuses": {
+    "201": 485
+   },
+   "serverRssMB": 320
+  }
+ ],
+ "serverCpuPctAtEnd": 417.7,
+ "serverRssMB": 320
+}

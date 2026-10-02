@@ -1,0 +1,4 @@
+[
+  { "name": "ai-ml-foundations-12h", "brief": { "title": "Introduction to AI/ML", "discipline": "AI/ML", "audience": "graduates with basic Python", "durationType": "M12", "hours": 12, "outcomes": ["Explain supervised learning", "Train and evaluate a simple model"], "prerequisites": ["Basic Python"], "languages": ["en"], "assessmentPolicy": "quiz + assignment per topic" }, "expect": { "hours": 12 } },
+  { "name": "iot-edge-18h", "brief": { "title": "IoT and Edge AI Basics", "discipline": "IoT", "audience": "diploma electronics", "durationType": "M18", "hours": 18, "outcomes": ["Interface sensors with a microcontroller", "Deploy a tiny ML model at the edge"], "prerequisites": [], "languages": ["en", "hi"], "assessmentPolicy": "quiz + assignment per topic" }, "expect": { "hours": 18 } }
+]
