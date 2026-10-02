@@ -48,3 +48,14 @@ export interface ExamResult {
 }
 export interface Completion { topics: { complete: boolean; percent: number }; labs: { complete: boolean; outstanding: string[] }; exams: { code: string; passed: boolean }[]; programmeComplete: boolean }
 export type SignalKind = 'FOCUS_LOST' | 'FULLSCREEN_EXIT' | 'COPY' | 'PASTE';
+
+// ---- assignment grades ----
+export type GradeState = 'PENDING_AI' | 'MODERATION_REQUIRED' | 'GRADED' | 'APPEALED' | 'FINAL' | string;
+export interface SubmissionSummary { submissionId: string; topicId: string; attemptNo?: number; submittedAt?: string; state: GradeState; finalPercent?: number | null; passed?: boolean | null }
+export interface GradeEvidence { quote: string; location?: string }
+export interface GradeDimension { id: string; name?: string; score: number; max: number; rationale?: string; evidence: GradeEvidence[] }
+export interface GradeView {
+  submissionId: string; topicId: string; state: GradeState; message?: string;
+  finalPercent?: number | null; rawPercent?: number | null; latePenaltyPercent?: number | null; passed?: boolean | null; passMark?: number;
+  dimensions?: GradeDimension[]; feedback?: string | null; gradedBy?: string; appeal?: { eligible: boolean; deadline?: string | null; appealed: boolean };
+}

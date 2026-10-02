@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Progress } from '../api/types';
 import { Badge, Card, ErrorNote, Loading, Progress as Bar } from '../components/ui';
+import { describeState } from '../lib/grades';
 
 export default function Course() {
   const { entitlementId = '' } = useParams(); const [p, setP] = useState<Progress | null>(null); const [error, setError] = useState<unknown>(null);
@@ -23,7 +24,7 @@ export default function Course() {
                 <ul className="steps" aria-label="Steps to complete this topic">
                   <li className={t.videoDone ? 'done' : ''}>{t.videoDone ? '✓' : '○'} Watch the video</li>
                   <li className={t.quizPassed ? 'done' : ''}>{t.quizPassed ? '✓' : '○'} Pass the quiz</li>
-                  <li className={t.assignmentSubmitted ? 'done' : ''}>{t.assignmentSubmitted ? '✓' : '○'} Submit the assignment</li>
+                  <li className={t.assignmentSubmitted ? 'done' : ''}>{t.assignmentSubmitted ? '✓' : '○'} Submit the assignment{t.assignmentState ? <span className="muted"> ({describeState(t.assignmentState).label.toLowerCase()})</span> : null}</li>
                 </ul>) : <p className="muted">Finish the previous topic to unlock this one.</p>}
             </Card>
           </li>))}

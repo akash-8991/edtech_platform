@@ -2,9 +2,9 @@
 
 React 18 + TypeScript + Vite single-page app for **learners**. It talks only to the platform API (see `../docs/guides/03-user-guide.md`); the server decides all access, so the client never hides a security rule behind the UI.
 
-**Status: learning loop and exams.** Built and checked against the real API in a browser: sign in (session restore on reload), course list with progress, course/topic progress with locked topics, video playback with verified watch-time heartbeats and in-video questions, quiz, assignment (text and file), notifications, doubts (ask a teacher), AI tutor (with consent), **exams (eligibility checklist, register/cancel, consent + device check + identity wait, the exam room with server-authoritative timer, resilient autosave, resume, integrity signals, submit with receipt, result and appeal, programme completion)**, low-bandwidth mode, responsive and keyboard-accessible layout, dark mode.
+**Status: learning loop, exams, and assignment grades.** Built and checked against the real API in a browser: sign in (session restore on reload), course list with progress, course/topic progress with locked topics, video playback with verified watch-time heartbeats and in-video questions, quiz, assignment (text and file), notifications, doubts (ask a teacher), AI tutor (with consent), **exams (eligibility checklist, register/cancel, consent + device check + identity wait, the exam room with server-authoritative timer, resilient autosave, resume, integrity signals, submit with receipt, result and appeal, programme completion)**, **assignment grades (list, live status while being evaluated or reviewed, score, late penalty, rubric breakdown with the quoted evidence, written feedback, who graded it, appeal with deadline), notification links**, low-bandwidth mode, responsive and keyboard-accessible layout, dark mode.
 
-**Not built yet:** offline download/playback (licences need a native or PWA wrapper), lab booking screens, assignment grade and feedback views and appeals, privacy centre (export/erasure), SSO button (needs the institute's identity provider), Hindi UI strings, captions (the API serves transcripts only), push notifications, staff consoles. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices (labels, focus, contrast, reduced motion) but has not been tested with assistive technology.
+**Not built yet:** offline download/playback (licences need a native or PWA wrapper), lab booking screens,  privacy centre (export/erasure), SSO button (needs the institute's identity provider), Hindi UI strings, captions (the API serves transcripts only), push notifications, staff consoles. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices (labels, focus, contrast, reduced motion) but has not been tested with assistive technology.
 
 ## Run it
 
@@ -21,7 +21,7 @@ Sign in with a learner account. Locally, create one: approve an application (use
 ## Check it
 
 ```bash
-npm run typecheck && npm test      # 60 tests: API client, heartbeat tracker, outbox, quiz, assignment, login, gating, and the exam stack (clock, autosave, device check, signals, runner, list, check-in, result)
+npm run typecheck && npm test      # 74 tests: API client, heartbeat tracker, outbox, quiz, assignment, login, gating, and the exam stack (clock, autosave, device check, signals, runner, list, check-in, result)
 npm run build                      # production bundle in dist/ (~190 kB, 63 kB gzipped)
 ```
 
@@ -53,3 +53,10 @@ npm run build                      # production bundle in dist/ (~190 kB, 63 kB 
 ## Test coverage (web)
 
 `npm run test:cov`: statements about 72%, branches about 80%. The covered areas are the logic that must not fail (API client, watch-time tracker and outbox, quiz, assignment, login, the whole exam stack). **Not covered by automated tests:** the course list/progress pages, the topic page and video player (verified by hand in a browser), notifications, doubts, tutor, programme completion. There are no end-to-end browser tests in CI; the exam journey was exercised manually against a real API on 2026-10-02.
+
+## Assignment grades: behaviour worth knowing
+
+- The page shows only what the API's learner view allows: while a teacher is deciding, no AI score is visible, and similarity/integrity signals are never shown. Evidence quotes appear only when the server marked them verified against the submission.
+- A grade produced by the AI is labelled as automated and the appeal route is offered next to it; an appeal is once per grade, needs a written reason (20+ characters), and is decided by a different teacher. The original grade stays visible, marked "appeal under review", until then.
+- Pending states (`PENDING_AI`, `MODERATION_REQUIRED`, `APPEALED`) refresh every 15 s and stop refreshing once a grade arrives.
+- Verified in a browser on 2026-10-02 against the real API with a teacher-graded submission and an appeal. The AI-graded presentation (automated label, verified evidence quotes) is covered by tests only: no AI keys were available to produce one.

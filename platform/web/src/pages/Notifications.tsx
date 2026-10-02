@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { Notification } from '../api/types';
-import { notificationText } from '../lib/format';
+import { Link } from 'react-router-dom';
+import { notificationLink, notificationText } from '../lib/format';
 import { Card, ErrorNote, Loading } from '../components/ui';
 
 export default function Notifications() {
@@ -13,7 +14,7 @@ export default function Notifications() {
   return (
     <div><h1>Notifications</h1>
       {!items.length ? <Card><p>Nothing new.</p></Card> : <ul className="plain">{items.map((n) => (
-        <li key={n.id}><Card><div className="row"><span className={n.readAt ? 'muted' : 'strong'}>{notificationText(n.type)}</span>
+        <li key={n.id}><Card><div className="row"><span className={n.readAt ? 'muted' : 'strong'}>{notificationText(n.type)}{notificationLink(n.type, n.payload) && <> <Link to={notificationLink(n.type, n.payload)!}>View</Link></>}</span>
           <span className="muted">{new Date(n.createdAt).toLocaleString()}</span>
           {!n.readAt && <button className="link" onClick={() => void read(n)}>Mark as read</button>}</div></Card></li>))}</ul>}
     </div>

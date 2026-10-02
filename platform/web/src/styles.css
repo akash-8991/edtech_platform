@@ -53,3 +53,5 @@ button.secondary { background: transparent; color: var(--accent); border: 2px so
 .exam > *:not(.watermark) { position: relative; z-index: 2; }
 .session { padding: 6px 0; border-bottom: 1px solid var(--border); }
 .exam-begin { max-width: 640px; margin: 4vh auto; }
+.dim { border-top: 1px solid var(--border); padding: 10px 0; } .dim h3 { margin: 0; font-size: 1rem; }
+blockquote { margin: 8px 0; padding: 6px 12px; border-left: 4px solid var(--accent); background: var(--bg); } blockquote footer { font-size: .85rem; }
