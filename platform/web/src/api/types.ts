@@ -105,3 +105,13 @@ export interface CaseFile {
   state: string; reasons: string[]; records: GradeRecordView[]; similarity: { score: number; otherRef: string; excerpt: string }[];
 }
 export interface DecideResult { state: string; finalPercent: number; passed: boolean; seq: number }
+
+export interface IncidentRow { id: string; attemptId: string; source: string; type: string; severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | string; status: string; occurredAt: string; hasEvidence: boolean; ageMinutes: number }
+export interface AppealRow { id: string; attemptId: string; reason: string; status: string; filedAt: string }
+export interface ExamCaseFile {
+  attemptId: string; learnerRef: string; attemptNo: number; mode: string; status: string; resultState: string; outcome: string | null; deviceCheck: unknown; idCheck: unknown; sessionSwitches: number; autoSubmitted: boolean;
+  accommodations: { type: string; extraTimePercent: number | null }[]; startedAt: string | null; submittedAt: string | null; proctorReportFinal: boolean;
+  incidents: { id: string; source: string; type: string; severity: string; status: string; occurredAt: string; hasEvidence: boolean; decisionReason: string | null }[];
+  timeline: { seq: number; type: string; at: string; payload: Record<string, unknown> }[];
+}
+export interface LogCheck { events: number; intact: boolean; firstBrokenIndex: number | null }

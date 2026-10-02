@@ -7,6 +7,7 @@ export const isStaff = (roles?: readonly string[]) => hasAny(roles, STAFF_ROLES)
 export const AREAS = {
   admissions: { title: 'Admissions', blurb: 'Review applications and admit learners.', view: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'SUPER_ADMIN', 'SUPPORT_OPERATOR'], act: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN'], import: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'SUPER_ADMIN'] },
   moderation: { title: 'Grading', blurb: 'Review assignments that need a person, and decide appeals.', view: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN', 'ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN'], act: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN'] },
+  examops: { title: 'Exam integrity', blurb: 'Review incidents and appeals, decide outcomes, and release results.', view: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN', 'FACULTY_REVIEWER', 'ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN'], act: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN'] },
   labs: { title: 'Lab desk', blurb: 'Plan sessions, show the check-in code, record attendance.', view: ['LAB_COORDINATOR', 'ACADEMIC_ADMIN'] },
   operations: { title: 'Operations', blurb: 'Integrity checks, audit trail, platform settings.', view: ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR', 'ACADEMIC_ADMIN', 'EXAM_ADMIN', 'ASSESSMENT_ADMIN'] },
 } as const;
@@ -15,3 +16,5 @@ export const INTEGRITY_ROLES = ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR'];
 export const CONFIG_ROLES = ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'ACADEMIC_ADMIN'];
 export const EXAM_STATUS_ROLES = ['EXAM_ADMIN', 'ASSESSMENT_ADMIN', 'FACULTY_REVIEWER', 'ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN'];
 export const roleLabel = (r: string) => r.toLowerCase().split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+/** Exam-operations actions, one list per server rule. */
+export const EXAMOPS = { caseView: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN', 'EXAM_ADMIN', 'AUDITOR'], adjudicate: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN'], release: ['ASSESSMENT_ADMIN', 'ACADEMIC_ADMIN'], proctor: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'], evidence: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN', 'EXAM_ADMIN'] } as const;

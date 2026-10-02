@@ -74,3 +74,5 @@ table.grid { width: 100%; border-collapse: collapse; } table.grid th, table.grid
 .staff-top { background: #1f2a44; } .staff-top, .staff-top a, .staff-top .brand, .staff-top .who, .staff-top button.link { color: #ffffff; } .staff-top nav a.active { border-color: #ffffff; } .staff-top a:focus-visible, .staff-top button:focus-visible { outline-color: #ffd37a; } @media (prefers-color-scheme: dark) { .staff-top { background: #0b1226; } }
 .rolechips { display: flex; flex-wrap: wrap; gap: 6px; }
 .warnnum { color: var(--err); }
+.subcard { border-top: 1px solid var(--line, #d0d5dd); padding: .6rem 0; }
+blockquote { margin: .4rem 0; padding-left: .8rem; border-left: 3px solid var(--line, #d0d5dd); }
