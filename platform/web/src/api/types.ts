@@ -188,3 +188,11 @@ export interface SubmissionHistory {
   grade: { state: string; finalPercent: number | null; passed: boolean | null; appealDeadline: string | null } | null; records: (GradeRecordView & { createdAt: string })[];
   tasks: { id: string; kind: string; status: string; outcome: string | null }[]; overrides: { id: string; status: string; reason: string; proposedById: string }[];
 }
+
+export interface GradingReportData {
+  since: string; submissions: number; byState: Record<string, number>; moderationRate: number | null; moderationReasons: Record<string, number>;
+  aiHumanAgreement: { pairs: number; tolerancePct: number; agreementRate: number | null; meanAbsDiffPct: number | null; humanMinusAiBiasPct: number | null; perDimensionMAEPct: Record<string, number | null> };
+  appeals: { appealed: number; rate: number | null; overturned: number; overturnRate: number | null }; integrity: { flaggedSubmissions: number; confirmedConcerns: number; cleared: number };
+  scoreDistribution: { range: string; count: number }[]; avgAiConfidence: number | null; graderVersions: Record<string, number>; costUsd: number;
+  backlog: { pendingAi: number; oldestPendingMinutes: number; openModeration: number; oldestModerationMinutes: number };
+}

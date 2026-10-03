@@ -6,9 +6,10 @@ import { useAuth } from '../auth';
 import { Badge, Card, ErrorNote, Loading } from '../components/ui';
 import { gradeState, overrideStatus, pctText } from '../lib/gradechanges';
 import { canSee, GRADECHANGES, hasAny } from '../lib/roles';
+import GradingReport from './GradingReport';
 import { LearnerPicker, type PickedLearner } from './LearnerPicker';
 
-type Tab = 'PENDING' | 'DECIDED' | 'FIND';
+type Tab = 'PENDING' | 'DECIDED' | 'FIND' | 'REPORT';
 
 export default function GradeChanges() {
   const { me } = useAuth();
@@ -17,13 +18,13 @@ export default function GradeChanges() {
 }
 
 function Desk({ canAct }: { canAct: boolean }) {
-  const tabs: [Tab, string][] = [['PENDING', 'Waiting for approval'], ['DECIDED', 'Decided'], ['FIND', "Find a learner's work"]]; const [tab, setTab] = useState<Tab>('PENDING');
+  const tabs: [Tab, string][] = [['PENDING', 'Waiting for approval'], ['DECIDED', 'Decided'], ['FIND', "Find a learner's work"], ['REPORT', 'Grading report']]; const [tab, setTab] = useState<Tab>('PENDING');
   return (
     <div>
       <h1>Grade changes</h1>
       <p className="muted">Changing a grade takes two people: one proposes it, a different administrator approves it. Nothing changes until it is approved, and the original grade stays on record. Late penalties still apply.</p>
       <div className="tabs" role="group" aria-label="Grade changes">{tabs.map(([k, l]) => <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>
-      {tab === 'FIND' ? <Find canAct={canAct} /> : <List key={tab} status={tab === 'PENDING' ? 'PENDING' : 'APPROVED,REJECTED'} empty={tab === 'PENDING' ? 'No override is waiting for approval.' : 'No override has been decided yet.'} />}
+      {tab === 'REPORT' ? <GradingReport /> : tab === 'FIND' ? <Find canAct={canAct} /> : <List key={tab} status={tab === 'PENDING' ? 'PENDING' : 'APPROVED,REJECTED'} empty={tab === 'PENDING' ? 'No override is waiting for approval.' : 'No override has been decided yet.'} />}
     </div>
   );
 }
