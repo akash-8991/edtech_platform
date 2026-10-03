@@ -24,6 +24,7 @@ function Index({ roles, canWrite }: { roles: string[]; canWrite: boolean }) {
       <p className="muted">Every programme and each of its versions. A version moves from draft through faculty review and final approval to published; nobody can approve their own work.</p>
       <div className="tabs" role="group" aria-label="Show"><button aria-pressed={filter === 'ALL'} onClick={() => setFilter('ALL')}>All programmes</button><button aria-pressed={filter === 'MINE'} onClick={() => setFilter('MINE')}>Needs my action{rows ? ` (${waiting})` : ''}</button></div>
       <ErrorNote error={error} />
+      {canWrite && <p className="choices"><Link className="button" to="/staff/content/generate">Write a course with AI</Link></p>}
       {canWrite && <NewProgramme onDone={load} />}
       {!rows ? (!error && <Loading what="Loading programmes" />) : !rows.length ? <Card><p>No programmes yet.{canWrite ? ' Create the first one above.' : ''}</p></Card> : rows.map((p) => {
         const vs = filter === 'MINE' ? p.versions.filter((v) => needsMe(v.state, roles)) : p.versions; if (filter === 'MINE' && !vs.length) return null;

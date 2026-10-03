@@ -213,3 +213,6 @@ export interface VersionOutline { id: string; modules: { id: string; title: stri
 export interface ProgressRow { learner: string; email: string; cohort: string; status: string; completedTopics: number; totalTopics: number; percent: number; quizAttempts: number; lastActivity: string; daysIdle: number; atRisk: boolean }
 export interface ProgressReportData { summary: { learners: number; avgPercent: number; atRisk: number; scope: string }; rows: ProgressRow[]; nextCursor: string | null }
 export interface TutorReportData { since: string; questions: number; byStatus: Record<string, number>; groundedAnswerRate: number; refusalRate: number; helpfulRate: number | null; escalatedTickets: number; topUnresolvedTerms: { term: string; count: number }[]; topUnresolvedTopics: { topicId?: string; title?: string; count?: number }[] }
+
+// ---- staff: AI generation ----
+export interface AiJob { id: string; kind: string; status: string; error: string | null; result: any; attempts: number; costUsd: number; versionId: string | null; topicId: string | null; requestedById: string; createdAt: string; startedAt: string | null; finishedAt: string | null; inputSummary?: { kind: string; references: number } }

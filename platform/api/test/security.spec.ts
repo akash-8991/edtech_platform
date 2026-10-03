@@ -276,8 +276,13 @@ describe('authorization audit: every route is protected as declared (default-den
   });
   it('every role-restricted route returns 403 to an authenticated user holding none of the allowed roles', async () => {
     const bad: string[] = []; let checked = 0;
-    for (const r of routes.filter((x) => !x.public && x.roles)) { const wrong = ROLES.find((x) => !r.roles!.includes(x)); if (!wrong) continue; checked++; const s = (await call(r.method, r.path, tokens[wrong])).status; if (s !== 403) bad.push(`${r.method} ${r.path} as ${wrong} -> ${s}`); }
+    for (const r of routes.filter((x) => !x.public && x.roles)) { const wrong = ROLES.find((x) => x !== 'SUPER_ADMIN' && !r.roles!.includes(x)); if (!wrong) continue; checked++; const s = (await call(r.method, r.path, tokens[wrong])).status; if (s !== 403) bad.push(`${r.method} ${r.path} as ${wrong} -> ${s}`); }
     expect(bad).toEqual([]); expect(checked).toBeGreaterThan(150);
+  });
+  it('SUPER_ADMIN passes the role check on every role-restricted route', async () => {
+    const bad: string[] = []; let checked = 0; const prev = process.env.CONTRACT_ENFORCE; delete process.env.CONTRACT_ENFORCE; // probes send empty bodies; only the role check matters here
+    for (const r of routes.filter((x) => !x.public && x.roles)) { checked++; const res = await call(r.method, r.path, tokens.SUPER_ADMIN); if (res.status === 403 && /insufficient role/.test(JSON.stringify(res.body))) bad.push(`${r.method} ${r.path}`); }
+    if (prev !== undefined) process.env.CONTRACT_ENFORCE = prev; expect(bad).toEqual([]); expect(checked).toBeGreaterThan(150);
   });
   it('the committed API/access-control inventory matches the code (regenerate with `npm run inventory` after intentional changes)', () => {
     const committed = JSON.parse(readFileSync(join(__dirname, '../../docs/api-inventory.json'), 'utf8')).routes;

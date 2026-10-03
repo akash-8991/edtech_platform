@@ -1,6 +1,6 @@
 /** Which roles see which staff areas. The SERVER enforces every one of these on every request; this only decides what to show. Mirrors platform/docs/guides/api-reference.md. */
 export const STAFF_ROLES = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'CONTENT_AUTHOR', 'FACULTY_REVIEWER', 'APPROVER_PUBLISHER', 'ASSESSMENT_ADMIN', 'EXAM_ADMIN', 'DOUBT_TEACHER', 'SUPPORT_OPERATOR', 'AUDITOR', 'LAB_COORDINATOR'] as const;
-export const hasAny = (roles: readonly string[] | undefined, allowed: readonly string[]) => !!roles?.some((r) => allowed.includes(r));
+export const hasAny = (roles: readonly string[] | undefined, allowed: readonly string[]) => !!roles?.some((r) => r === 'SUPER_ADMIN' || allowed.includes(r)); // SUPER_ADMIN has every role
 export const isLearner = (roles?: readonly string[]) => !!roles?.includes('LEARNER');
 export const isStaff = (roles?: readonly string[]) => hasAny(roles, STAFF_ROLES);
 

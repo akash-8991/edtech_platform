@@ -12,7 +12,7 @@ const STAFF_ROUTES: [RegExp, string][] = [
   [/^\/staff$/, 'Staff console'], [/^\/staff\/admissions$/, 'Admissions'], [/^\/staff\/moderation$/, 'Grading'], [/^\/staff\/moderation\/[^/]+$/, 'Grading case'], [/^\/staff\/labs$/, 'Lab desk'], [/^\/staff\/operations$/, 'Operations'],
   [/^\/staff\/examops$/, 'Exam integrity'], [/^\/staff\/examops\/attempts\/[^/]+$/, 'Exam case'], [/^\/staff\/examops\/exams\/[^/]+\/report$/, 'Exam results report'],
   [/^\/staff\/examsetup$/, 'Exam set-up'], [/^\/staff\/examsetup\/new$/, 'Define an exam'], [/^\/staff\/examsetup\/exams\/[^/]+$/, 'Exam'],
-  [/^\/staff\/content$/, 'Content'], [/^\/staff\/content\/versions\/[^/]+$/, 'Programme version'], [/^\/staff\/doubts$/, 'Doubt desk'], [/^\/staff\/doubts\/tickets\/[^/]+$/, 'Ticket'],
+  [/^\/staff\/content$/, 'Content'], [/^\/staff\/content\/versions\/[^/]+$/, 'Programme version'], [/^\/staff\/content\/generate$/, 'Write a course with AI'], [/^\/staff\/content\/jobs\/[^/]+$/, 'AI job'], [/^\/staff\/doubts$/, 'Doubt desk'], [/^\/staff\/doubts\/tickets\/[^/]+$/, 'Ticket'],
   [/^\/staff\/gradechanges$/, 'Grade changes'], [/^\/staff\/gradechanges\/overrides\/[^/]+$/, 'Grade override'], [/^\/staff\/gradechanges\/submissions\/[^/]+$/, 'Grade history'],
   [/^\/staff\/users$/, 'People'], [/^\/staff\/users\/[^/]+$/, 'Person'], [/^\/staff\/privacy$/, 'Privacy'], [/^\/staff\/privacy\/requests\/[^/]+$/, 'Privacy request'],
   [/^\/staff\/entitlements$/, 'Entitlements'], [/^\/staff\/entitlements\/[^/]+$/, 'Entitlement'], [/^\/staff\/reports$/, 'Reports'], [/^\/staff\/account$/, 'Account and security'],

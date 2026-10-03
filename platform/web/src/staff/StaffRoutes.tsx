@@ -12,6 +12,8 @@ const ExamOps = lazy(() => import('./ExamOps'));
 const ExamReport = lazy(() => import('./ExamReport'));
 const ExamCase = lazy(() => import('./ExamCase'));
 const Content = lazy(() => import('./Content'));
+const AiGenerate = lazy(() => import('./AiGenerate'));
+const AiJob = lazy(() => import('./AiJob'));
 const ContentVersion = lazy(() => import('./ContentVersion'));
 const Doubts = lazy(() => import('./Doubts'));
 const DoubtTicket = lazy(() => import('./DoubtTicket'));
@@ -39,6 +41,8 @@ export default function StaffRoutes() {
       <Route path="moderation" element={<Moderation />} />
       <Route path="moderation/:taskId" element={<ModerationCase />} />
       <Route path="content" element={<Content />} />
+      <Route path="content/generate" element={<AiGenerate />} />
+      <Route path="content/jobs/:jobId" element={<AiJob />} />
       <Route path="content/versions/:versionId" element={<ContentVersion />} />
       <Route path="examops" element={<ExamOps />} />
       <Route path="examops/attempts/:attemptId" element={<ExamCase />} />

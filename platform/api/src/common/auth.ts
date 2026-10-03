@@ -46,6 +46,8 @@ export const verifyPassword = (pw: string, stored: string) => {
  * OIDC/SAML adapter replaces AuthService.login; the guard only needs verified claims {sub, roles}).
  * Default-deny: a route needs @Public() or a valid token; @Roles() further restricts.
  */
+export const STAFF_ROLE_LIST = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'CONTENT_AUTHOR', 'FACULTY_REVIEWER', 'APPROVER_PUBLISHER', 'ASSESSMENT_ADMIN', 'EXAM_ADMIN', 'DOUBT_TEACHER', 'SUPPORT_OPERATOR', 'AUDITOR', 'LAB_COORDINATOR'];
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private jwt: JwtService, private reflector: Reflector, @Inject('SESSION_SERVICE') private sessions: SessionService) {}
@@ -59,9 +61,11 @@ export class AuthGuard implements CanActivate {
     try { claims = await verifyJwt(this.jwt, h.slice(7)); } catch { throw new UnauthorizedException(); }
     // single-purpose tokens (MFA step, enrolment) are never accepted as access tokens; every access token is tied to a live session
     if (claims.purpose || !claims.sid || !(await this.sessions.isActive(claims.sid, claims.sub))) throw new UnauthorizedException();
-    req.actor = { id: claims.sub, roles: claims.roles ?? [], ip: req.ip, correlationId: req.correlationId, sid: claims.sid } as Actor;
+    // SUPER_ADMIN is the super user: it holds every staff role for every check, in guards and services alike. Separation of duties (author != approver etc.) is by person, so it still applies. LEARNER is not added: learner routes stay about the person's own learning.
+    const roles: string[] = claims.roles ?? [];
+    req.actor = { id: claims.sub, roles: roles.includes('SUPER_ADMIN') ? [...new Set([...roles, ...STAFF_ROLE_LIST])] : roles, ip: req.ip, correlationId: req.correlationId, sid: claims.sid } as Actor;
     const need = this.reflector.getAllAndOverride<string[]>('roles', [ctx.getHandler(), ctx.getClass()]);
-    if (need && !need.some((r) => req.actor.roles.includes(r))) throw new ForbiddenException('insufficient role');
+    if (need && !req.actor.roles.includes('SUPER_ADMIN') && !need.some((r) => req.actor.roles.includes(r))) throw new ForbiddenException('insufficient role');
     return true;
   }
 }

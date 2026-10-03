@@ -34,7 +34,7 @@ export PASS='Dev-Only-Pass1'              # the password of the seeded synthetic
 | `LAB_COORDINATOR` | lab staff | lab slots, rosters, attendance |
 | `SUPPORT_OPERATOR` | support | read-only help, revoke sessions, file privacy requests on behalf of a learner |
 | `PLATFORM_ADMIN` | technical admin | runtime configuration, kill switch, integrity, privacy processing, MFA reset |
-| `SUPER_ADMIN` | break-glass owner | everything above that is not segregated |
+| `SUPER_ADMIN` | super user | every route and every staff screen; only the two-person rules (you cannot approve your own work) still apply |
 | `AUDITOR` | read-only auditor | audit trail, reports, integrity verification |
 
 The precise role list for every endpoint is in the generated [API reference](api-reference.md).
@@ -223,6 +223,8 @@ What the platform enforces for you:
 - Reviewers can leave comments (`/v1/authoring/versions/<id>/comments`). Every transition is audited with who, when and why.
 
 ### 3.1 Generating content with AI **[needs external service]**
+
+**In the staff console (authors and academic admins):** *Content → Write a course with AI* takes the programme code, title, discipline, audience, duration, hours, learning outcomes, languages (English, optionally Hindi) and optional reference text, starts the job, and follows it on a status page (waiting, being written, done or what went wrong and what to do about it). A finished job opens the draft, lists what the AI assumed and how many quality checks need attention, and shows the video steps for the topic. On any draft you own, *Write a topic with AI* rewrites one topic's script, quiz and assignment into that draft. Everything is a draft until reviewed and published. The API calls below do the same thing.
 
 Authors can ask the AI content factory to draft a curriculum or a topic (script, scenes, quiz candidates in English and Hindi). It needs `ANTHROPIC_API_KEY` and/or `OPENROUTER_API_KEY` ([configuration](04-configuration-reference.md#ai)); check connectivity first with `npm run ai:smoke` in `platform/api`.
 

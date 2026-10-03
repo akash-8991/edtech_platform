@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, messageFor } from '../api/client';
-import type { A11yReport, DiffChange, ProgrammeRow, QualityFinding, VersionTree } from '../api/types';
+import type { A11yReport, AiJob, DiffChange, ProgrammeRow, QualityFinding, VersionTree } from '../api/types';
+import { AI_GEN, jobLabel, jobTone, kindLabel, topicBody, topicProblem } from '../lib/aigen';
 import { useAuth } from '../auth';
 import { Badge, Card, ErrorNote, Loading } from '../components/ui';
 import { describeChange, isDraft, movesFor, readinessIssues, stateLabel, stateTone, topicStatus, waitingOn } from '../lib/content';
@@ -29,7 +30,7 @@ function Page({ roles, meId }: { roles: string[]; meId: string }) {
   /** Runs an action, then refreshes but keeps the error on screen (a refusal's reason is what the person needs to read). */
   const act = async (fn: () => Promise<unknown>, ok: string) => { setError(null); setDone(null); setIssues(null); try { await fn(); setDone(ok); await load(false); return true; } catch (e) { if (e instanceof ApiError && Array.isArray(e.body?.issues)) { setIssues(e.body.issues); setError(null); } else setError(e); await load(false); return false; } };
   if (!t) return <div><p><Link to="/staff/content">Back to content</Link></p><h1>Programme version</h1><ErrorNote error={error} />{!error && <Loading what="Loading the version" />}</div>;
-  const canWrite = hasAny(roles, AREAS.content.act) && isDraft(t.state) && (t.authorId === meId || roles.includes('ACADEMIC_ADMIN'));
+  const canWrite = hasAny(roles, AREAS.content.act) && isDraft(t.state) && (t.authorId === meId || hasAny(roles, ['ACADEMIC_ADMIN']));
   const who = (id: string) => t.people[id] ?? 'Someone';
   const open = quality.filter((q) => q.blocking && !q.resolvedAt);
   return (
@@ -40,7 +41,8 @@ function Page({ roles, meId }: { roles: string[]; meId: string }) {
       <ErrorNote error={error} />{done && <p role="status" className="note">{done}</p>}
       <Workflow t={t} roles={roles} meId={meId} open={open.length} issues={issues} onMove={(to, reason) => act(() => api.post(`/v1/authoring/versions/${t.id}/transition`, { to, ...(reason ? { reason } : {}) }), `Moved to “${stateLabel(to)}”.`)} />
       {isDraft(t.state) && <Readiness t={t} a11y={a11y} />}
-      {quality.length > 0 && <Quality findings={quality} canResolve={roles.includes('FACULTY_REVIEWER')} onResolve={(id, r) => act(() => api.post(`/v1/ai/quality/${id}/resolve`, { resolution: r }), 'Finding resolved.')} />}
+      {quality.length > 0 && <Quality findings={quality} canResolve={hasAny(roles, ['FACULTY_REVIEWER'])} onResolve={(id, r) => act(() => api.post(`/v1/ai/quality/${id}/resolve`, { resolution: r }), 'Finding resolved.')} />}
+      {canWrite && hasAny(roles, AI_GEN) && <AiTopic t={t} />}
       {canWrite ? <Editor t={t} reload={() => load(false)} setDone={(m) => { setDone(m); setIssues(null); }} /> : <Content t={t} />}
       {prev && <Diff id={t.id} against={prev} />}
       <Comments t={t} who={who} onAdd={(body, target) => act(() => api.post(`/v1/authoring/versions/${t.id}/comments`, { body, ...(target ? { target } : {}) }), 'Comment added.')} />
@@ -139,6 +141,32 @@ function Comments({ t, who, onAdd }: { t: VersionTree; who: (id: string) => stri
         <label htmlFor="cm-body">Comment</label><textarea id="cm-body" value={body} onChange={(e) => { setBody(e.target.value); setProblem(null); }} aria-invalid={!!problem} />{problem && <p role="alert" className="note error">{problem}</p>}
         <button>Add comment</button>
       </form>
+    </Card>
+  );
+}
+
+/** Ask the AI to (re)write one topic of this draft: its lesson script, quiz and assignment. Replaces what is in that topic; the result is a draft you still review. */
+function AiTopic({ t }: { t: VersionTree }) {
+  const nav = useNavigate(); const topics = t.modules.flatMap((m) => m.topics.map((x) => ({ id: x.id, label: `${m.title} › ${x.title}` })));
+  const [topicId, setTopicId] = useState(''); const [instruction, setInstruction] = useState(''); const [langs, setLangs] = useState<string[]>(t.languages); const [ref, setRef] = useState('');
+  const [problem, setProblem] = useState<string | null>(null); const [error, setError] = useState<unknown>(null); const [busy, setBusy] = useState(false); const [jobs, setJobs] = useState<AiJob[]>([]);
+  useEffect(() => { api.get<AiJob[]>('/v1/ai/jobs').then((all) => setJobs(all.filter((j) => j.versionId === t.id).slice(0, 5))).catch(() => undefined); }, [t.id]);
+  const go = async () => {
+    const p = topicProblem(topicId, langs, ref); setProblem(p); if (p) return; setBusy(true); setError(null);
+    try { const r = await api.post<{ jobId: string }>('/v1/ai/topic-jobs', topicBody(topicId, instruction, langs, ref)); nav(`/staff/content/jobs/${r.jobId}`); } catch (e) { setError(e); } finally { setBusy(false); }
+  };
+  return (
+    <Card title="Write a topic with AI">
+      <p className="muted">Pick a topic and the AI writes its lesson script, quiz and assignment <strong>into this draft</strong>, replacing what that topic has now. It stays a draft: you check it, resolve any quality flags, and it goes through review like your own work.</p>
+      <form onSubmit={(e) => { e.preventDefault(); void go(); }} noValidate>
+        <label htmlFor="at-topic">Topic</label><select id="at-topic" value={topicId} onChange={(e) => { setTopicId(e.target.value); setProblem(null); }}><option value="">Choose a topic</option>{topics.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}</select>
+        <label htmlFor="at-ins">What should it cover? (optional)</label><textarea id="at-ins" rows={3} value={instruction} onChange={(e) => setInstruction(e.target.value)} placeholder="Focus on thermistors; use a worked example with a numeric quiz question." />
+        <fieldset><legend>Languages</legend>{[['en', 'English'], ['hi', 'Hindi']].filter(([k]) => t.languages.includes(k)).map(([k, l]) => <label key={k} className="inline"><input type="checkbox" checked={langs.includes(k)} onChange={(e) => { setLangs(e.target.checked ? [...langs, k] : langs.filter((x) => x !== k)); setProblem(null); }} /> {l}</label>)}</fieldset>
+        <details><summary>Reference material (optional)</summary><label htmlFor="at-ref">Paste the text the AI must stay faithful to</label><textarea id="at-ref" rows={6} value={ref} onChange={(e) => setRef(e.target.value)} /></details>
+        {problem && <p role="alert" className="note error">{problem}</p>}<ErrorNote error={error} />
+        <button disabled={busy}>{busy ? 'Sending…' : 'Write this topic'}</button>
+      </form>
+      {jobs.length > 0 && <><h3>Recent AI jobs for this draft</h3><ul className="plain">{jobs.map((j) => <li key={j.id}><Link to={`/staff/content/jobs/${j.id}`}>{new Date(j.createdAt).toLocaleString()}</Link> · {kindLabel(j.kind)} <Badge tone={jobTone(j.status)}>{jobLabel(j.status)}</Badge></li>)}</ul></>}
     </Card>
   );
 }

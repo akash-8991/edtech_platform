@@ -30,3 +30,4 @@ platform/api/.loadtest/
 # Remove these lines only if the owner decides to publish them.
 /0[1-5]_*.docx
 /0[1-5]_*.pdf
+.local-credentials.txt
