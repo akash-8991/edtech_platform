@@ -7,6 +7,7 @@ import { ErrorNote, Loading, Modal } from '../components/ui';
 import { Autosaver, FatalSaveError, type SaveStatus } from '../lib/autosave';
 import { fmtRemaining, ServerClock } from '../lib/clock';
 import { watchSignals } from '../lib/signals';
+import { useT } from '../lib/i18n';
 
 type Phase = 'loading' | 'begin' | 'running' | 'submitting' | 'done';
 
@@ -15,7 +16,7 @@ type Phase = 'loading' | 'begin' | 'running' | 'submitting' | 'done';
  * through a bad connection), reports focus/full-screen/copy-paste signals for human review, and submits once.
  */
 export default function ExamRunner() {
-  const { attemptId = '' } = useParams(); const nav = useNavigate();
+  const { attemptId = '' } = useParams(); const nav = useNavigate(); const t = useT();
   const [phase, setPhase] = useState<Phase>('loading'); const [status, setStatus] = useState<string>(''); const [error, setError] = useState<unknown>(null);
   const [exam, setExam] = useState<ExamStart | null>(null); const [answers, setAnswers] = useState<Record<string, unknown>>({}); const [flags, setFlags] = useState<Set<string>>(new Set());
   const [idx, setIdx] = useState(0); const [saveStatus, setSaveStatus] = useState<SaveStatus>({ state: 'idle' }); const [remaining, setRemaining] = useState(0);
@@ -29,7 +30,7 @@ export default function ExamRunner() {
     api.get<ExamResult>(`/v1/me/exam-attempts/${attemptId}`).then((r) => {
       if (r.status === 'SUBMITTED') return nav(`/exam-results/${attemptId}`, { replace: true });
       setStatus(r.status); setPhase(r.status === 'READY' || r.status === 'IN_PROGRESS' ? 'begin' : 'loading');
-      if (r.status === 'CHECKED_IN') setError(new ApiError(409, { message: 'Your check-in is not complete yet. Go back and finish the check-in steps.' }));
+      if (r.status === 'CHECKED_IN') setError(new ApiError(409, { message: t('Your check-in is not complete yet. Go back and finish the check-in steps.') }));
     }).catch(setError);
   }, [attemptId, nav]);
 
@@ -55,7 +56,7 @@ export default function ExamRunner() {
       token.current = data.sessionToken; clock.sync(data.serverTime); setExam(data); setReplaced(false); buildSaver(data); setPhase('running');
       try { await document.documentElement.requestFullscreen?.(); } catch { /* not allowed: the exam still runs, a reminder is shown */ }
     } catch (e) {
-      setError(e instanceof ApiError && e.status === 409 && /window is not open/i.test(e.message) ? new ApiError(409, { message: 'The exam window is not open yet. You are checked in: come back to this page when the session starts, then press Start.' }) : e);
+      setError(e instanceof ApiError && e.status === 409 && /window is not open/i.test(e.message) ? new ApiError(409, { message: t('The exam window is not open yet. You are checked in: come back to this page when the session starts, then press Start.') }) : e);
     }
   };
 
@@ -68,7 +69,7 @@ export default function ExamRunner() {
       saver.current?.stop(); saver.current?.clearBackup(); if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined); setReceipt(r); setPhase('done');
     } catch (e) {
       if (e instanceof ApiError && e.status === 409 && /time is up|SUBMITTED/i.test(e.message)) { saver.current?.stop(); nav(`/exam-results/${attemptId}`, { replace: true }); return; }
-      submitted.current = false; setPhase('running'); setError(auto ? new ApiError(0, { message: 'Time is up but the submission did not go through. Keep this page open: we are retrying.' }) : e);
+      submitted.current = false; setPhase('running'); setError(auto ? new ApiError(0, { message: t('Time is up but the submission did not go through. Keep this page open: we are retrying.') }) : e);
       if (auto) setTimeout(() => void submit(true), 5000);
     }
   }, [attemptId, nav]);
@@ -77,7 +78,7 @@ export default function ExamRunner() {
     if (phase !== 'running' || !exam) return;
     const step = () => {
       const ms = clock.remainingMs(exam.deadlineAt); setRemaining(ms);
-      for (const m of [5, 1]) if (ms <= m * 60_000 && ms > 0 && !warned.current.has(m)) { warned.current.add(m); setAnnounce(`${m} minute${m > 1 ? 's' : ''} remaining.`); }
+      for (const m of [5, 1]) if (ms <= m * 60_000 && ms > 0 && !warned.current.has(m)) { warned.current.add(m); setAnnounce(m > 1 ? t('{n} minutes remaining.', { n: m }) : t('1 minute remaining.')); }
       if (ms <= 0) { clearInterval(tick); void submit(true); }
     };
     const tick = setInterval(step, 500); step(); // show the real remaining time immediately, not 0:00 until the first tick
@@ -85,52 +86,52 @@ export default function ExamRunner() {
     const onFs = () => setFs(!!document.fullscreenElement); document.addEventListener('fullscreenchange', onFs); setFs(!!document.fullscreenElement);
     const leave = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; }; window.addEventListener('beforeunload', leave);
     return () => { clearInterval(tick); stopSignals(); document.removeEventListener('fullscreenchange', onFs); window.removeEventListener('beforeunload', leave); };
-  }, [phase, exam, clock, attemptId, submit]);
+  }, [phase, exam, clock, attemptId, submit, t]);
   useEffect(() => () => saver.current?.stop(), []);
 
   const setAnswer = (qid: string, v: unknown) => { saver.current?.set(qid, v); setAnswers((a) => ({ ...a, [qid]: v })); };
   const resumeHere = async () => { setError(null); try { const data = await api.post<ExamStart>(`/v1/exam-attempts/${attemptId}/resume`, { deviceId: navigator.userAgent.slice(0, 60) }); token.current = data.sessionToken; clock.sync(data.serverTime); setExam(data); setReplaced(false); buildSaver({ ...data, answers: { ...(data.answers ?? {}) } }); } catch (e) { setError(e); } };
 
   // ---- render --------------------------------------------------------------------------------------------------------------------------------------------
-  if (phase === 'loading') return error ? <div><h1>Your exam</h1><ErrorNote error={error} /><p><Link to="/exams">Back to exams</Link></p></div> : <div><h1>Your exam</h1><Loading what="Loading your exam" /></div>;
+  if (phase === 'loading') return error ? <div><h1>{t('Your exam')}</h1><ErrorNote error={error} /><p><Link to="/exams">{t('Back to exams')}</Link></p></div> : <div><h1>{t('Your exam')}</h1><Loading what={t('Loading your exam')} /></div>;
   if (phase === 'begin') return (
-    <div className="exam-begin"><h1>{status === 'IN_PROGRESS' ? 'Resume your exam' : 'Start your exam'}</h1>
-      <ul><li>The timer is controlled by the server and keeps running if you close this page.</li><li>Your answers are saved automatically; you can see the save status at the top.</li>
-        <li>Leaving the window, exiting full screen, copying or pasting is recorded for review.</li><li>Do not open the exam in another window: that ends this one.</li></ul>
-      <ErrorNote error={error} /><button onClick={() => void begin()}>{status === 'IN_PROGRESS' ? 'Resume exam' : 'Start exam and begin the timer'}</button>
-      <p><Link to="/exams">Not now</Link></p></div>);
+    <div className="exam-begin"><h1>{status === 'IN_PROGRESS' ? t('Resume your exam') : t('Start your exam')}</h1>
+      <ul><li>{t('The timer is controlled by the server and keeps running if you close this page.')}</li><li>{t('Your answers are saved automatically; you can see the save status at the top.')}</li>
+        <li>{t('Leaving the window, exiting full screen, copying or pasting is recorded for review.')}</li><li>{t('Do not open the exam in another window: that ends this one.')}</li></ul>
+      <ErrorNote error={error} /><button onClick={() => void begin()}>{status === 'IN_PROGRESS' ? t('Resume exam') : t('Start exam and begin the timer')}</button>
+      <p><Link to="/exams">{t('Not now')}</Link></p></div>);
   if (phase === 'done' && receipt) return (
-    <div className="card" role="status"><h1>Exam submitted</h1><p>Your answers are recorded{receipt.autoSubmitted ? ' (submitted automatically when time ran out)' : ''}. You answered {receipt.answered} question(s).</p>
-      <p>Keep your receipt code: <strong className="mono">{receipt.receiptCode}</strong></p><p className="muted">Results are released after review. You will be notified.</p>
-      <Link to={`/exam-results/${attemptId}`}>View status</Link> · <Link to="/exams">Back to exams</Link></div>);
-  if (!exam) return <div><h1>Your exam</h1><Loading /></div>;
+    <div className="card" role="status"><h1>{t('Exam submitted')}</h1><p>{t('Your answers are recorded')}{receipt.autoSubmitted ? ` ${t('(submitted automatically when time ran out)')}` : ''}. {t('You answered {n} question(s).', { n: receipt.answered })}</p>
+      <p>{t('Keep your receipt code:')} <strong className="mono">{receipt.receiptCode}</strong></p><p className="muted">{t('Results are released after review. You will be notified.')}</p>
+      <Link to={`/exam-results/${attemptId}`}>{t('View status')}</Link> · <Link to="/exams">{t('Back to exams')}</Link></div>);
+  if (!exam) return <div><h1>{t('Your exam')}</h1><Loading /></div>;
 
   const q = exam.questions[idx]; const answered = exam.questions.filter((x) => isAnswered(answers[x.id])).length; const unanswered = exam.questions.length - answered;
   const low = remaining <= 5 * 60_000;
   return (
     <div className="exam">
       <div className="watermark" aria-hidden="true">{Array.from({ length: 24 }, (_, i) => <span key={i}>{exam.watermark}</span>)}</div>
-      <div className="exam-bar" role="region" aria-label="Exam status">
-        <span className={`timer ${low ? 'low' : ''}`} role="timer" aria-label="Time remaining">{fmtRemaining(remaining)}</span>
-        <span className="muted" role="status" aria-live="polite">{saveText(saveStatus)}</span>
-        <button className="secondary" onClick={() => setConfirm(true)} disabled={phase === 'submitting'}>Submit exam</button>
+      <div className="exam-bar" role="region" aria-label={t('Exam status')}>
+        <span className={`timer ${low ? 'low' : ''}`} role="timer" aria-label={t('Time remaining')}>{fmtRemaining(remaining)}</span>
+        <span className="muted" role="status" aria-live="polite">{saveText(saveStatus, t)}</span>
+        <button className="secondary" onClick={() => setConfirm(true)} disabled={phase === 'submitting'}>{t('Submit exam')}</button>
       </div>
       <p className="sr-only" aria-live="assertive">{announce}</p>
-      {!fs && <p className="note warn" role="alert">You have left full screen. This is recorded. <button className="link" onClick={() => void document.documentElement.requestFullscreen?.().catch(() => undefined)}>Return to full screen</button></p>}
-      {replaced && <p className="note error" role="alert">This exam was opened in another window, so this one has been paused. <button onClick={() => void resumeHere()}>Continue here instead</button></p>}
+      {!fs && <p className="note warn" role="alert">{t('You have left full screen. This is recorded.')} <button className="link" onClick={() => void document.documentElement.requestFullscreen?.().catch(() => undefined)}>{t('Return to full screen')}</button></p>}
+      {replaced && <p className="note error" role="alert">{t('This exam was opened in another window, so this one has been paused.')} <button onClick={() => void resumeHere()}>{t('Continue here instead')}</button></p>}
       <ErrorNote error={error} />
-      <nav aria-label="Question navigator" className="palette">{exam.questions.map((x, i) => <button key={x.id} className={`pal ${i === idx ? 'cur' : ''} ${isAnswered(answers[x.id]) ? 'ans' : ''} ${flags.has(x.id) ? 'flag' : ''}`} aria-label={`Question ${i + 1}${isAnswered(answers[x.id]) ? ', answered' : ', not answered'}${flags.has(x.id) ? ', flagged' : ''}`} aria-current={i === idx} onClick={() => setIdx(i)}>{i + 1}</button>)}</nav>
+      <nav aria-label={t('Question navigator')} className="palette">{exam.questions.map((x, i) => <button key={x.id} className={`pal ${i === idx ? 'cur' : ''} ${isAnswered(answers[x.id]) ? 'ans' : ''} ${flags.has(x.id) ? 'flag' : ''}`} aria-label={`${t('Question {n}', { n: i + 1 })}${isAnswered(answers[x.id]) ? `, ${t('answered')}` : `, ${t('not answered')}`}${flags.has(x.id) ? `, ${t('flagged')}` : ''}`} aria-current={i === idx} onClick={() => setIdx(i)}>{i + 1}</button>)}</nav>
       <ExamQuestionView q={q} n={idx + 1} total={exam.questions.length} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} flagged={flags.has(q.id)} onFlag={() => setFlags((f) => { const n = new Set(f); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n; })} />
-      <div className="row"><button className="secondary" disabled={idx === 0} onClick={() => setIdx(idx - 1)}>Previous</button><span className="muted">{answered} of {exam.questions.length} answered</span><button disabled={idx === exam.questions.length - 1} onClick={() => setIdx(idx + 1)}>Next</button></div>
+      <div className="row"><button className="secondary" disabled={idx === 0} onClick={() => setIdx(idx - 1)}>{t('Previous')}</button><span className="muted">{t('{a} of {n} answered', { a: answered, n: exam.questions.length })}</span><button disabled={idx === exam.questions.length - 1} onClick={() => setIdx(idx + 1)}>{t('Next')}</button></div>
       {confirm && (
         <Modal labelledBy="sub-t" onEscape={() => setConfirm(false)}>
-          <h3 id="sub-t">Submit your exam?</h3>
-          <p>{unanswered ? <><strong>{unanswered}</strong> question(s) are unanswered.</> : 'You have answered every question.'} {flags.size ? `${flags.size} flagged for review. ` : ''}You cannot change your answers after submitting.</p>
-          <div className="choices"><button onClick={() => void submit(false)}>Yes, submit now</button><button className="secondary" onClick={() => setConfirm(false)}>Go back</button></div>
+          <h3 id="sub-t">{t('Submit your exam?')}</h3>
+          <p>{unanswered ? <strong>{t('{n} question(s) are unanswered.', { n: unanswered })}</strong> : t('You have answered every question.')} {flags.size ? `${t('{n} flagged for review.', { n: flags.size })} ` : ''}{t('You cannot change your answers after submitting.')}</p>
+          <div className="choices"><button onClick={() => void submit(false)}>{t('Yes, submit now')}</button><button className="secondary" onClick={() => setConfirm(false)}>{t('Go back')}</button></div>
         </Modal>)}
     </div>
   );
 }
-const saveText = (s: SaveStatus) => s.state === 'saved' ? `All answers saved at ${new Date(s.at).toLocaleTimeString()}` : s.state === 'saving' ? 'Saving…'
-  : s.state === 'retrying' ? 'Connection problem. Your answers are kept on this device and will be sent when the connection returns.' : s.state === 'closed' ? 'Saving has stopped.' : 'Answers are saved automatically.';
+const saveText = (s: SaveStatus, t: (k: string, v?: Record<string, string | number>) => string) => s.state === 'saved' ? t('All answers saved at {time}', { time: new Date(s.at).toLocaleTimeString() }) : s.state === 'saving' ? t('Saving…')
+  : s.state === 'retrying' ? t('Connection problem. Your answers are kept on this device and will be sent when the connection returns.') : s.state === 'closed' ? t('Saving has stopped.') : t('Answers are saved automatically.');
 export { messageFor };

@@ -17,7 +17,9 @@ for (const name of ['localStorage', 'sessionStorage'] as const) {
   const s = new MemStorage(); Object.defineProperty(globalThis, name, { value: s, configurable: true, writable: true });
   Object.defineProperty(window, name, { value: s, configurable: true, writable: true });
 }
-afterEach(() => { cleanup(); sessionStorage.clear(); localStorage.clear(); });
+import { resetLang } from '../lib/i18n';
+import { resetReachable } from '../lib/offline/network';
+afterEach(() => { cleanup(); sessionStorage.clear(); localStorage.clear(); resetLang(); resetReachable(); });
 
 // ---- accessibility regression net ---------------------------------------------------------------------------------------------------------------
 // After EVERY test, the final DOM is checked with axe-core (WCAG 2.x A/AA and best practice). jsdom has no layout, so contrast and the

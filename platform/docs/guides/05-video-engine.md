@@ -9,7 +9,7 @@ platform: AI topic job ──► script manifest ──► video_engine: QA gate
                       faculty + admin approval ◄── draft asset ◄── publish.py (checksum verified by the platform)
 ```
 
-**Maturity: prototype.** Verified: manifest validation, QA gate, mock pipeline, unit tests (4 pass). **Never run against the real Higgsfield or ElevenLabs services**, and not yet built: lip-synced avatar scenes, captions (SRT), HLS/offline packaging, a review UI. The platform's accessibility rule needs a **transcript** for every mandatory video, which you must still supply (the narration text in the manifest is the source).
+**Maturity: prototype.** Verified: manifest validation, QA gate, mock pipeline, unit tests (4 pass). **Never run against the real Higgsfield or ElevenLabs services**, and **Captions (WebVTT) and a transcript are now produced for every language** (`captions.py`, written next to the masters and uploaded by `publish.py`). Adaptive-bitrate (HLS) packaging is done **by the platform** after upload (`publish.py --abr`; see [Adaptive video](07-adaptive-video.md)). Not yet built: lip-synced avatar scenes, a review UI. The platform's accessibility rule needs a **transcript** for every mandatory video, which you must still supply (the narration text in the manifest is the source).
 
 ## 1. Install
 

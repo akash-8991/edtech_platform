@@ -13,7 +13,10 @@ An AI-assisted, multidisciplinary learning-delivery platform: governed course au
 | use it as an author, admin, teacher or learner | [User guide](platform/docs/guides/03-user-guide.md) |
 | look up a setting | [Configuration reference](platform/docs/guides/04-configuration-reference.md) |
 | produce lesson videos | [Video engine](platform/docs/guides/05-video-engine.md) |
-| find an endpoint | [API reference](platform/docs/guides/api-reference.md) (all 202 routes and who may call them) |
+| find an endpoint | [API reference](platform/docs/guides/api-reference.md) (all 229 routes and who may call them) and [OpenAPI](platform/docs/openapi.json) |
+| use it on a phone, in Hindi, offline; QR check-in; single sign-on | [Learner experience](platform/docs/guides/06-learner-experience.md) |
+| deliver adaptive-bitrate video | [Adaptive video](platform/docs/guides/07-adaptive-video.md) |
+| understand or change the API schemas | [API contracts](platform/docs/guides/08-api-contracts.md) |
 | understand the design | [Architecture](platform/docs/architecture.md), [decision log](platform/docs/decision-log.md), [traceability](platform/docs/traceability.md) |
 | run it in production | [Runbooks](platform/docs/ops/runbooks.md), [SLOs and alerts](platform/docs/ops/slo-and-alerts.md), [DR plan](platform/docs/ops/dr-plan.md), [migrations](platform/docs/ops/migrations.md), [scaling](platform/docs/ops/scaling.md), [key rotation](platform/docs/security/key-rotation.md) |
 | review security and privacy | [Threat model](platform/docs/security/threat-model.md), [security review](platform/docs/security/security-review.md), [privacy data map](platform/docs/privacy/data-map-and-retention.md) |

@@ -50,6 +50,7 @@ export class AuthController {
   mfaReset(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) { return this.auth.adminMfaReset(a, id, b?.reason); }
 
   // ---- OIDC single sign-on --------------------------------------------------------------------------------------------------------------------
+  @Public() @Get('auth/sso/config') ssoConfig() { return this.oidc.available(); }
   @Public() @Get('auth/sso/start') sso() { return this.oidc.start(); }
   @Public() @Get('auth/sso/callback') ssoCallback(@Query('code') code: string, @Query('state') state: string, @Req() req: any) { return this.oidc.callback(code, state, ctxOf(req)); }
 }

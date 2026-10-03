@@ -201,7 +201,7 @@ export class PrivacyService {
   static PREF_RULES: Record<string, (v: any) => boolean> = {
     captions: (v) => typeof v === 'boolean', transcriptByDefault: (v) => typeof v === 'boolean', audioDescription: (v) => typeof v === 'boolean', highContrast: (v) => typeof v === 'boolean', reducedMotion: (v) => typeof v === 'boolean',
     lowBandwidth: (v) => typeof v === 'boolean', largeTargets: (v) => typeof v === 'boolean', playbackSpeed: (v) => typeof v === 'number' && v >= 0.5 && v <= 2, fontScale: (v) => typeof v === 'number' && v >= 0.8 && v <= 2.5, language: (v) => ['en', 'hi'].includes(v),
-    captionLanguage: (v) => ['en', 'hi'].includes(v), textSpacing: (v) => ['normal', 'wide', 'wider'].includes(v),
+    captionLanguage: (v) => ['en', 'hi'].includes(v), captionSize: (v) => ['normal', 'large', 'larger'].includes(v), captionBackground: (v) => typeof v === 'boolean', textSpacing: (v) => ['normal', 'wide', 'wider'].includes(v),
   };
   async setPrefs(a: Actor, b: any) {
     const bad = Object.keys(b ?? {}).filter((k) => !PrivacyService.PREF_RULES[k] || !PrivacyService.PREF_RULES[k](b[k])); if (bad.length) throw new BadRequestException({ error: 'invalid_preferences', fields: bad });

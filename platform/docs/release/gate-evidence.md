@@ -7,7 +7,7 @@ marked met by engineering.
 | Gate | Criterion | Status | Evidence / gap |
 |---|---|---|---|
 | 1 Requirements baseline | Traceability, assumptions, MVP and exclusions approved | PARTIAL | `docs/traceability.md`, `docs/decision-log.md` (66+ decisions, ~25 OPEN). **Approval pending**; open inputs: IdP, policies, enrolment API, retention schedule, SLO/budget, pilot cohort, support model |
-| 2 Architecture and UX | C4, data, threat model, contracts, prototypes approved | PARTIAL | `docs/architecture.md`, Prisma schema, `docs/security/threat-model.md`, `docs/api-inventory.json` (routes + access rules only; **no request/response OpenAPI schemas, no event catalogue**). **No UX prototypes or design system** |
+| 2 Architecture and UX | C4, data, threat model, contracts, prototypes approved | PARTIAL | `docs/architecture.md`, Prisma schema, `docs/security/threat-model.md`, `docs/api-inventory.json` (routes + access rules) and **`docs/openapi.json` (OpenAPI 3.1: every route's parameters, request body and response bodies, enforced against live responses in CI; see guides/08)**. **No event catalogue. No UX prototypes or design system** |
 | 3 Foundation | Identity, RBAC, entitlements, authoring, audit, pipelines accepted | PARTIAL | 299 passing tests; MFA/SSO/sessions; audit chain. CI/CD and Dockerfile authored but **never executed**; no IaC (cloud provider undecided) |
 | 4 Learning MVP | Video, quiz, assignment, gating, **web/mobile pilot** accepted | PARTIAL | Server side complete and tested. **No web, Android or iOS client exists** |
 | 5 AI capabilities | Content factory, bilingual media, tutor, grading **academically validated** | NOT MET | Everything tested with scripted fakes. **No live provider run, no golden datasets, no academic council benchmark** (tutor/grader benchmark runners exist) |
@@ -25,7 +25,7 @@ marked met by engineering.
 ## Blocking list to reach a pilot
 1. Choose cloud/region, IdP, proctoring vendor, retention schedule, support model; sign DPA/subprocessor terms (incl. AI providers).
 2. Build the clients (learner web/PWA first, then admin/faculty/teacher/exam consoles) against the inventory.
-3. Run live provider smoke tests, SME benchmarks for tutor (>=85 % grounded, <2 % unsupported) and grader agreement, Hindi review.
+3. Run live provider smoke tests, SME benchmarks for tutor (>=85 % grounded, <2 % unsupported) and grader agreement, **native-speaker review of the Hindi UI strings (`web/src/i18n/hi.json`)**, one real ffmpeg transcode, and the service worker in desktop Chrome and mobile Safari.
 4. Real malware scanner; sandbox review before enabling code execution.
 5. Staging stack with IaC, k6 load tests incl. exam burst, cloud DR drill, independent penetration test, accessibility audit with real users.
 

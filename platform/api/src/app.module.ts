@@ -1,6 +1,8 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { IdempotencyInterceptor } from './common/idempotency';
+import { ContractInterceptor } from './platform/conformance';
+import { OpenApiController } from './platform/openapi';
 import { BodyGuardPipe, dtoPipe } from './common/validation';
 import { jwtSecrets } from './security/keyring';
 import { JwtModule } from '@nestjs/jwt';
@@ -25,6 +27,7 @@ import { buildScanner, buildStore, OBJECT_STORE, SCANNER, StorageService } from 
 import { LearningController, ProgressionService } from './learning';
 import { ContentController } from './content';
 import { MediaController } from './media';
+import { RUNNER, spawnRun, TranscodeController, TranscodeService } from './media/transcode';
 import { ReportsController } from './reports';
 import { AI_PROVIDERS, buildProviders } from './ai/providers';
 import { GatewayService } from './ai/gateway';
@@ -46,8 +49,8 @@ import { DoubtService, DoubtsController } from './doubts/doubts';
 
 @Module({
   imports: [JwtModule.registerAsync({ global: true, useFactory: () => ({ secret: jwtSecrets().current }) })], // read at DI time, after the secret store has been loaded
-  controllers: [HealthController, AuthController, UsersController, AuditController, ApplicationsController, EntitlementsController, AuthoringController, CatalogueController, NotificationsController, LearningController, ContentController, MediaController, ReportsController, AiController, TutorController, AnalyticsController, DoubtsController, GradingController, LabsController, ExamsController, ExamOpsController, PrivacyController, OpsController],
-  providers: [UsersService, PrismaService, ReadDb, AuditService, ApplicationsService, EntitlementsService, AuthoringService, NotificationsService, { provide: OBJECT_STORE, useFactory: () => buildStore() }, { provide: SCANNER, useFactory: () => buildScanner() }, StorageService, ProgressionService, { provide: AI_PROVIDERS, useFactory: () => buildProviders() }, GatewayService, ConfigService, PromptRegistry, GenerationService, JobWorker, { provide: EMBEDDER, useFactory: () => buildEmbedder() }, TutorIndexService, TutorService, DoubtService, { provide: SANDBOX, useFactory: () => buildSandbox() }, GradingService, { provide: PROCTOR, useFactory: () => buildProctor() }, LabsService, ExamsService, ExamOpsService, AuthService, SessionService, PrivacyService, IntegrityService, { provide: 'SESSION_SERVICE', useExisting: SessionService }, OidcService, { provide: APP_PIPE, useClass: BodyGuardPipe }, { provide: APP_PIPE, useFactory: dtoPipe }, { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor }, { provide: APP_GUARD, useClass: AuthGuard }, { provide: APP_GUARD, useClass: ActorRateLimitGuard }],
+  controllers: [OpenApiController, HealthController, AuthController, UsersController, AuditController, ApplicationsController, EntitlementsController, AuthoringController, CatalogueController, NotificationsController, LearningController, ContentController, MediaController, TranscodeController, ReportsController, AiController, TutorController, AnalyticsController, DoubtsController, GradingController, LabsController, ExamsController, ExamOpsController, PrivacyController, OpsController],
+  providers: [TranscodeService, { provide: RUNNER, useValue: spawnRun }, UsersService, PrismaService, ReadDb, AuditService, ApplicationsService, EntitlementsService, AuthoringService, NotificationsService, { provide: OBJECT_STORE, useFactory: () => buildStore() }, { provide: SCANNER, useFactory: () => buildScanner() }, StorageService, ProgressionService, { provide: AI_PROVIDERS, useFactory: () => buildProviders() }, GatewayService, ConfigService, PromptRegistry, GenerationService, JobWorker, { provide: EMBEDDER, useFactory: () => buildEmbedder() }, TutorIndexService, TutorService, DoubtService, { provide: SANDBOX, useFactory: () => buildSandbox() }, GradingService, { provide: PROCTOR, useFactory: () => buildProctor() }, LabsService, ExamsService, ExamOpsService, AuthService, SessionService, PrivacyService, IntegrityService, { provide: 'SESSION_SERVICE', useExisting: SessionService }, OidcService, { provide: APP_PIPE, useClass: BodyGuardPipe }, { provide: APP_PIPE, useFactory: dtoPipe }, { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor }, { provide: APP_INTERCEPTOR, useClass: ContractInterceptor }, { provide: APP_GUARD, useClass: AuthGuard }, { provide: APP_GUARD, useClass: ActorRateLimitGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) { consumer.apply(RequestContextMiddleware, CorsMiddleware, IpRateLimitMiddleware).forRoutes('*'); }

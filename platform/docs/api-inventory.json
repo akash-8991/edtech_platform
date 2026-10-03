@@ -40,6 +40,30 @@
    ]
   },
   {
+   "method": "GET",
+   "path": "/v1/admin/entitlements/:id",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/admin/entitlements",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
    "method": "POST",
    "path": "/v1/admin/users/:id/mfa-reset",
    "public": false,
@@ -379,6 +403,12 @@
   },
   {
    "method": "GET",
+   "path": "/v1/auth/sso/config",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
    "path": "/v1/auth/sso/start",
    "public": true,
    "roles": null
@@ -386,6 +416,27 @@
   {
    "method": "PUT",
    "path": "/v1/authoring/assets/:id/files/:label",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "CONTENT_AUTHOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/authoring/assets/:id/renditions",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "APPROVER_PUBLISHER",
+    "AUDITOR",
+    "CONTENT_AUTHOR",
+    "FACULTY_REVIEWER"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/authoring/assets/:id/transcode",
    "public": false,
    "roles": [
     "ACADEMIC_ADMIN",
@@ -1552,6 +1603,12 @@
   },
   {
    "method": "GET",
+   "path": "/v1/media/hls/:token",
+   "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
    "path": "/v1/media/stream/:token",
    "public": true,
    "roles": null
@@ -1637,6 +1694,17 @@
    "public": false,
    "roles": [
     "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/openapi.json",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
    ]
   },
   {

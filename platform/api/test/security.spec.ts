@@ -261,7 +261,7 @@ describe('OIDC single sign-on', () => {
 
 describe('authorization audit: every route is protected as declared (default-deny)', () => {
   const UUID = '00000000-0000-4000-8000-000000000001';
-  const PUBLIC_OK = new Set(['GET /health', 'GET /health/ready', 'GET /metrics', 'POST /v1/admissions/applications', 'POST /v1/auth/login', 'POST /v1/auth/mfa/enroll/confirm', 'POST /v1/auth/mfa/enroll/start', 'POST /v1/auth/mfa/verify', 'POST /v1/auth/refresh', 'GET /v1/auth/sso/callback', 'GET /v1/auth/sso/start', 'GET /v1/media/stream/:token', 'POST /v1/proctoring/webhook']);
+  const PUBLIC_OK = new Set(['GET /health', 'GET /health/ready', 'GET /metrics', 'POST /v1/admissions/applications', 'POST /v1/auth/login', 'POST /v1/auth/mfa/enroll/confirm', 'POST /v1/auth/mfa/enroll/start', 'POST /v1/auth/mfa/verify', 'POST /v1/auth/refresh', 'GET /v1/auth/sso/callback', 'GET /v1/auth/sso/start', 'GET /v1/auth/sso/config', 'GET /v1/media/stream/:token', 'GET /v1/media/hls/:token', 'POST /v1/proctoring/webhook']);
   const SELF_SCOPED = new Set(['POST /v1/auth/logout', 'GET /v1/auth/me', 'POST /v1/auth/password', 'GET /v1/catalogue/versions/:id', 'GET /v1/catalogue', 'POST /v1/me/notifications/:id/read', 'GET /v1/me/notifications', 'DELETE /v1/me/sessions/:id', 'GET /v1/me/sessions',
     'GET /v1/me/consents', 'PUT /v1/me/consents', 'GET /v1/me/preferences', 'PUT /v1/me/preferences', 'GET /v1/me/privacy/requests/:id/download', 'GET /v1/me/privacy/requests', 'POST /v1/me/privacy/requests']);
   const call = (m: string, p: string, t?: string) => { const r = (h as any)[m.toLowerCase()](p.replace(/:\w+/g, UUID)); if (t) r.set(auth(t)); return m === 'GET' || m === 'DELETE' ? r : r.send({}); };

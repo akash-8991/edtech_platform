@@ -15,6 +15,7 @@ import { ConfigService } from './config';
 import { GatewayService, RunResult } from './gateway';
 import { PromptRegistry, referencesBlock, render } from './prompts';
 import { SCHEMAS } from './schemas';
+import { TranscodeService } from '../media/transcode';
 import { blocking, checkContent, checkCurriculum, ContentOut, CurriculumOut, Finding, judgeFindings, translationFindings } from './quality';
 
 export interface Ref { id: string; title?: string; text: string }
@@ -189,7 +190,7 @@ export class GenerationService {
 @Injectable()
 export class JobWorker implements OnModuleInit, OnModuleDestroy {
   private log = new Logger('job-worker'); private timer?: NodeJS.Timeout; private busy = 0; private lastSweep = 0; private lastExamSweep = 0; private lastPrivacy = 0; private lastRetention = 0; private lastIntegrity = 0;
-  constructor(private prisma: PrismaService, private gen: GenerationService, @Optional() private doubts?: DoubtService, @Optional() private grading?: GradingService, @Optional() private examOps?: ExamOpsService, @Optional() private privacy?: PrivacyService, @Optional() private integrity?: IntegrityService) {}
+  constructor(private prisma: PrismaService, private gen: GenerationService, @Optional() private doubts?: DoubtService, @Optional() private grading?: GradingService, @Optional() private examOps?: ExamOpsService, @Optional() private privacy?: PrivacyService, @Optional() private integrity?: IntegrityService, @Optional() private transcode?: TranscodeService) {}
 
   onModuleInit() {
     // PROCESS_ROLE=api serves HTTP only; =worker (src/worker.ts) runs the queue and sweeps; =all (default, dev/small pilots) does both.
@@ -225,7 +226,7 @@ export class JobWorker implements OnModuleInit, OnModuleDestroy {
     try {
       const job = await this.prisma.generationJob.findUniqueOrThrow({ where: { id: claimed[0].id } });
       try {
-        const result = job.kind === 'CURRICULUM' ? await this.gen.curriculum(job as any) : job.kind === 'GRADE_SUBMISSION' ? await this.grading!.grade(job as any) : await this.gen.generateTopic(job as any);
+        const result = job.kind === 'CURRICULUM' ? await this.gen.curriculum(job as any) : job.kind === 'GRADE_SUBMISSION' ? await this.grading!.grade(job as any) : job.kind === 'TRANSCODE' ? await this.transcode!.run(job as any) : await this.gen.generateTopic(job as any);
         await this.prisma.generationJob.updateMany({ where: { id: job.id, status: 'RUNNING' }, data: { status: 'SUCCEEDED', result: result as any, finishedAt: new Date(), versionId: (result as any).versionId ?? undefined } });
       } catch (e: any) {
         if (e instanceof Requeue) { // model unavailable: wait and retry instead of failing the learner's grade

@@ -5,9 +5,10 @@ export interface RouteInfo { method: string; path: string; public: boolean; role
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'ALL'];
 
 /** Reflects every controller route with its access rule. Used by the authorization audit test and to generate docs/api-inventory.json. */
-export function listRoutes(app: INestApplication): RouteInfo[] {
+export function listRoutes(app: INestApplication): RouteInfo[] { return listRoutesFrom(app.get(ModulesContainer)); }
+export function listRoutesFrom(container: ModulesContainer): RouteInfo[] {
   const out: RouteInfo[] = [];
-  for (const mod of app.get(ModulesContainer).values()) {
+  for (const mod of container.values()) {
     for (const w of mod.controllers.values()) {
       const proto = w.metatype?.prototype; if (!proto) continue;
       const base = Reflect.getMetadata('path', w.metatype!) ?? '';

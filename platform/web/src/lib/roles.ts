@@ -13,6 +13,8 @@ export const AREAS = {
   users: { title: 'People', blurb: 'Find people, create accounts, change roles, suspend or unlock, reset passwords.', view: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR', 'SUPPORT_OPERATOR'], act: ['SUPER_ADMIN', 'PLATFORM_ADMIN'] },
   privacy: { title: 'Privacy', blurb: "Decide people's requests to see, correct or erase their data; run retention.", view: ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'SUPPORT_OPERATOR', 'AUDITOR'], act: ['PLATFORM_ADMIN', 'SUPER_ADMIN'] },
   examsetup: { title: 'Exam set-up', blurb: 'Define and publish exams, keep the question bank, schedule sittings, grant accommodations.', view: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN', 'ACADEMIC_ADMIN', 'AUDITOR'], act: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'] },
+  entitlements: { title: 'Entitlements', blurb: 'Find a learner\'s access, pause or extend it, revoke it, or unlock a topic.', view: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'SUPPORT_OPERATOR', 'AUDITOR'], act: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'SUPPORT_OPERATOR'] },
+  reports: { title: 'Reports', blurb: 'Progress, exams, grading, doubts and tutor use, with CSV export for progress.', view: ['ACADEMIC_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT_OPERATOR', 'AUDITOR', 'SUPER_ADMIN', 'ASSESSMENT_ADMIN', 'EXAM_ADMIN', 'FACULTY_REVIEWER'] },
   gradechanges: { title: 'Grade changes', blurb: 'Change a grade with two people: one proposes, a different one approves.', view: ['ACADEMIC_ADMIN', 'ASSESSMENT_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN'], act: ['ACADEMIC_ADMIN', 'ASSESSMENT_ADMIN'] },
   labs: { title: 'Lab desk', blurb: 'Plan sessions, show the check-in code, record attendance.', view: ['LAB_COORDINATOR', 'ACADEMIC_ADMIN'] },
   operations: { title: 'Operations', blurb: 'Integrity checks, audit trail, platform settings.', view: ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR', 'ACADEMIC_ADMIN', 'EXAM_ADMIN', 'ASSESSMENT_ADMIN'] },
@@ -30,3 +32,7 @@ export const USERS = { write: ['SUPER_ADMIN', 'PLATFORM_ADMIN'], mfaReset: ['SUP
 export const PRIVACY = { decide: ['PLATFORM_ADMIN', 'SUPER_ADMIN'], file: ['SUPPORT_OPERATOR', 'PLATFORM_ADMIN', 'SUPER_ADMIN'] } as const;
 export const EXAMSETUP = { author: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'], publish: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'], bank: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'], accommodate: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'], override: ['ASSESSMENT_ADMIN', 'ACADEMIC_ADMIN'], create: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'] } as const;
 export const GRADECHANGES = { act: ['ACADEMIC_ADMIN', 'ASSESSMENT_ADMIN'] } as const;
+/** Entitlement actions, one list per server rule (entitlements.ts, learning.ts). */
+export const ENTITLEMENTS = { pause: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'SUPPORT_OPERATOR'], extend: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN'], revoke: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN'], override: ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN'] } as const;
+export const REPORTS = { progress: ['ACADEMIC_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT_OPERATOR', 'AUDITOR'], exams: ['ACADEMIC_ADMIN', 'ASSESSMENT_ADMIN', 'AUDITOR', 'EXAM_ADMIN', 'FACULTY_REVIEWER', 'PLATFORM_ADMIN'], grading: ['ACADEMIC_ADMIN', 'ASSESSMENT_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN'],
+  doubts: ['ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'SUPPORT_OPERATOR'], tutor: ['ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'SUPPORT_OPERATOR'] } as const;

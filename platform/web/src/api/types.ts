@@ -66,7 +66,7 @@ export type RequestType = 'EXPORT' | 'CORRECTION' | 'ERASURE';
 export interface PrivacyRequest { id: string; type: RequestType | string; status: string; requestedAt: string; completedAt?: string | null; exportExpiresAt?: string | null; decisionReason?: string | null }
 export interface Prefs {
   captions?: boolean; transcriptByDefault?: boolean; audioDescription?: boolean; highContrast?: boolean; reducedMotion?: boolean; lowBandwidth?: boolean; largeTargets?: boolean;
-  playbackSpeed?: number; fontScale?: number; language?: 'en' | 'hi'; captionLanguage?: 'en' | 'hi'; textSpacing?: 'normal' | 'wide' | 'wider';
+  playbackSpeed?: number; fontScale?: number; language?: 'en' | 'hi'; captionLanguage?: 'en' | 'hi'; captionSize?: 'normal' | 'large' | 'larger'; captionBackground?: boolean; textSpacing?: 'normal' | 'wide' | 'wider';
 }
 export interface SessionInfo { id: string; current: boolean; method: string; mfa: boolean; device?: string; createdAt: string; lastSeenAt?: string; expiresAt: string }
 
@@ -196,3 +196,19 @@ export interface GradingReportData {
   scoreDistribution: { range: string; count: number }[]; avgAiConfidence: number | null; graderVersions: Record<string, number>; costUsd: number;
   backlog: { pendingAi: number; oldestPendingMinutes: number; openModeration: number; oldestModerationMinutes: number };
 }
+
+// ---- staff: entitlements and reports ----
+export interface EntitlementRow extends EntitlementSummary { duration: string; pauseCount: number; pausedDays: number; pausedAt: string | null; learner: { id: string; name: string; email: string }; programme: { code: string; title: string }; versionNumber: number }
+export interface EntitlementHistory { seq: number; action: string; actorId: string | null; actorRole: string | null; reason: string | null; createdAt: string }
+export interface EntitlementDetailData extends EntitlementRow {
+  learner: { id: string; name: string; email: string; status?: string };
+  pauses: { id: string; startedAt: string; endedAt: string | null; reason: string | null }[];
+  exceptions: { id: string; extendDays: number; reason: string; createdAt: string }[];
+  overrides: { id: string; topicId: string; type: string; value: number; reason: string; createdAt: string }[];
+  history: EntitlementHistory[];
+}
+export interface OutlineTopic { id: string; title: string; position: number; mandatory: boolean }
+export interface VersionOutline { id: string; modules: { id: string; title: string; position: number; topics: OutlineTopic[] }[] }
+export interface ProgressRow { learner: string; email: string; cohort: string; status: string; completedTopics: number; totalTopics: number; percent: number; quizAttempts: number; lastActivity: string; daysIdle: number; atRisk: boolean }
+export interface ProgressReportData { summary: { learners: number; avgPercent: number; atRisk: number; scope: string }; rows: ProgressRow[]; nextCursor: string | null }
+export interface TutorReportData { since: string; questions: number; byStatus: Record<string, number>; groundedAnswerRate: number; refusalRate: number; helpfulRate: number | null; escalatedTickets: number; topUnresolvedTerms: { term: string; count: number }[]; topUnresolvedTopics: { topicId?: string; title?: string; count?: number }[] }

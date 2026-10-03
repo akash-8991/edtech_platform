@@ -8,6 +8,7 @@ import hashlib, json, shutil, subprocess
 from pathlib import Path
 from manifest import Manifest, Scene
 from qa import run_qa
+from captions import transcript, webvtt
 
 
 def _h(*a) -> str:
@@ -35,6 +36,9 @@ def build(m: Manifest, out_dir: Path, video, tts, force_qa: bool = False) -> dic
                 ledger.append({"scene": s.id, "kind": "audio", "lang": lang, "file": aclip.name, **meta})
             parts.append((vclip, aclip))
         masters[lang] = _compose(parts, out_dir / f"{m.topic_id}.{lang}.master.mp4")
+    for lang in m.languages:  # captions and transcript need no video tools, so they are always produced
+        (out_dir / f"{m.topic_id}.{lang}.captions.vtt").write_text(webvtt(m, lang), encoding="utf-8")
+        (out_dir / f"{m.topic_id}.{lang}.transcript.txt").write_text(transcript(m, lang), encoding="utf-8")
     (out_dir / "provenance.json").write_text(json.dumps(ledger, indent=2))
     return {"masters": masters, "qa_issues": issues, "assets": len(ledger)}
 

@@ -63,7 +63,8 @@ Generate each with `openssl rand -base64 48` (secrets) or `openssl rand -hex 32`
 |---|---|
 | `OIDC_ISSUER` | Identity provider issuer URL (discovery is read from `<issuer>/.well-known/openid-configuration`). |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | OAuth client of this platform at the provider. |
-| `OIDC_REDIRECT_URI` | Must equal the callback registered at the provider: `https://<api-host>/v1/auth/sso/callback`. |
+| `OIDC_REDIRECT_URI` | Must equal the callback registered at the provider. For the web app that is **`https://<web-host>/sso/callback`** (the page hands the one-time code to `GET /v1/auth/sso/callback` on the API). A non-browser client may register `https://<api-host>/v1/auth/sso/callback` instead. |
+| `OIDC_LABEL` | Name on the sign-in button: "Sign in with <label>" (default "your institute account"). |
 | `OIDC_MFA_AMR` | Comma list of `amr` values that count as multi-factor (default `mfa,otp,hwk`); staff sign-in is refused without one. |
 
 ## Shared state, storage, scanning
@@ -132,6 +133,11 @@ Check connectivity and cost after setting keys: `cd platform/api && npm run ai:s
 | `POLICY_MAX_PAUSED_DAYS` | `60` | Total paused days allowed. |
 | `POLICY_PAUSE_NOTICE_DAYS` | `0` | Notice required before a pause. |
 | `OFFLINE_DAYS` | `7` | Offline licence lifetime. |
+| `HLS_TTL_MIN` | `180` | How long one playback's adaptive-stream tokens last (minutes). |
+| `FFMPEG_BIN`, `FFPROBE_BIN` | `ffmpeg`, `ffprobe` | Media tools the worker runs for adaptive builds. |
+| `TRANSCODE_TIMEOUT_MIN` | `90` | Time limit per ffmpeg/ffprobe call. |
+| `CONTRACT_ENFORCE` | `0` (tests: `1`) | Validate every response and request body against its API contract (tests only; no cost in production). |
+| `OPENAPI_RECORD` | unset | File to append observed API traffic to, for `npm run contracts:infer`. |
 | `STRUCT_CACHE_MS` | `600000` | Cache of published course structure (published versions are immutable). |
 
 ## Limits, jobs and maintenance

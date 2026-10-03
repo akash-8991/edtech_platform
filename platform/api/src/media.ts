@@ -7,11 +7,13 @@ import { ProgressionService } from './learning';
 import { StorageService } from './storage';
 import { hasLearningAccess } from './domain/entitlement';
 import { masterKeys, mediaSecrets, openWith, sealWith, verifyAny } from './security/keyring';
+import { HLS_MIME, childKey, rewritePlaylist, segmentMime } from './media/abr';
 import { decryptBuffer, encryptBuffer, signToken, unwrapWithMaster, verifyToken, wrapForDevice, wrapWithMaster } from './domain/media-crypto';
 
 const secret = () => mediaSecrets().current;
 const MIME: Record<string, string> = { master: 'video/mp4', '720p': 'video/mp4', '360p': 'video/mp4', audio: 'audio/mpeg', transcript: 'text/plain; charset=utf-8', captions: 'text/vtt; charset=utf-8', slides: 'application/pdf' };
 const OFFLINE_LABELS = ['360p', 'master']; // smallest first: devices on low bandwidth
+const HLS_TTL = () => Number(process.env.HLS_TTL_MIN ?? 180) * 60_000; // a lesson's segments are fetched over its whole length; children never outlive the master token
 const STREAM_TTL = 10 * 60_000, OFFLINE_DAYS = Number(process.env.OFFLINE_DAYS ?? 7), MAX_DEVICES = 3;
 
 const learnerAsset = (a: any) => ({ id: a.id, language: a.language, durationSec: a.durationSec });
@@ -39,7 +41,9 @@ export class MediaController {
     if (!asset) throw new NotFoundException('no video for topic');
     const f = asset.files as Record<string, { key: string }>;
     const order = mode === 'low' ? ['audio', 'transcript', 'captions', '360p', 'slides'] : ['720p', '360p', 'master', 'audio', 'transcript', 'captions', 'slides'];
-    const streams = order.filter((l) => f[l]).map((l) => ({ label: l, mime: MIME[l], url: this.url(f[l].key, a.id) }));
+    const streams: { label: string; mime: string; url: string }[] = order.filter((l) => f[l]).map((l) => ({ label: l, mime: MIME[l], url: this.url(f[l].key, a.id) }));
+    // Adaptive ladder first (normal mode only): the player picks a rung from measured bandwidth; the single-file renditions stay as fallback.
+    if (mode !== 'low' && f.hls?.key) streams.unshift({ label: 'hls', mime: HLS_MIME, url: `/v1/media/hls/${signToken(secret(), { k: f.hls.key, exp: Date.now() + HLS_TTL(), sub: a.id })}` });
     if (!streams.length) throw new NotFoundException('no renditions');
     return { assetId: asset.id, language: asset.language, durationSec: asset.durationSec, mode: mode === 'low' ? 'low' : 'normal', streams,
       interactions: publicInteractions(asset.interactions as any[]), resume: { sec: row.p?.resumeAssetId === asset.id ? (row.p?.resumeSec ?? 0) : 0 } };
@@ -64,6 +68,24 @@ export class MediaController {
     }
     res.setHeader('Content-Length', size);
     return (await this.storage.stream(c.k)).pipe(res);
+  }
+
+  /** Adaptive playlist. Every reference inside is re-signed with the same expiry, so the player needs no credentials and nothing outlives the master token. */
+  @Public() @Get('media/hls/:token')
+  async hls(@Param('token') token: string, @Res() res: any) {
+    const c = verifyAny(mediaSecrets().all, token);
+    if (!c || !c.k.endsWith('.m3u8') || !c.k.startsWith('hls/')) throw new UnauthorizedException();
+    let text: string;
+    try { text = (await this.storage.get(c.k)).toString('utf8'); } catch { throw new NotFoundException(); }
+    let body: string;
+    try {
+      body = rewritePlaylist(text, (uri) => {
+        const k = childKey(c.k, uri);
+        return k.endsWith('.m3u8') ? `/v1/media/hls/${signToken(secret(), { k, exp: c.exp, sub: c.sub })}` : `/v1/media/stream/${signToken(secret(), { k, exp: c.exp, sub: c.sub, n: segmentMime(k) })}`;
+      });
+    } catch { throw new BadRequestException('playlist references are not allowed'); }
+    res.setHeader('Content-Type', HLS_MIME); res.setHeader('Cache-Control', 'private, no-store');
+    return res.end(body);
   }
 
   // ---- Offline ---------------------------------------------------------------------------------------------

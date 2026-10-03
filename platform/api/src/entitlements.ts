@@ -1,4 +1,5 @@
-import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Injectable, NotFoundException, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Injectable, NotFoundException, Param, Post, Query, Res } from '@nestjs/common';
+import { paged } from './common/page';
 import { PrismaService } from './common/prisma.service';
 import { Actor, CurrentActor, Roles } from './common/auth';
 import { need } from './common/http';
@@ -7,6 +8,8 @@ import { canPause, effectiveStatus, hasLearningAccess, PolicyError, resumeResult
 import { defaultPolicy } from './domain/policy';
 
 const STAFF = ['PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'SUPPORT_OPERATOR'];
+const ADMIN_READ = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'ACADEMIC_ADMIN', 'SUPPORT_OPERATOR', 'AUDITOR'];
+const STATUSES = ['ACTIVE', 'PAUSED', 'EXPIRED', 'REVOKED'];
 
 @Injectable()
 export class EntitlementsService {
@@ -98,6 +101,30 @@ export class EntitlementsController {
   revoke(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) {
     need(b, { reason: 'string' });
     return this.svc.revoke(id, a, b.reason);
+  }
+
+  /** Staff search: by learner name or email, programme code and status. Cursor-paged. */
+  @Get('admin/entitlements') @Roles(...ADMIN_READ)
+  async search(@Res({ passthrough: true }) res: any, @Query('q') q?: string, @Query('status') status?: string, @Query('programme') programme?: string, @Query('limit') limit?: string, @Query('cursor') cursor?: string) {
+    if (status && !STATUSES.includes(status)) throw new BadRequestException({ error: 'validation_failed', fields: ['status'] });
+    const term = q?.trim().slice(0, 100);
+    const where: any = { ...(status && { status }), ...(programme && { version: { programme: { code: programme } } }),
+      ...(term && { learner: { OR: [{ email: { contains: term, mode: 'insensitive' } }, { name: { contains: term, mode: 'insensitive' } }] } }) };
+    const rows = await paged(res, limit, cursor, (a) => this.prisma.entitlement.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], ...a,
+      include: { learner: { select: { id: true, name: true, email: true } }, version: { select: { version: true, programme: { select: { code: true, title: true } } } } } }));
+    return rows.map(({ learner, version, ...e }) => ({ ...view(e), learner, programme: version.programme, versionNumber: version.version }));
+  }
+
+  /** One entitlement with everything that changed it: pauses, extensions, progression overrides and its audit trail. */
+  @Get('admin/entitlements/:id') @Roles(...ADMIN_READ)
+  async detail(@Param('id') id: string) {
+    const e = await this.prisma.entitlement.findUnique({ where: { id }, include: { learner: { select: { id: true, name: true, email: true, status: true } }, version: { select: { version: true, programme: { select: { code: true, title: true } } } },
+      pauses: { orderBy: { startedAt: 'desc' } }, exceptions: { orderBy: { createdAt: 'desc' } } } });
+    if (!e) throw new NotFoundException();
+    const { learner, version, pauses, exceptions, ...rest } = e;
+    const overrides = await this.prisma.progressionOverride.findMany({ where: { entitlementId: id }, orderBy: { createdAt: 'desc' } });
+    const history = await this.prisma.auditEvent.findMany({ where: { objectType: 'Entitlement', objectId: id }, orderBy: { seq: 'desc' }, take: 50, select: { seq: true, action: true, actorId: true, actorRole: true, reason: true, createdAt: true } });
+    return { ...view(rest), learner, programme: version.programme, versionNumber: version.version, pauses, exceptions, overrides, history: history.map((h) => ({ ...h, seq: Number(h.seq) })) };
   }
 
   // Server-side access decision; clients never decide (build prompt).

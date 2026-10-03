@@ -1,4 +1,6 @@
 import type { Tokens } from './types';
+import { tr } from '../lib/i18n';
+import { setReachable } from '../lib/offline/network';
 
 export type LoginResult = { status: 'ok'; roles: string[] } | { status: 'mfa'; mfaToken: string } | { status: 'enroll'; enrollmentToken: string };
 
@@ -25,6 +27,7 @@ export class ApiClient {
   private onLogout = new Set<Listener>();
   constructor(private base = (import.meta as any).env?.VITE_API_URL ?? '', private fetchImpl: typeof fetch = (...a) => fetch(...a)) {}
 
+  get baseUrl() { return this.base; }
   get signedIn() { return !!this.access; }
   get hasRefreshToken() { return !!sessionStorage.getItem(RT_KEY); }
   subscribeLogout(fn: Listener) { this.onLogout.add(fn); return () => { this.onLogout.delete(fn); }; }
@@ -39,10 +42,10 @@ export class ApiClient {
     const rt = sessionStorage.getItem(RT_KEY); if (!rt) return false;
     this.refreshing ??= (async () => {
       try {
-        const r = await this.fetchImpl(`${this.base}/v1/auth/refresh`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: rt }) });
+        const r = await this.fetchImpl(`${this.base}/v1/auth/refresh`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: rt }) }); setReachable(true);
         if (!r.ok) return false;
         const t = (await r.json()) as Tokens; this.setTokens(t); return true;
-      } catch { return false; } finally { setTimeout(() => { this.refreshing = null; }, 0); }
+      } catch { setReachable(false); return false; } finally { setTimeout(() => { this.refreshing = null; }, 0); }
     })();
     const ok = await this.refreshing; if (!ok) { this.access = null; sessionStorage.removeItem(RT_KEY); }
     return ok;
@@ -53,10 +56,12 @@ export class ApiClient {
     if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
     if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey;
     if (opts.auth !== false && this.access) headers.Authorization = `Bearer ${this.access}`;
-    const res = await this.fetchImpl(`${this.base}${path}`, { method, headers, body: opts.raw ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined) });
+    let res: Response;
+    try { res = await this.fetchImpl(`${this.base}${path}`, { method, headers, body: opts.raw ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined) }); } catch (e) { setReachable(false); throw e; } // no answer at all: offline, or the server is down
+    setReachable(true);
     if (res.status === 401 && opts.auth !== false && !opts._retried) {
       if (await this.refresh()) return this.request<T>(method, path, { ...opts, _retried: true });
-      this.clear(); throw new ApiError(401, { error: 'unauthorized', message: 'Your session has ended. Please sign in again.' });
+      this.clear(); throw new ApiError(401, { error: 'unauthorized', message: tr('Your session has ended. Please sign in again.') });
     }
     if (opts.blob && res.ok) return (await res.blob()) as T;
     if (opts.withHeaders && res.ok) { const t = await res.text(); return { body: t ? JSON.parse(t) : null, headers: res.headers } as T; }
@@ -86,6 +91,10 @@ export class ApiClient {
   /** Enrolment calls authenticate with the short-lived enrolment token from sign-in, not an access token. */
   enrollStart(token: string) { return this.request<{ secret: string; otpauthUri: string }>('POST', '/v1/auth/mfa/enroll/start', { body: {}, auth: false, headers: { Authorization: `Bearer ${token}` } }); }
   async enrollConfirm(token: string, code: string) { const r = await this.request<Partial<Tokens> & { enabled: boolean; backupCodes: string[] }>('POST', '/v1/auth/mfa/enroll/confirm', { body: { code: code.trim() }, auth: false, headers: { Authorization: `Bearer ${token}` } }); if (r.accessToken && r.refreshToken) this.setTokens({ accessToken: r.accessToken, refreshToken: r.refreshToken }); return r; }
+  // ---- single sign-on (OIDC authorization code + PKCE; the server holds the secrets and verifies the identity token) ----
+  ssoConfig() { return this.request<{ enabled: boolean; label?: string }>('GET', '/v1/auth/sso/config', { auth: false }); }
+  ssoStart() { return this.request<{ authorizationUrl: string }>('GET', '/v1/auth/sso/start', { auth: false }); }
+  async ssoFinish(code: string, state: string) { const r = await this.request<Tokens>('GET', `/v1/auth/sso/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`, { auth: false }); this.setTokens(r); return r; }
   async logout() { try { await this.request('POST', '/v1/auth/logout', { body: {} }); } catch { /* already gone */ } this.clear(); }
 }
 
@@ -94,12 +103,12 @@ export const api = new ApiClient();
 /** A friendly message for an error shown to a learner. Never exposes raw server text for 5xx. */
 export function messageFor(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.status === 0 || e.status >= 500) return 'Something went wrong on our side. Please try again in a moment.';
-    if (e.status === 429) return 'Too many requests. Please wait a few seconds and try again.';
-    if (e.code === 'consent_required') return 'You need to accept the notice for this feature first.';
-    if (e.status === 403) return typeof e.body?.message === 'string' ? e.body.message : 'This is not available to you yet.';
+    if (e.status === 0 || e.status >= 500) return tr('Something went wrong on our side. Please try again in a moment.');
+    if (e.status === 429) return tr('Too many requests. Please wait a few seconds and try again.');
+    if (e.code === 'consent_required') return tr('You need to accept the notice for this feature first.');
+    if (e.status === 403) return typeof e.body?.message === 'string' ? e.body.message : tr('This is not available to you yet.');
     if (typeof e.body?.message === 'string') return e.body.message;
     if (Array.isArray(e.body?.message)) return e.body.message.join(', ');
   }
-  return 'Could not reach the server. Check your connection and try again.';
+  return tr('Could not reach the server. Check your connection and try again.');
 }

@@ -2,14 +2,15 @@ import { useRef, useState } from 'react';
 import { api } from '../api/client';
 import { ErrorNote } from './ui';
 import { idempotencyKey } from '../lib/format';
+import { useT } from '../lib/i18n';
 
 const ALLOWED = '.pdf,.txt,.md,.png,.jpg,.jpeg,.zip,.ipynb,.py,.csv,.doc,.docx,.mp4,.mp3';
 
 export function Assignment({ topicId, instructions, submitted, onDone }: { topicId: string; instructions?: string; submitted: boolean; onDone: () => void }) {
-  const [text, setText] = useState(''); const [file, setFile] = useState<File | null>(null);
+  const t = useT(); const [text, setText] = useState(''); const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<unknown>(null); const [busy, setBusy] = useState(false); const [done, setDone] = useState(submitted);
   const key = useRef(idempotencyKey());
-  if (done) return <p className="note ok" role="status">Submitted. Your work is recorded and will be evaluated; you will be notified when there is feedback.</p>;
+  if (done) return <p className="note ok" role="status">{t('Submitted. Your work is recorded and will be evaluated; you will be notified when there is feedback.')}</p>;
   const submit = async () => {
     setBusy(true); setError(null);
     try {
@@ -21,13 +22,13 @@ export function Assignment({ topicId, instructions, submitted, onDone }: { topic
   return (
     <form onSubmit={(e) => { e.preventDefault(); void submit(); }}>
       {instructions && <p>{instructions}</p>}
-      <label htmlFor="as-text">Your answer</label>
+      <label htmlFor="as-text">{t('Your answer')}</label>
       <textarea id="as-text" rows={6} value={text} onChange={(e) => setText(e.target.value)} />
-      <label htmlFor="as-file">Attach a file (optional)</label>
+      <label htmlFor="as-file">{t('Attach a file (optional)')}</label>
       <input id="as-file" type="file" accept={ALLOWED} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
       <ErrorNote error={error} />
-      <button type="submit" disabled={busy || (!text.trim() && !file)}>{busy ? 'Submitting…' : 'Submit assignment'}</button>
-      <p className="muted">You can submit once the quiz is passed. Submissions cannot be edited afterwards.</p>
+      <button type="submit" disabled={busy || (!text.trim() && !file)}>{busy ? t('Submitting…') : t('Submit assignment')}</button>
+      <p className="muted">{t('You can submit once the quiz is passed. Submissions cannot be edited afterwards.')}</p>
     </form>
   );
 }

@@ -92,3 +92,92 @@ input[type=checkbox], input[type=radio] { width: 24px; height: 24px; margin: 0 6
 main:focus { outline: none; } /* main is a focus target after a page change, not a control: the page content is the indicator */
 input[type=checkbox], input[type=radio] { min-width: 24px; min-height: 24px; flex: 0 0 24px; }
 .card-head h2 a { display: inline-block; min-height: 24px; }
+
+/* ===================================================================================================================================================
+   Responsive layout: phone (≤ 599px), tablet (600–1023px), laptop/desktop (≥ 1024px), large screens (≥ 1600px), touch or mouse, either orientation.
+   Mobile first where it matters: nothing may scroll sideways, targets are finger-sized on touch screens, and the notch and home bar are respected.
+   =================================================================================================================================================== */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { min-height: 100vh; min-height: 100dvh; overflow-wrap: break-word; }
+img, video, canvas, svg { max-width: 100%; height: auto; }
+.card, .card-head h2, li, dd, blockquote { overflow-wrap: anywhere; }
+th { white-space: nowrap; } td .muted, td code, td .mono { overflow-wrap: anywhere; } /* table headings never break mid-word: a wide table scrolls inside its card instead */
+.card-body { margin: -3px; padding: 3px; overflow-x: auto; } /* wide tables scroll inside their card, not the page; the padding keeps focus rings from being clipped */
+.scroll { overflow-x: auto; margin: -3px; padding: 3px; }
+table { max-width: 100%; }
+main { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: max(48px, calc(24px + env(safe-area-inset-bottom))); }
+main.wide { max-width: 1240px; }
+.top { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-top: max(10px, env(safe-area-inset-top)); }
+.top .top-end { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.lang-select { width: auto; padding: 4px 8px; min-height: 36px; }
+.lang-switch { display: flex; gap: 12px; justify-content: flex-end; margin: 0; }
+.lang-switch button[aria-pressed=true] { font-weight: 700; text-decoration: none; }
+.menu-toggle { display: none; margin: 0; padding: 6px 14px; background: transparent; color: inherit; border: 2px solid currentColor; min-height: 44px; }
+.staff-top .menu-toggle { color: #fff; }
+.offline-bar { margin: 0; padding: 8px max(16px, env(safe-area-inset-left)); background: var(--warn-bg); color: var(--warn); border-bottom: 1px solid var(--border); text-align: center; }
+.download { margin-top: 12px; } .download .bar { margin-top: 8px; }
+.scanner { display: grid; gap: 8px; justify-items: start; margin: 8px 0; }
+.scan-video { width: min(100%, 420px); aspect-ratio: 1; object-fit: cover; background: #000; border-radius: 10px; }
+.player { max-height: 70vh; max-height: 70dvh; }
+.modal { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.modal-body { width: min(560px, 100%); max-height: 90vh; max-height: 90dvh; overflow: auto; }
+/* captions follow the learner's size and background choices */
+html[data-caption-size=large] video::cue { font-size: 150%; } html[data-caption-size=larger] video::cue { font-size: 200%; }
+html[data-caption-bg=none] video::cue { background: transparent; text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 6px #000; }
+
+/* phones */
+@media (max-width: 759px) {
+  .menu-toggle { display: inline-flex; align-items: center; margin-left: auto; }
+  .top { gap: 8px 12px; }
+  .top .brand { flex: 0 1 auto; }
+  .top nav { display: none; order: 5; flex-basis: 100%; flex-direction: column; gap: 0; }
+  .top nav.open { display: flex; }
+  .top nav a { min-height: 48px; padding: 8px 4px; border-bottom: 1px solid var(--border); width: 100%; }
+  .top nav a.active { border-bottom-color: var(--accent); }
+  .staff-top nav a { border-bottom-color: rgba(255, 255, 255, .25); } .staff-top nav a.active { border-bottom-color: #fff; }
+  .top .top-end { order: 6; flex-basis: 100%; justify-content: space-between; }
+  h1 { font-size: 1.35rem; } main { padding-top: 4px; }
+  .card { padding: 12px; margin: 10px 0; border-radius: 8px; }
+  .card-head { align-items: flex-start; }
+  .choices > button, .choices > a.button, .exam-bar button { flex: 1 1 100%; }
+  .exam > .exam-bar { gap: 6px 10px; padding: 8px 12px; } .timer { font-size: 1.25rem; }
+  .palette { gap: 4px; } .pal { min-width: 44px; min-height: 44px; }
+  .row { align-items: flex-start; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .cols { gap: 12px; }
+  .auth { margin: 4vh auto; } .auth form { padding: 12px; }
+  input[type=text], input[type=email], input[type=password], input[type=number], input[type=search], input[type=datetime-local], textarea, select { font-size: 16px; } /* stops iOS from zooming into the field */
+  table { font-size: .92rem; } th, td { padding: 6px 8px; } td { min-width: 5.5em; }
+  form.choices { flex-direction: column; align-items: stretch; gap: 6px; }
+  form.choices > input, form.choices > select, form.choices > button { width: 100% !important; flex: none; }
+  form.choices > label { margin: 6px 0 0; }
+}
+/* tablets: two columns where there is room */
+@media (min-width: 600px) and (max-width: 1023px) {
+  main { max-width: 760px; } main.wide { max-width: 100%; }
+  .stats { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 760px) { .top nav { display: flex; } }
+/* laptops and desktops */
+@media (min-width: 1024px) {
+  main { max-width: 920px; }
+  main.wide { max-width: 1240px; }
+  .top { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+  .player { max-height: 62vh; }
+}
+@media (min-width: 1600px) { main { max-width: 1040px; } main.wide { max-width: 1480px; } html { font-size: calc(106.25% * var(--font-scale, 1)); } }
+/* touch screens: finger-sized targets (WCAG 2.5.8 asks for 24px; 44px is what a thumb needs) */
+@media (pointer: coarse) {
+  button, a.button, select, input:not([type=checkbox]):not([type=radio]):not([type=range]), summary { min-height: 44px; }
+  button.link { min-height: 44px; padding: 10px 8px; }
+  .top nav a, nav[aria-label=Main] a { min-height: 44px; }
+  .choice, label.inline, label.switch { min-height: 44px; align-items: center; }
+  input[type=range] { height: 32px; }
+}
+/* short landscape screens (phones on their side): give the content the height */
+@media (max-height: 480px) and (orientation: landscape) {
+  .top { padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: 4px; } h1 { margin: .4rem 0; }
+  .player { max-height: 85vh; max-height: 85dvh; } .exam > .exam-bar { position: static; }
+  .modal-body { max-height: 96vh; max-height: 96dvh; }
+}
+@media print { .top, .menu-toggle, .offline-bar, .skip { display: none !important; } main { max-width: none; } body { background: #fff; } }

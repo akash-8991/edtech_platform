@@ -1,34 +1,39 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route } from 'react-router-dom';
-import StaffShell from './StaffShell';
-import StaffHome from './StaffHome';
-import Admissions from './Admissions';
-import LabDesk from './LabDesk';
-import Operations from './Operations';
-import Moderation from './Moderation';
-import ModerationCase from './ModerationCase';
-import ExamOps from './ExamOps';
-import ExamReport from './ExamReport';
-import ExamCase from './ExamCase';
-import Content from './Content';
-import ContentVersion from './ContentVersion';
-import Doubts from './Doubts';
-import DoubtTicket from './DoubtTicket';
-import Users from './Users';
-import UserDetail from './UserDetail';
-import PrivacyDesk from './PrivacyDesk';
-import PrivacyRequest from './PrivacyRequest';
-import ExamSetup from './ExamSetup';
-import ExamNew from './ExamNew';
-import ExamDefinition from './ExamDefinition';
-import GradeChanges from './GradeChanges';
-import OverrideCase from './OverrideCase';
-import SubmissionHistory from './SubmissionHistory';
-import Account from '../pages/Account';
+import { Loading } from '../components/ui';
+const StaffShell = lazy(() => import('./StaffShell'));
+const StaffHome = lazy(() => import('./StaffHome'));
+const Admissions = lazy(() => import('./Admissions'));
+const LabDesk = lazy(() => import('./LabDesk'));
+const Operations = lazy(() => import('./Operations'));
+const Moderation = lazy(() => import('./Moderation'));
+const ModerationCase = lazy(() => import('./ModerationCase'));
+const ExamOps = lazy(() => import('./ExamOps'));
+const ExamReport = lazy(() => import('./ExamReport'));
+const ExamCase = lazy(() => import('./ExamCase'));
+const Content = lazy(() => import('./Content'));
+const ContentVersion = lazy(() => import('./ContentVersion'));
+const Doubts = lazy(() => import('./Doubts'));
+const DoubtTicket = lazy(() => import('./DoubtTicket'));
+const Users = lazy(() => import('./Users'));
+const UserDetail = lazy(() => import('./UserDetail'));
+const PrivacyDesk = lazy(() => import('./PrivacyDesk'));
+const PrivacyRequest = lazy(() => import('./PrivacyRequest'));
+const ExamSetup = lazy(() => import('./ExamSetup'));
+const ExamNew = lazy(() => import('./ExamNew'));
+const ExamDefinition = lazy(() => import('./ExamDefinition'));
+const GradeChanges = lazy(() => import('./GradeChanges'));
+const OverrideCase = lazy(() => import('./OverrideCase'));
+const SubmissionHistory = lazy(() => import('./SubmissionHistory'));
+const Entitlements = lazy(() => import('./Entitlements'));
+const EntitlementDetail = lazy(() => import('./EntitlementDetail'));
+const Reports = lazy(() => import('./Reports'));
+const Account = lazy(() => import('../pages/Account'));
 
 /** Everything under /staff. Each page also checks the role (and the API checks it again on every call). */
 export default function StaffRoutes() {
   return (
-    <Route path="staff" element={<StaffShell />}>
+    <Route path="staff" element={<Suspense fallback={<Loading />}><StaffShell /></Suspense>}>
       <Route index element={<StaffHome />} />
       <Route path="admissions" element={<Admissions />} />
       <Route path="moderation" element={<Moderation />} />
@@ -50,6 +55,9 @@ export default function StaffRoutes() {
       <Route path="gradechanges" element={<GradeChanges />} />
       <Route path="gradechanges/overrides/:overrideId" element={<OverrideCase />} />
       <Route path="gradechanges/submissions/:submissionId" element={<SubmissionHistory />} />
+      <Route path="entitlements" element={<Entitlements />} />
+      <Route path="entitlements/:entitlementId" element={<EntitlementDetail />} />
+      <Route path="reports" element={<Reports />} />
       <Route path="labs" element={<LabDesk />} />
       <Route path="operations" element={<Operations />} />
       <Route path="account" element={<Account />} />

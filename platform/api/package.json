@@ -18,7 +18,9 @@
     "start:worker": "node dist/src/worker.js",
     "test:cov": "jest --coverage && ts-node scripts/coverage-report.ts",
     "user:create": "ts-node scripts/create-user.ts",
-    "walkthrough": "bash scripts/walkthrough.sh"
+    "walkthrough": "bash scripts/walkthrough.sh",
+    "contracts:infer": "ts-node scripts/infer-contracts.ts",
+    "openapi": "ts-node scripts/gen-openapi.ts"
   },
   "jest": {
     "preset": "ts-jest",
@@ -83,6 +85,8 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.6.4",
     "@types/supertest": "^7.2.1",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "jest": "^30.5.2",
     "js-yaml": "^5.4.2",
     "prisma": "^6.19.3",

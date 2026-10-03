@@ -4,10 +4,11 @@ import { api, ApiError } from '../api/client';
 import type { CheckInResult, ExamInfo } from '../api/types';
 import { collectDeviceReport } from '../lib/device';
 import { Badge, Card, ErrorNote, Hold } from '../components/ui';
+import { useT } from '../lib/i18n';
 
 /** Consent, device check and identity, then wait until the exam is READY (identity can be confirmed by the proctoring provider or an invigilator). */
 export default function CheckIn() {
-  const { examId = '', sessionId = '' } = useParams(); const nav = useNavigate();
+  const t = useT(); const { examId = '', sessionId = '' } = useParams(); const nav = useNavigate();
   const [exam, setExam] = useState<ExamInfo | null>(null); const [error, setError] = useState<unknown>(null);
   const [agree, setAgree] = useState(false); const [busy, setBusy] = useState(false); const [res, setRes] = useState<CheckInResult | null>(null); const [status, setStatus] = useState<string>('');
   const poll = useRef<ReturnType<typeof setInterval>>();
@@ -31,33 +32,33 @@ export default function CheckIn() {
       const device = await collectDeviceReport(needs);
       const r = await api.post<CheckInResult>(`/v1/exam-sessions/${sessionId}/check-in`, { consent: true, consentHash: exam.consent.hash, device });
       setRes(r); setStatus(r.status); if (r.status !== 'READY') waitForReady();
-    } catch (e) { setError(e instanceof ApiError && e.code === 'consent_required' ? new ApiError(400, { message: 'Consent is required to take this exam.' }) : e); } finally { setBusy(false); }
+    } catch (e) { setError(e instanceof ApiError && e.code === 'consent_required' ? new ApiError(400, { message: t('Consent is required to take this exam.') }) : e); } finally { setBusy(false); }
   };
 
-  if (!exam) return <Hold title="Exam check-in" error={error} what="Loading" />;
+  if (!exam) return <Hold title={t('Exam check-in')} error={error} what={t('Loading')} />;
   const attempt = res?.attemptId ?? exam.attempts.find((a) => a.status === 'READY' || a.status === 'CHECKED_IN')?.id;
   return (
     <div>
-      <p><Link to="/exams">All exams</Link></p><h1>Check in: {exam.title}</h1>
+      <p><Link to="/exams">{t('All exams')}</Link></p><h1>{t('Check in: {title}', { title: exam.title })}</h1>
       {!res && (<>
-        <Card title="1. Consent">
+        <Card title={t('1. Consent')}>
           <p>{exam.consent.text}</p>
-          <label className="choice"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> I have read this and I consent.</label>
+          <label className="choice"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> {t('I have read this and I consent.')}</label>
         </Card>
-        <Card title="2. Device check">
-          <p>When you continue, your browser may ask to use your <strong>camera</strong> and <strong>microphone</strong>, and we measure your connection speed. Close other screens and applications. You need a stable connection for the whole exam.</p>
+        <Card title={t('2. Device check')}>
+          <p>{t('When you continue, your browser may ask to use your camera and microphone, and we measure your connection speed. Close other screens and applications. You need a stable connection for the whole exam.')}</p>
           <ErrorNote error={error} />
-          <button disabled={!agree || busy} onClick={() => void submit()}>{busy ? 'Checking…' : 'Check my device and check in'}</button>
+          <button disabled={!agree || busy} onClick={() => void submit()}>{busy ? t('Checking…') : t('Check my device and check in')}</button>
         </Card></>)}
       {res && (<>
-        <Card title="Device" actions={<Badge tone={res.device.ok ? 'ok' : 'warn'}>{res.device.ok ? 'Passed' : 'Problems found'}</Badge>}>
-          {res.device.ok ? <p>Your device meets the exam requirements.</p> : (<><p className="note warn" role="alert">Fix these and check in again:</p><ul>{res.device.problems.map((p) => <li key={p}>{p}</li>)}</ul><button onClick={() => { setRes(null); setAgree(true); }}>Try the device check again</button></>)}
+        <Card title={t('Device')} actions={<Badge tone={res.device.ok ? 'ok' : 'warn'}>{res.device.ok ? t('Passed') : t('Problems found')}</Badge>}>
+          {res.device.ok ? <p>{t('Your device meets the exam requirements.')}</p> : (<><p className="note warn" role="alert">{t('Fix these and check in again:')}</p><ul>{res.device.problems.map((p) => <li key={p}>{p}</li>)}</ul><button onClick={() => { setRes(null); setAgree(true); }}>{t('Try the device check again')}</button></>)}
         </Card>
-        <Card title="Identity and readiness" actions={<Badge tone={status === 'READY' ? 'ok' : 'warn'}>{status === 'READY' ? 'Ready' : 'Waiting'}</Badge>}>
-          {status === 'READY' ? <p>You are ready. Start when you are comfortable: the clock begins as soon as you press Start.</p>
-            : <p role="status" aria-live="polite">{res.mode === 'CENTRE' ? 'Show your photo ID to the invigilator. This page updates automatically.' : 'Waiting for identity verification. This page updates automatically.'}</p>}
-          {res.launchUrl && <p><a href={res.launchUrl} target="_blank" rel="noreferrer noopener">Open the proctoring window</a> (keep it open during the exam).</p>}
-          <button disabled={status !== 'READY' || !attempt} onClick={() => nav(`/exam-attempts/${attempt}`)}>Start the exam</button>
+        <Card title={t('Identity and readiness')} actions={<Badge tone={status === 'READY' ? 'ok' : 'warn'}>{status === 'READY' ? t('Ready') : t('Waiting')}</Badge>}>
+          {status === 'READY' ? <p>{t('You are ready. Start when you are comfortable: the clock begins as soon as you press Start.')}</p>
+            : <p role="status" aria-live="polite">{res.mode === 'CENTRE' ? t('Show your photo ID to the invigilator. This page updates automatically.') : t('Waiting for identity verification. This page updates automatically.')}</p>}
+          {res.launchUrl && <p><a href={res.launchUrl} target="_blank" rel="noreferrer noopener">{t('Open the proctoring window')}</a> {t('(keep it open during the exam).')}</p>}
+          <button disabled={status !== 'READY' || !attempt} onClick={() => nav(`/exam-attempts/${attempt}`)}>{t('Start the exam')}</button>
         </Card></>)}
     </div>
   );

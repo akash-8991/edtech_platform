@@ -1,18 +1,21 @@
-import { useState, type FormEvent } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, Navigate } from 'react-router-dom';
 import { api, messageFor } from '../api/client';
 import { useAuth } from '../auth';
 import { isLearner } from '../lib/roles';
+import { LANGS, useLocale, useT } from '../lib/i18n';
+import { offlineLessons } from '../lib/offline/lessons';
 
 type Step = { kind: 'password' } | { kind: 'mfa'; token: string } | { kind: 'enroll'; token: string };
 
 export default function Login() {
-  const { me, refreshMe } = useAuth();
+  const { me, refreshMe } = useAuth(); const t = useT(); const { lang, setLang } = useLocale();
   const [step, setStep] = useState<Step>({ kind: 'password' });
   if (me) return <Navigate to={isLearner(me.roles) ? '/' : '/staff'} replace />;
   return (
     <main className="auth">
-      <h1>Learning Portal</h1>
+      <p className="lang-switch" role="group" aria-label={t('Language')}>{LANGS.map((l) => <button key={l.code} type="button" className="link" lang={l.code} aria-pressed={lang === l.code} onClick={() => setLang(l.code)}>{l.native}</button>)}</p>
+      <h1>{t('Learning Portal')}</h1>
       {step.kind === 'password' && <PasswordStep onNext={setStep} onDone={refreshMe} />}
       {step.kind === 'mfa' && <MfaStep token={step.token} onDone={refreshMe} onBack={() => setStep({ kind: 'password' })} />}
       {step.kind === 'enroll' && <EnrollStep token={step.token} onDone={refreshMe} onBack={() => setStep({ kind: 'password' })} />}
@@ -21,6 +24,10 @@ export default function Login() {
 }
 
 function PasswordStep({ onNext, onDone }: { onNext: (s: Step) => void; onDone: () => Promise<void> }) {
+  const t = useT(); const [sso, setSso] = useState<{ enabled: boolean; label?: string } | null>(null);
+  const [saved, setSaved] = useState(false);
+  useEffect(() => { api.ssoConfig().then(setSso).catch(() => setSso(null)); offlineLessons.list().then((l) => setSaved(l.length > 0)).catch(() => undefined); }, []);
+  const goSso = async () => { try { const r = await api.ssoStart(); window.location.assign(r.authorizationUrl); } catch (e) { setError(messageFor(e)); } };
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState<string | null>(null); const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setError(null);
@@ -30,14 +37,16 @@ function PasswordStep({ onNext, onDone }: { onNext: (s: Step) => void; onDone: (
     } catch (err) { setError(messageFor(err)); } finally { setBusy(false); }
   };
   return (<>
-    <p className="muted">Sign in with the account your institute created for you.</p>
+    {sso?.enabled && <><p><button type="button" onClick={() => void goSso()}>{t('Sign in with {name}', { name: sso.label ?? t('your institute account') })}</button></p><p className="muted" aria-hidden="true">{t('or use your email and password')}</p></>}
+    <p className="muted">{t('Sign in with the account your institute created for you.')}</p>
     <form onSubmit={submit} noValidate>
-      <label htmlFor="email">Email</label><input id="email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
-      <label htmlFor="password">Password</label><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+      <label htmlFor="email">{t('Email')}</label><input id="email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
+      <label htmlFor="password">{t('Password')}</label><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       {error && <p role="alert" className="note error">{error}</p>}
-      <button type="submit" disabled={busy || !email || !password}>{busy ? 'Signing in…' : 'Sign in'}</button>
+      <button type="submit" disabled={busy || !email || !password}>{busy ? t('Signing in…') : t('Sign in')}</button>
     </form>
-    <p className="muted">Locked out or forgot your password? Contact your programme support team. After 5 wrong attempts an account is paused for 15 minutes.</p>
+    {saved && <p><Link to="/offline">{t('Watch my saved lessons')}</Link></p>}
+    <p className="muted">{t('Locked out or forgot your password? Contact your programme support team. After 5 wrong attempts an account is paused for 15 minutes.')}</p>
   </>);
 }
 

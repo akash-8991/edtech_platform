@@ -30,6 +30,9 @@ export class OidcService {
     this.disc = { d, at: Date.now() }; this.jwks = createRemoteJWKSet(new URL(d.jwks_uri)); return d;
   }
 
+  /** Lets the sign-in page decide whether to show the SSO button without creating a login attempt. */
+  available() { const e = process.env; return { enabled: !!(e.OIDC_ISSUER && e.OIDC_CLIENT_ID && e.OIDC_CLIENT_SECRET && e.OIDC_REDIRECT_URI), label: e.OIDC_LABEL ?? 'your institute account' }; }
+
   async start() {
     const c = this.cfg(); const d = await this.discovery();
     const state = b64u(randomBytes(24)), nonce = b64u(randomBytes(24)), verifier = b64u(randomBytes(32));

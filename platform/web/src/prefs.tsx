@@ -3,6 +3,7 @@ import { api } from './api/client';
 import type { Prefs } from './api/types';
 import { useAuth } from './auth';
 import { applyPrefs, loadPrefsLocal, savePrefsLocal } from './lib/privacy';
+import { chooseLang, LocaleProvider } from './lib/i18n';
 
 interface PrefsState { prefs: Prefs; save: (change: Partial<Prefs>) => Promise<void> }
 const Ctx = createContext<PrefsState>({ prefs: {}, save: async () => {} });
@@ -13,6 +14,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const { me } = useAuth(); const [prefs, setPrefs] = useState<Prefs>(() => loadPrefsLocal());
   useEffect(() => { applyPrefs(prefs); }, [prefs]);
   useEffect(() => { if (!me) return; api.get<Prefs>('/v1/me/preferences').then((p) => { setPrefs(p ?? {}); savePrefsLocal(p ?? {}); }).catch(() => undefined); }, [me]);
-  const save = async (change: Partial<Prefs>) => { const next = { ...prefs, ...change }; setPrefs(next); applyPrefs(next); savePrefsLocal(next); try { await api.put('/v1/me/preferences', change); } catch (e) { setPrefs(prefs); applyPrefs(prefs); savePrefsLocal(prefs); throw e; } };
-  return <Ctx.Provider value={{ prefs, save }}>{children}</Ctx.Provider>;
+  const save = async (change: Partial<Prefs>) => { const next = { ...prefs, ...change }; setPrefs(next); applyPrefs(next); savePrefsLocal(next); if (!api.signedIn) return; /* signed-out visitors (the sign-in page) keep their choice on this device only */ try { await api.put('/v1/me/preferences', change); } catch (e) { setPrefs(prefs); applyPrefs(prefs); savePrefsLocal(prefs); throw e; } };
+  const lang = chooseLang(prefs.language, me?.language);
+  return <Ctx.Provider value={{ prefs, save }}><LocaleProvider lang={lang} onChange={(l) => { save({ language: l }).catch(() => undefined); }}>{children}</LocaleProvider></Ctx.Provider>;
 }

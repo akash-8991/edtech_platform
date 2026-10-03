@@ -4,7 +4,9 @@ React 18 + TypeScript + Vite single-page app: the **learner portal** (`/`) and a
 
 **Status: learning loop, exams, assignment grades, labs, and the privacy centre.** Built and checked against the real API in a browser: sign in (session restore on reload), course list with progress, course/topic progress with locked topics, video playback with verified watch-time heartbeats and in-video questions, quiz, assignment (text and file), notifications, doubts (ask a teacher), AI tutor (with consent), **exams (eligibility checklist, register/cancel, consent + device check + identity wait, the exam room with server-authoritative timer, resilient autosave, resume, integrity signals, submit with receipt, result and appeal, programme completion)**, **assignment grades (list, live status while being evaluated or reviewed, score, late penalty, rubric breakdown with the quoted evidence, written feedback, who graded it, appeal with deadline), notification links**, **privacy centre (versioned consents with withdrawal, data download / correction / erasure requests with password confirmation and status tracking, authenticated download of the export, accessibility and language preferences applied across the app, active sessions with sign-out, password change)**, **lab booking (status per lab with what is blocking you, lab manual, safety-notice acceptance, session list with seats left and booking, cancel, QR check-in by pasted code or by opening the QR link, evidence upload, completion)**, low-bandwidth mode, responsive and keyboard-accessible layout, dark mode.
 
-**Not built yet:** offline download/playback (licences need a native or PWA wrapper),  SSO button (needs the institute's identity provider), Hindi UI strings, captions (the API serves transcripts only), push notifications, staff consoles. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices (labels, focus, contrast, reduced motion) but has not been tested with assistive technology.
+**Also built (see `../docs/guides/06-learner-experience.md`):** **Hindi** for the whole learner app (language selector, ~570 strings, test-enforced), **offline** (device-bound encrypted saved lessons, a per-person read cache, a service worker, an offline bar that sends queued watch time when back online), **captions** (WebVTT in the learner's language with size/background/on-off choices), **adaptive-bitrate video** playback (hls.js, quality choice), **in-app QR scanning** for lab check-in (camera, with typing as the fallback), **single sign-on** (OIDC button and `/sso/callback`), and a **responsive layout** for phone, tablet, laptop and large screens (phone menu, touch targets, safe areas, scrolling tables). The **staff console** now also has people, privacy requests, exam set-up (create, schedule, question bank, accommodations, eligibility overrides), entitlements and a reports hub.
+
+**Not built yet / not verified:** push notifications; staff console in Hindi (by design); the service worker has not been run in a real browser here (unit-tested only), SSO has not been run against a real identity provider, and the Hindi text has not been reviewed by a native speaker. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices and is checked by an automated net after every test, but has not been tested with assistive technology.
 
 ## Run it
 
@@ -21,13 +23,13 @@ Sign in with a learner account. Locally, create one: approve an application (use
 ## Check it
 
 ```bash
-npm run typecheck && npm test      # 149 tests: API client, heartbeat tracker, outbox, quiz, assignment, login, gating, and the exam stack (clock, autosave, device check, signals, runner, list, check-in, result)
-npm run build                      # production bundle in dist/ (~190 kB, 63 kB gzipped)
+npm run typecheck && npm test      # 326 tests: the learner and staff screens, API client, heartbeat tracker, exam stack, Hindi coverage, offline (real WebCrypto + IndexedDB), QR decoding, SSO, adaptive video, service worker
+npm run build                      # production bundle in dist/ (app ~360 kB, 119 kB gzipped; the staff console, hls.js and the QR reader load on demand)
 ```
 
 ## Production hosting
 
-`dist/` is static. Serve it from S3 + CloudFront (or any static host) on the **same site** as the API (for example `learn.institute.edu` for the app and `learn.institute.edu/v1/*` routed to the API) so no cross-origin setup is needed, or set `VITE_API_URL` at build time and list the app's origin in the API's `CORS_ORIGINS`. Serve it with a strict Content-Security-Policy (`default-src 'self'; media-src 'self' <media origin>; connect-src 'self' <api origin>`), no third-party scripts, and HSTS.
+`dist/` is static. Serve it from S3 + CloudFront (or any static host) on the **same site** as the API (for example `learn.institute.edu` for the app and `learn.institute.edu/v1/*` routed to the API) so no cross-origin setup is needed, or set `VITE_API_URL` at build time and list the app's origin in the API's `CORS_ORIGINS`. Serve it with a strict Content-Security-Policy (`default-src 'self'; media-src 'self' blob: <media origin>; img-src 'self' data:; worker-src 'self'; connect-src 'self' <api origin>`; `blob:` is how saved lessons play), no third-party scripts, HSTS, and `Permissions-Policy: camera=(self)` (the QR scanner and proctoring use the camera). Serve `sw.js` with `Cache-Control: no-cache` so a new version reaches phones promptly, and everything under `/assets/` as immutable.
 
 ## Design notes
 
@@ -35,7 +37,7 @@ npm run build                      # production bundle in dist/ (~190 kB, 63 kB 
 - **Watch time:** `HeartbeatTracker` counts only natural playback (never seeks), cuts 20 s chunks (the server rejects >30 s), and flushes on pause, end and tab hide. Events go through a durable `localStorage` outbox so offline periods and reloads lose nothing; the server de-duplicates by event id.
 - **Safe retries:** quiz and assignment submissions and new doubts carry an `Idempotency-Key`, so a retry after a dropped connection cannot double-submit.
 - **Errors:** friendly messages; raw server text is never shown for 5xx.
-- **Staff accounts** that sign in here are told to use the administration console (not built).
+- **Staff accounts** that sign in here go to the staff console (`/staff`), which is English only.
 
 ## Dependency audit
 

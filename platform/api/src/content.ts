@@ -87,7 +87,8 @@ export class ContentController {
     if (sum && sum.toLowerCase() !== f.checksum) throw new BadRequestException('checksum mismatch');
     return this.prisma.$transaction(async (tx) => {
       const cur = await tx.contentAsset.findUniqueOrThrow({ where: { id } });
-      const files = { ...(cur.files as object), [label]: { key, checksum: f.checksum, size: f.size } };
+      const files: Record<string, any> = { ...(cur.files as object), [label]: { key, checksum: f.checksum, size: f.size } };
+      if (label === 'master') delete files.hls; // a new master makes the derived adaptive ladder stale; rebuild it with POST /v1/authoring/assets/:id/transcode
       const u = await tx.contentAsset.update({ where: { id }, data: { files } });
       await this.audit.record(tx, { actor: a, action: 'asset.file_uploaded', objectType: 'ContentAsset', objectId: id, after: { label, checksum: f.checksum, size: f.size, scan: scanned ? 'clean' : 'skipped_oversize' } });
       return u;
