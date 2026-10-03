@@ -1,9 +1,10 @@
-import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Headers, HttpException, Inject, Injectable, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Headers, HttpException, Inject, Injectable, NotFoundException, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../common/prisma.service';
 import { Actor, CurrentActor, Roles } from '../common/auth';
 import { need } from '../common/http';
+import { paged } from '../common/page';
 import { AuditService } from '../audit';
 import { ConfigService } from '../ai/config';
 import { NotificationsService } from '../notifications';
@@ -385,12 +386,56 @@ export class ExamsController {
   async accommodation(@Body() b: any, @CurrentActor() a: Actor) {
     need(b, { learnerId: 'string', type: 'string', reason: 'string' });
     if (!['EXTRA_TIME', 'BREAKS', 'ASSISTIVE'].includes(b.type) || !Number.isInteger(b.extraTimePercent ?? 0) || (b.extraTimePercent ?? 0) < 0 || (b.extraTimePercent ?? 0) > 100) throw new BadRequestException('type EXTRA_TIME|BREAKS|ASSISTIVE; extraTimePercent 0..100');
+    if (!(await this.prisma.user.count({ where: { id: String(b.learnerId), roles: { some: { role: 'LEARNER' } } } }))) throw new NotFoundException('no such learner');
+    if (b.examId && !(await this.prisma.examDefinition.count({ where: { id: String(b.examId) } }))) throw new NotFoundException('no such exam');
     return this.prisma.$transaction(async (tx) => { const x = await tx.examAccommodation.create({ data: { learnerId: b.learnerId, examId: b.examId ?? null, type: b.type, extraTimePercent: b.extraTimePercent ?? 0, reason: b.reason, approvedById: a.id } }); await this.audit.record(tx, { actor: a, action: 'exam.accommodation_granted', objectType: 'ExamAccommodation', objectId: x.id, after: { learnerId: b.learnerId, type: b.type, extraTimePercent: b.extraTimePercent ?? 0 }, reason: b.reason }); return x; });
+  }
+
+  // ---- read models for the staff console ------------------------------------------------------------------------------------------------
+  /** Everything needed to start defining an exam: whether changes are frozen, and the published course versions an exam can be defined on. */
+  @Get('exam-ops/setup') @Roles(...EXAM_ADMIN, 'ACADEMIC_ADMIN')
+  async setup() {
+    const versions = await this.prisma.programmeVersion.findMany({ where: { state: 'PUBLISHED' }, orderBy: [{ publishedAt: 'desc' }], include: { programme: { select: { id: true, code: true, title: true } } } });
+    return { changeFrozen: !!(await this.config.get<boolean>('exam.change_freeze')), versions: versions.map((v) => ({ versionId: v.id, programmeId: v.programme.id, code: v.programme.code, title: v.programme.title, version: v.version })) };
+  }
+  /** One exam as defined, with whether its blueprint can be satisfied by the question bank as it stands (what publishing will check). */
+  @Get('exam-ops/exams/:id') @Roles(...EXAM_ADMIN, 'ACADEMIC_ADMIN', 'AUDITOR', 'FACULTY_REVIEWER', 'PLATFORM_ADMIN')
+  async examDetail(@Param('id') id: string) {
+    const e = await this.prisma.examDefinition.findUnique({ where: { id } }); if (!e) throw new NotFoundException();
+    const v = await this.prisma.programmeVersion.findUniqueOrThrow({ where: { id: e.versionId }, include: { programme: { select: { id: true, code: true, title: true } } } });
+    const people = new Map((await this.prisma.user.findMany({ where: { id: { in: [e.createdById, ...(e.approvedById ? [e.approvedById] : [])] } }, select: { id: true, name: true } })).map((u) => [u.id, u.name]));
+    const check = validateBlueprint(e.blueprint as any, await this.svc.bankItems(v.programmeId));
+    return { id: e.id, code: e.code, title: e.title, status: e.status, durationMin: e.durationMin, passPercent: e.passPercent, maxAttempts: e.maxAttempts, cooldownDays: e.cooldownDays, shuffle: e.shuffle, eligibility: e.eligibility, blueprint: e.blueprint, proctoring: e.proctoring, publishedAt: e.publishedAt,
+      programme: { id: v.programme.id, code: v.programme.code, title: v.programme.title, version: v.version }, createdById: e.createdById, createdByName: people.get(e.createdById) ?? null, approvedByName: e.approvedById ? people.get(e.approvedById) ?? null : null, blueprintCheck: check, changeFrozen: !!(await this.config.get<boolean>('exam.change_freeze')) };
+  }
+  /** The bank's questions with their answers (exam administrators only: this is the answer key). */
+  @Get('exams/bank/:programmeId/questions') @Roles(...EXAM_ADMIN)
+  bankList(@Param('programmeId') p: string, @Res({ passthrough: true }) res: any, @Query('tag') tag?: string, @Query('status') status?: string, @Query('limit') limit?: string, @Query('cursor') cursor?: string) {
+    return paged(res, limit, cursor, (a) => this.prisma.examQuestion.findMany({ where: { programmeId: p, status: status ?? 'ACTIVE', ...(tag && { tag }) }, orderBy: [{ tag: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }], select: { id: true, tag: true, difficulty: true, type: true, text: true, options: true, answer: true, tolerance: true, points: true, status: true, usedCount: true, createdAt: true }, ...a }));
+  }
+  @Get('exams/accommodations') @Roles(...EXAM_ADMIN)
+  async accommodations(@Query('learnerId') learnerId?: string, @Query('examId') examId?: string, @Query('active') active?: string) {
+    const rows = await this.prisma.examAccommodation.findMany({ where: { ...(learnerId && { learnerId }), ...(examId && { examId }), ...(active !== undefined && { active: active === 'true' }) }, orderBy: { createdAt: 'desc' }, take: 200 });
+    const names = new Map((await this.prisma.user.findMany({ where: { id: { in: [...new Set(rows.flatMap((r) => [r.learnerId, r.approvedById]))] } }, select: { id: true, name: true, email: true } })).map((u) => [u.id, u]));
+    return rows.map((r) => ({ ...r, learnerName: names.get(r.learnerId)?.name ?? null, learnerEmail: names.get(r.learnerId)?.email ?? null, approvedByName: names.get(r.approvedById)?.name ?? null }));
+  }
+  @Post('exams/accommodations/:id/deactivate') @Roles(...EXAM_ADMIN)
+  async deactivateAccommodation(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) {
+    need(b, { reason: 'string' }); if (!b.reason.trim()) throw new BadRequestException('reason required');
+    return this.prisma.$transaction(async (tx) => { const x = await tx.examAccommodation.findUnique({ where: { id } }); if (!x) throw new NotFoundException(); if (!x.active) throw new ConflictException('already withdrawn'); await tx.examAccommodation.update({ where: { id }, data: { active: false } }); await this.audit.record(tx, { actor: a, action: 'exam.accommodation_withdrawn', objectType: 'ExamAccommodation', objectId: id, after: { learnerId: x.learnerId, type: x.type }, reason: b.reason }); return { ok: true }; });
+  }
+  @Get('exams/:id/eligibility-overrides') @Roles(...RELEASERS, 'AUDITOR')
+  async overrides(@Param('id') id: string) {
+    const rows = await this.prisma.eligibilityOverride.findMany({ where: { examId: id }, orderBy: { createdAt: 'desc' }, take: 200 });
+    const names = new Map((await this.prisma.user.findMany({ where: { id: { in: [...new Set(rows.flatMap((r) => [r.learnerId, r.approvedById]))] } }, select: { id: true, name: true, email: true } })).map((u) => [u.id, u]));
+    return rows.map((r) => ({ ...r, learnerName: names.get(r.learnerId)?.name ?? null, learnerEmail: names.get(r.learnerId)?.email ?? null, approvedByName: names.get(r.approvedById)?.name ?? null }));
   }
 
   @Post('exams/:id/eligibility-overrides') @Roles(...RELEASERS)
   async override(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) {
     need(b, { learnerId: 'string', reason: 'string' });
+    if (!(await this.prisma.examDefinition.count({ where: { id } }))) throw new NotFoundException('no such exam');
+    if (!(await this.prisma.user.count({ where: { id: b.learnerId, roles: { some: { role: 'LEARNER' } } } }))) throw new NotFoundException('no such learner');
     return this.prisma.$transaction(async (tx) => { const o = await tx.eligibilityOverride.create({ data: { examId: id, learnerId: b.learnerId, reason: b.reason, approvedById: a.id } }); await this.audit.record(tx, { actor: a, action: 'exam.eligibility_override', objectType: 'ExamDefinition', objectId: id, after: { learnerId: b.learnerId }, reason: b.reason }); return o; });
   }
 

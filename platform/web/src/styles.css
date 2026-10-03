@@ -84,3 +84,4 @@ blockquote { margin: .4rem 0; padding-left: .8rem; border-left: 3px solid var(--
 .card table th, .card table td { padding: 4px 12px 4px 0; text-align: left; vertical-align: top; }
 .subcard.internal { background: #fff8e6; border-left: 3px solid #d9a400; padding-left: .6rem; }
 .secret { font-size: 1.1rem; padding: 4px 8px; background: var(--bg); border: 1px solid var(--line, #d0d5dd); border-radius: 4px; user-select: all; }
+a.button { display: inline-block; font: inherit; padding: 10px 16px; border-radius: 8px; background: var(--accent); color: var(--accent-text); text-decoration: none; min-height: 44px; box-sizing: border-box; line-height: 24px; }

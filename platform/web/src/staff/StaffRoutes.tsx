@@ -17,6 +17,9 @@ import Users from './Users';
 import UserDetail from './UserDetail';
 import PrivacyDesk from './PrivacyDesk';
 import PrivacyRequest from './PrivacyRequest';
+import ExamSetup from './ExamSetup';
+import ExamNew from './ExamNew';
+import ExamDefinition from './ExamDefinition';
 import Account from '../pages/Account';
 
 /** Everything under /staff. Each page also checks the role (and the API checks it again on every call). */
@@ -38,6 +41,9 @@ export default function StaffRoutes() {
       <Route path="users/:userId" element={<UserDetail />} />
       <Route path="privacy" element={<PrivacyDesk />} />
       <Route path="privacy/requests/:requestId" element={<PrivacyRequest />} />
+      <Route path="examsetup" element={<ExamSetup />} />
+      <Route path="examsetup/new" element={<ExamNew />} />
+      <Route path="examsetup/exams/:examId" element={<ExamDefinition />} />
       <Route path="labs" element={<LabDesk />} />
       <Route path="operations" element={<Operations />} />
       <Route path="account" element={<Account />} />

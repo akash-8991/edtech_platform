@@ -43,13 +43,16 @@ export class UsersService {
 
   async list(actor: Actor, q: { q?: string; role?: string; status?: string }, res: any, limit?: string, cursor?: string) {
     const full = actor.roles.some((r) => READ.includes(r));
-    if (!full && !(actor.roles.includes('ACADEMIC_ADMIN') && q.role === 'DOUBT_TEACHER')) throw new ForbiddenException(); // academic admins may only look up doubt teachers
+    // Narrow lookups for people who must name someone to do their job: academic admins find doubt teachers or learners; exam administrators find a learner (to grant an accommodation).
+    const lookup = (actor.roles.includes('ACADEMIC_ADMIN') && (q.role === 'DOUBT_TEACHER' || q.role === 'LEARNER')) || (actor.roles.some((r) => ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'].includes(r)) && q.role === 'LEARNER');
+    if (!full && !lookup) throw new ForbiddenException();
+    if (!full && q.role === 'LEARNER' && (q.q?.trim().length ?? 0) < 3) throw new BadRequestException('type at least 3 letters of the name or email'); // no browsing of every learner
     if (q.role && !ALL_ROLES.includes(q.role)) throw new BadRequestException('unknown role');
     if (q.status && !['ACTIVE', 'SUSPENDED', 'ERASED'].includes(q.status)) throw new BadRequestException('status ACTIVE|SUSPENDED|ERASED');
     const term = q.q?.trim();
     const where: Prisma.UserWhereInput = { ...(q.role && { roles: { some: { role: q.role as Role } } }), ...(q.status === 'ERASED' ? { erasedAt: { not: null } } : q.status ? { status: q.status, erasedAt: null } : {}), ...(term && { OR: [{ email: { contains: term, mode: 'insensitive' } }, { name: { contains: term, mode: 'insensitive' } }] }) };
     const rows = await paged(res, limit, cursor, (a) => this.prisma.user.findMany({ where, orderBy: [{ name: 'asc' }, { id: 'asc' }], select: SELECT, ...a }));
-    return rows.map((u) => this.view(u, full));
+    return rows.map((u) => this.view(u, true));
   }
   private view(u: any, full = true) { return { id: u.id, name: u.name, ...(full && { email: u.email }), language: u.language, status: u.erasedAt ? 'ERASED' : u.status, createdAt: u.createdAt, lastLoginAt: u.lastLoginAt, locked: !!u.lockedUntil && u.lockedUntil > new Date(), mfaEnabled: u.mfaEnabled, legalHold: u.legalHold, roles: this.rolesOf(u), scopedRoles: u.roles.filter((r: any) => r.programmeId || r.cohort).map((r: any) => ({ role: r.role, programmeId: r.programmeId, cohort: r.cohort })) }; }
 
@@ -145,7 +148,7 @@ export class UsersService {
 @Controller('v1/admin/users')
 export class UsersController {
   constructor(private svc: UsersService) {}
-  @Get() @Roles(...READ, 'ACADEMIC_ADMIN')
+  @Get() @Roles(...READ, 'ACADEMIC_ADMIN', 'EXAM_ADMIN', 'ASSESSMENT_ADMIN')
   list(@CurrentActor() a: Actor, @Res({ passthrough: true }) res: any, @Query('q') q?: string, @Query('role') role?: string, @Query('status') status?: string, @Query('limit') limit?: string, @Query('cursor') cursor?: string) { return this.svc.list(a, { q, role, status }, res, limit, cursor); }
   @Get(':id') @Roles(...READ) one(@Param('id') id: string) { return this.svc.get(id); }
   @Post() @Roles(...WRITE) @HttpCode(201) @Header('Cache-Control', 'no-store')

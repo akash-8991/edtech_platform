@@ -41,6 +41,12 @@ describe('who may use the user directory', () => {
     await http.get('/v1/admin/users').set(as('learner')).expect(403); await http.get('/v1/admin/users').expect(401);
     await http.get('/v1/admin/users').set(as('acad')).expect(403); await http.get('/v1/admin/users?role=CONTENT_AUTHOR').set(as('acad')).expect(403); await http.get('/v1/admin/users?role=DOUBT_TEACHER').set(as('acad')).expect(200);
   });
+  it('narrow lookups: exam administrators find a learner by 3+ letters; academic admins find learners or doubt teachers; nobody else', async () => {
+    await mk('exam', 'EXAM_ADMIN'); await mk('assess', 'ASSESSMENT_ADMIN');
+    for (const k of ['exam', 'assess', 'acad']) { expect((await http.get('/v1/admin/users?role=LEARNER&q=learner').set(as(k)).expect(200)).body.map((u: any) => u.email)).toEqual(['learner@x.test']); await http.get('/v1/admin/users?role=LEARNER&q=le').set(as(k)).expect(400); await http.get('/v1/admin/users?role=LEARNER').set(as(k)).expect(400); }
+    await http.get('/v1/admin/users?role=CONTENT_AUTHOR&q=victim').set(as('exam')).expect(403); await http.get('/v1/admin/users?q=victim').set(as('exam')).expect(403); await http.get('/v1/admin/users?role=DOUBT_TEACHER').set(as('exam')).expect(403); await http.get('/v1/admin/users?role=DOUBT_TEACHER').set(as('acad')).expect(200);
+    await http.get(`/v1/admin/users/${id.victim}`).set(as('exam')).expect(403);
+  });
   it('writes: only super and platform admins', async () => {
     for (const k of ['audit', 'help', 'acad', 'learner']) { await http.post('/v1/admin/users').set(as(k)).send({ email: 'n@x.test', name: 'N', roles: ['LEARNER'] }).expect(403); await http.post(`/v1/admin/users/${id.victim}/status`).set(as(k)).send({ status: 'SUSPENDED', reason: 'x' }).expect(403); await http.post(`/v1/admin/users/${id.victim}/roles`).set(as(k)).send({ add: ['AUDITOR'], reason: 'x' }).expect(403); await http.post(`/v1/admin/users/${id.victim}/reset-password`).set(as(k)).send({ reason: 'x' }).expect(403); }
     await http.get(`/v1/admin/users/${id.victim}`).set(as('acad')).expect(403);
@@ -49,7 +55,7 @@ describe('who may use the user directory', () => {
 
 describe('listing', () => {
   it('searches, filters, pages, and never returns secrets', async () => {
-    const all = (await http.get('/v1/admin/users').set(as('audit')).expect(200)).body; expect(all.length).toBe(7); expect(JSON.stringify(all)).not.toMatch(/passwordHash|mfaSecret|mfaBackup/); expect(all[0]).toHaveProperty('roles');
+    const all = (await http.get('/v1/admin/users').set(as('audit')).expect(200)).body; expect(all.length).toBe(9); expect(JSON.stringify(all)).not.toMatch(/passwordHash|mfaSecret|mfaBackup/); expect(all[0]).toHaveProperty('roles');
     expect((await http.get('/v1/admin/users?q=VICTIM').set(as('audit'))).body.map((u: any) => u.email)).toEqual(['victim@x.test']); expect((await http.get('/v1/admin/users?role=AUDITOR').set(as('audit'))).body).toHaveLength(1);
     expect((await http.get('/v1/admin/users?status=SUSPENDED').set(as('audit'))).body).toHaveLength(0); await http.get('/v1/admin/users?status=weird').set(as('audit')).expect(400); await http.get('/v1/admin/users?role=NOPE').set(as('audit')).expect(400);
     const p1 = await http.get('/v1/admin/users?limit=3').set(as('audit')).expect(200); expect(p1.body).toHaveLength(3); const next = p1.headers['x-next-cursor']; expect(next).toBeTruthy();

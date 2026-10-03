@@ -111,7 +111,9 @@
    "public": false,
    "roles": [
     "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
     "AUDITOR",
+    "EXAM_ADMIN",
     "PLATFORM_ADMIN",
     "SUPER_ADMIN",
     "SUPPORT_OPERATOR"
@@ -861,6 +863,19 @@
   },
   {
    "method": "GET",
+   "path": "/v1/exam-ops/exams/:id",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
    "path": "/v1/exam-ops/exams",
    "public": false,
    "roles": [
@@ -905,6 +920,16 @@
   },
   {
    "method": "GET",
+   "path": "/v1/exam-ops/setup",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
    "path": "/v1/exam-ops/status",
    "public": false,
    "roles": [
@@ -941,6 +966,16 @@
    "public": false,
    "roles": [
     "LEARNER"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exams/:id/eligibility-overrides",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR"
    ]
   },
   {
@@ -991,6 +1026,24 @@
   },
   {
    "method": "POST",
+   "path": "/v1/exams/accommodations/:id/deactivate",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exams/accommodations",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
    "path": "/v1/exams/accommodations",
    "public": false,
    "roles": [
@@ -1001,6 +1054,15 @@
   {
    "method": "GET",
    "path": "/v1/exams/bank/:programmeId/coverage",
+   "public": false,
+   "roles": [
+    "ASSESSMENT_ADMIN",
+    "EXAM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/exams/bank/:programmeId/questions",
    "public": false,
    "roles": [
     "ASSESSMENT_ADMIN",
