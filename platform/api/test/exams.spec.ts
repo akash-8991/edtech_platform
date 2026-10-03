@@ -454,6 +454,12 @@ describe('operations, analytics, completion', () => {
     await http.get('/v1/exam-ops/status').set(as('l1')).expect(403); const st = (await http.get('/v1/exam-ops/status').set(as('e1')).expect(200)).body;
     expect(st.inProgress).toBeGreaterThanOrEqual(1); expect(st.staleAutosave).toBeGreaterThanOrEqual(1); expect(st.heldResults).toBeGreaterThanOrEqual(1); expect(st).toHaveProperty('openIncidents'); expect(st.webhookEventsLastHour).toBeGreaterThan(5); expect(st.remoteAwaitingProctorReport).toBeGreaterThanOrEqual(0);
   });
+  it('exam index lists exams with sessions and result-state counts; role-gated', async () => {
+    await http.get('/v1/exam-ops/exams').set(as('l1')).expect(403); await http.get('/v1/exam-ops/exams').expect(401);
+    const list = (await http.get('/v1/exam-ops/exams').set(as('auditor')).expect(200)).body; const e = list.find((x: any) => x.id === EXAM);
+    expect(e).toMatchObject({ id: EXAM, status: 'PUBLISHED' }); expect(e.sessions.length).toBeGreaterThan(0);
+    const sum = e.sessions.reduce((t: number, x: any) => t + x.attempts.total, 0); expect(sum).toBeGreaterThan(8); expect(e.sessions.every((x: any) => x.attempts.released + x.attempts.held + x.attempts.ready + x.attempts.invalidated <= x.attempts.total)).toBe(true);
+  });
   it('exam report: funnel, results, section means, item analysis, integrity and appeals; role-gated', async () => {
     await http.get(`/v1/reports/exams?examId=${EXAM}`).set(as('l1')).expect(403); await http.get('/v1/reports/exams').set(as('auditor')).expect(400);
     const r = (await http.get(`/v1/reports/exams?examId=${EXAM}`).set(as('auditor')).expect(200)).body;

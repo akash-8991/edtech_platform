@@ -21,3 +21,13 @@ export function nextStep(c: { status: string; resultState: string; outcome: stri
   return 'Set the outcome to move this result on.';
 }
 export const evidenceMessage = (e: unknown): string | null => { const m = (e as { status?: number })?.status; return m === 410 ? 'That evidence link has expired. The access was logged. Ask the proctoring provider for a fresh link.' : null; };
+
+// ---- exams and results ---------------------------------------------------------------------------------------------------------------------------
+export const modeLabel = (m: string) => (m === 'REMOTE' ? 'Remote' : m === 'CENTRE' ? 'At a centre' : m);
+export const percent = (x: number | null) => (x === null ? 'n/a' : `${Math.round(x * 100)}%`);
+/** Why a result was skipped in a bulk release, in words (the server sends a code or its own message). */
+export const skipReason = (r: string) => (r === 'not_ready_for_release' ? 'It is no longer ready (an incident came in, or the state changed).' : /segregation of duties/i.test(r) ? 'You decided something on this attempt, so someone else must release it.' : r === 'already released' ? 'Already released.' : r);
+export const releaseMessage = (o: { released: number; skipped: unknown[] }) => (o.released === 0 && !o.skipped.length ? 'Nothing was ready to release.' : `Released ${o.released} result${o.released === 1 ? '' : 's'}${o.skipped.length ? `; ${o.skipped.length} could not be released.` : '.'}`);
+/** Bar heights (0-100) for the score distribution; the tallest bar is full height. */
+export const barHeights = (d: number[]) => { const max = Math.max(1, ...d); return d.map((n) => Math.round((n / max) * 100)); };
+export const bandLabel = (i: number) => (i === 9 ? '90-100' : `${i * 10}-${i * 10 + 9}`);

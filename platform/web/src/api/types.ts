@@ -133,3 +133,15 @@ export interface VersionTree {
 export interface QualityFinding { id: string; topicId: string | null; gate: string; severity: string; blocking: boolean; message: string; resolvedAt: string | null; resolution: string | null }
 export interface A11yReport { blocking: number; advisory: number; enforced: boolean; issues: { topic: string; language?: string; severity: 'BLOCKING' | 'ADVISORY'; rule: string; message: string }[] }
 export interface DiffChange { path: string; change: 'added' | 'removed' | 'changed'; from?: unknown; to?: unknown }
+
+export interface ExamSessionCounts { total: number; inProgress: number; submitted: number; held: number; ready: number; released: number; invalidated: number }
+export interface ExamIndexRow { id: string; code: string; title: string; status: string; durationMin: number; passPercent: number; publishedAt: string | null; sessions: { id: string; startsAt: string; endsAt: string; mode: string; centre: string | null; capacity: number; status: string; attempts: ExamSessionCounts }[] }
+export interface ReleaseOutcome { released: number; skipped: { attemptId: string; reason: string }[] }
+export interface ExamReportData {
+  exam: { code: string; passPercent: number };
+  funnel: { registered: number; checkedIn: number; started: number; submitted: number; released: number; held: number; invalidated: number; autoSubmitted: number };
+  results: { n: number; mean: number | null; passRate: number | null; distribution: number[] };
+  sections: Record<string, number>; itemAnalysis: { questionId: string; attempts: number; pValue: number }[];
+  integrity: { incidents: number; byType: Record<string, number>; bySeverity: Record<string, number>; byStatus: Record<string, number>; confirmedRate: number | null; sessionTakeovers: number };
+  appeals: { filed: number; overturned: number; open: number };
+}

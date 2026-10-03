@@ -269,6 +269,16 @@ export class ExamOpsController {
   }
   @Post('proctor/attempts/:id/incidents') @Roles(...EXAM_ADMIN) manual(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) { return this.ops.manualIncident(id, a, b ?? {}); }
 
+  /** Staff index of exams with their sessions and how many results are in each state (the learner list is /me/exams). */
+  @Get('exam-ops/exams') @Roles(...OPS_READ)
+  async examIndex() {
+    const exams = await this.prisma.examDefinition.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
+    const sessions = await this.prisma.examSession.findMany({ where: { examId: { in: exams.map((e) => e.id) } }, orderBy: { startsAt: 'desc' } });
+    const counts = await this.prisma.examAttempt.groupBy({ by: ['sessionId', 'status', 'resultState'], where: { sessionId: { in: sessions.map((x) => x.id) } }, _count: true });
+    return exams.map((e) => ({ id: e.id, code: e.code, title: e.title, status: e.status, durationMin: e.durationMin, passPercent: e.passPercent, publishedAt: e.publishedAt,
+      sessions: sessions.filter((x) => x.examId === e.id).map((x) => { const c = counts.filter((k) => k.sessionId === x.id); const n = (f: (k: (typeof c)[number]) => boolean) => c.filter(f).reduce((t, k) => t + k._count, 0);
+        return { id: x.id, startsAt: x.startsAt, endsAt: x.endsAt, mode: x.mode, centre: x.centre, capacity: x.capacity, status: x.status, attempts: { total: n(() => true), inProgress: n((k) => k.status === 'IN_PROGRESS'), submitted: n((k) => k.status === 'SUBMITTED'), held: n((k) => k.resultState === 'HELD'), ready: n((k) => k.resultState === 'READY'), released: n((k) => k.resultState === 'RELEASED'), invalidated: n((k) => k.resultState === 'INVALIDATED') } }; }) }));
+  }
   @Get('exam-ops/incidents') @Roles(...OPS_READ)
   async queue(@Query('status') status: string | undefined, @Query('severity') severity: string | undefined) {
     const rows = await this.prisma.incident.findMany({ where: { status: status ? { in: status.split(',') } : { in: ['OPEN', 'NEEDS_INFO'] }, ...(severity && { severity }) }, orderBy: { occurredAt: 'asc' }, take: 300 });

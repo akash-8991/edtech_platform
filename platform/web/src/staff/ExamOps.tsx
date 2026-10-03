@@ -3,28 +3,29 @@ import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import type { AppealRow, IncidentRow } from '../api/types';
 import { useAuth } from '../auth';
+import ExamList from './ExamList';
 import { Badge, Card, ErrorNote, Loading } from '../components/ui';
 import { ageText } from '../lib/moderation';
 import { reasonError, severityTone, statusLabel, typeLabel } from '../lib/examops';
 import { AREAS, canSee, EXAMOPS, hasAny } from '../lib/roles';
 
-type View = 'INCIDENTS' | 'DECIDED' | 'APPEALS';
+type View = 'INCIDENTS' | 'DECIDED' | 'APPEALS' | 'EXAMS';
 
 export default function ExamOps() {
   const { me } = useAuth();
   if (!canSee(me?.roles, 'examops')) return <Navigate to="/staff" replace />; // checked before anything is fetched
-  return <Inner canCase={hasAny(me?.roles, [...EXAMOPS.caseView, ...EXAMOPS.release])} canDecideAppeal={hasAny(me?.roles, AREAS.examops.act)} />;
+  return <Inner canCase={hasAny(me?.roles, [...EXAMOPS.caseView, ...EXAMOPS.release])} canDecideAppeal={hasAny(me?.roles, AREAS.examops.act)} canRelease={hasAny(me?.roles, EXAMOPS.release)} canSweep={hasAny(me?.roles, [...EXAMOPS.proctor, ...EXAMOPS.release])} />;
 }
 
-function Inner({ canCase, canDecideAppeal }: { canCase: boolean; canDecideAppeal: boolean }) {
+function Inner({ canCase, canDecideAppeal, canRelease, canSweep }: { canCase: boolean; canDecideAppeal: boolean; canRelease: boolean; canSweep: boolean }) {
   const [view, setView] = useState<View>('INCIDENTS'); const [severity, setSeverity] = useState('');
   return (
     <div>
       <h1>Exam integrity</h1>
       <p className="muted">Learners are shown only a short reference here, and you never see a score while deciding an incident: integrity is judged blind to performance.</p>
-      <div className="tabs" role="group" aria-label="Queue">{([['INCIDENTS', 'Open incidents'], ['DECIDED', 'Decided incidents'], ['APPEALS', 'Appeals']] as [View, string][]).map(([k, l]) => <button key={k} aria-pressed={view === k} onClick={() => setView(k)}>{l}</button>)}</div>
-      {view !== 'APPEALS' && <><label htmlFor="eo-sev" className="inline">Severity</label> <select id="eo-sev" value={severity} onChange={(e) => setSeverity(e.target.value)} style={{ width: 'auto' }}>{['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((s) => <option key={s} value={s}>{s || 'All'}</option>)}</select></>}
-      {view === 'APPEALS' ? <Appeals canCase={canCase} canDecide={canDecideAppeal} /> : <Incidents key={view} decided={view === 'DECIDED'} severity={severity} canCase={canCase} />}
+      <div className="tabs" role="group" aria-label="Queue">{([['INCIDENTS', 'Open incidents'], ['DECIDED', 'Decided incidents'], ['APPEALS', 'Appeals'], ['EXAMS', 'Exams and results']] as [View, string][]).map(([k, l]) => <button key={k} aria-pressed={view === k} onClick={() => setView(k)}>{l}</button>)}</div>
+      {(view === 'INCIDENTS' || view === 'DECIDED') && <><label htmlFor="eo-sev" className="inline">Severity</label> <select id="eo-sev" value={severity} onChange={(e) => setSeverity(e.target.value)} style={{ width: 'auto' }}>{['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((s) => <option key={s} value={s}>{s || 'All'}</option>)}</select></>}
+      {view === 'EXAMS' ? <ExamList canRelease={canRelease} canSweep={canSweep} canCase={canCase} /> : view === 'APPEALS' ? <Appeals canCase={canCase} canDecide={canDecideAppeal} /> : <Incidents key={view} decided={view === 'DECIDED'} severity={severity} canCase={canCase} />}
     </div>
   );
 }

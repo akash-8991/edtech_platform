@@ -7,6 +7,7 @@ import Operations from './Operations';
 import Moderation from './Moderation';
 import ModerationCase from './ModerationCase';
 import ExamOps from './ExamOps';
+import ExamReport from './ExamReport';
 import ExamCase from './ExamCase';
 import Content from './Content';
 import ContentVersion from './ContentVersion';
@@ -24,6 +25,7 @@ export default function StaffRoutes() {
       <Route path="content/versions/:versionId" element={<ContentVersion />} />
       <Route path="examops" element={<ExamOps />} />
       <Route path="examops/attempts/:attemptId" element={<ExamCase />} />
+      <Route path="examops/exams/:examId/report" element={<ExamReport />} />
       <Route path="labs" element={<LabDesk />} />
       <Route path="operations" element={<Operations />} />
       <Route path="account" element={<Account />} />

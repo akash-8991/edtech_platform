@@ -792,6 +792,19 @@
    ]
   },
   {
+   "method": "GET",
+   "path": "/v1/exam-ops/exams",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "EXAM_ADMIN",
+    "FACULTY_REVIEWER",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
    "method": "POST",
    "path": "/v1/exam-ops/incidents/:id/decide",
    "public": false,
