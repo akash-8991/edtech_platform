@@ -320,6 +320,26 @@ export class GradingService {
     });
   }
 
+  /** An override as the person deciding it needs to see it: who proposed what, the current grade beside the proposed one (with the late penalty that would still apply). */
+  async overrideCase(id: string) {
+    const o = await this.prisma.gradeOverride.findUnique({ where: { id } }); if (!o) throw new NotFoundException();
+    const sub = await this.prisma.submission.findUniqueOrThrow({ where: { id: o.submissionId } }); const sg = await this.prisma.submissionGrade.findUniqueOrThrow({ where: { submissionId: sub.id } });
+    const policy = await this.policyFor(await this.prisma.assignment.findUniqueOrThrow({ where: { id: sub.assignmentId } }));
+    // For a decided override, "current" is the grade it replaced (the record before it), not the grade it created.
+    let seqNow = sg.currentSeq;
+    if (o.status === 'APPROVED') { const applied = await this.prisma.gradeRecord.findFirst({ where: { submissionId: sub.id, kind: 'OVERRIDE', reason: { startsWith: o.reason } }, orderBy: { seq: 'desc' } }); if (applied) seqNow = applied.seq - 1 || null; }
+    const cur = seqNow ? await this.prisma.gradeRecord.findUnique({ where: { submissionId_seq: { submissionId: sub.id, seq: seqNow } } }) : null;
+    const dims = o.dimensions as unknown as HumanDim[]; const sc = computeScore(policy, dims.map((d) => ({ id: d.id, score: Number(d.score) })));
+    const late = latePenalty(policy.lateRule, sub.createdAt, await this.extensionHours(this.prisma, sub.entitlementId, sub.topicId)); const fin = applyPenalty(sc.rawPercent, late.penaltyPercent);
+    const topic = await this.prisma.topic.findUnique({ where: { id: sub.topicId }, include: { module: { include: { version: { include: { programme: { select: { code: true, title: true } } } } } } } });
+    const people = new Map((await this.prisma.user.findMany({ where: { id: { in: [o.proposedById, sub.learnerId, ...(o.decidedById ? [o.decidedById] : [])] } }, select: { id: true, name: true } })).map((u) => [u.id, u.name]));
+    return { id: o.id, status: o.status, reason: o.reason, feedback: o.feedback, decisionReason: o.decisionReason, createdAt: o.createdAt, decidedAt: o.decidedAt, proposedById: o.proposedById, proposedByName: people.get(o.proposedById) ?? null, decidedByName: o.decidedById ? people.get(o.decidedById) ?? null : null,
+      submission: { id: sub.id, attemptNo: sub.attemptNo, submittedAt: sub.createdAt, state: sg.state, topic: topic?.title ?? null, programme: topic ? `${topic.module.version.programme.title} (${topic.module.version.programme.code})` : null, learnerName: people.get(sub.learnerId) ?? null },
+      policy: { passPercent: policy.passPercent, dimensions: policy.dimensions.map((d) => ({ id: d.id, name: d.name, min: d.min, max: d.max, weight: d.weight })) },
+      current: cur ? { seq: cur.seq, kind: cur.kind, dimensions: (cur.dimensions as any[]).map((d) => ({ id: d.id, score: d.score })), rawPercent: cur.rawPercent, finalPercent: cur.finalPercent, passed: cur.passed } : null,
+      proposed: { dimensions: dims.map((d) => ({ id: d.id, score: Number(d.score), rationale: d.rationale ?? '' })), rawPercent: sc.rawPercent, latePenaltyPercent: late.penaltyPercent, finalPercent: fin, passed: fin >= policy.passPercent && !sc.disqualified.length } };
+  }
+
   /** Appeal windows close; submissions stuck forever never exist. */
   async sweep(now = new Date()) {
     const r = await this.prisma.submissionGrade.updateMany({ where: { state: 'GRADED', appealDeadline: { lt: now } }, data: { state: 'FINAL' } });

@@ -173,3 +173,18 @@ export interface BankCoverage { tag: string; difficulty: number; count: number }
 export interface BankQuestion { id: string; tag: string; difficulty: number; type: string; text: string; options: string[]; answer: number | number[]; tolerance: number; points: number; status: string; usedCount: number; createdAt: string }
 export interface AccommodationRow { id: string; learnerId: string; learnerName: string | null; learnerEmail: string | null; examId: string | null; type: 'EXTRA_TIME' | 'BREAKS' | 'ASSISTIVE' | string; extraTimePercent: number; reason: string; approvedByName: string | null; active: boolean; createdAt: string }
 export interface OverrideRow { id: string; learnerName: string | null; learnerEmail: string | null; reason: string; approvedByName: string | null; createdAt: string }
+
+export interface OverrideRow { id: string; submissionId: string; status: 'PENDING' | 'APPROVED' | 'REJECTED' | string; reason: string; decisionReason: string | null; createdAt: string; decidedAt: string | null; proposedById: string; proposedByName: string | null; decidedByName: string | null; topic: string | null; learnerName: string | null; attemptNo: number | null; currentPercent: number | null }
+export interface PolicyDims { passPercent: number; unlockOn?: string; dimensions: { id: string; name: string; min: number; max: number; weight: number }[] }
+export interface OverrideCase {
+  id: string; status: string; reason: string; feedback: string; decisionReason: string | null; createdAt: string; decidedAt: string | null; proposedById: string; proposedByName: string | null; decidedByName: string | null;
+  submission: { id: string; attemptNo: number; submittedAt: string; state: string; topic: string | null; programme: string | null; learnerName: string | null }; policy: PolicyDims;
+  current: { seq: number; kind: string; dimensions: { id: string; score: number }[]; rawPercent: number; finalPercent: number; passed: boolean } | null;
+  proposed: { dimensions: { id: string; score: number; rationale: string }[]; rawPercent: number; latePenaltyPercent: number; finalPercent: number; passed: boolean };
+}
+export interface FoundSubmission { submissionId: string; topic: string | null; programme: string | null; attemptNo: number | null; submittedAt: string | null; state: string; finalPercent: number | null; passed: boolean | null }
+export interface SubmissionHistory {
+  submission: { id: string; attemptNo: number; submittedAt: string; contentHash: string | null; topic: string | null; learnerName: string | null }; policy: PolicyDims;
+  grade: { state: string; finalPercent: number | null; passed: boolean | null; appealDeadline: string | null } | null; records: (GradeRecordView & { createdAt: string })[];
+  tasks: { id: string; kind: string; status: string; outcome: string | null }[]; overrides: { id: string; status: string; reason: string; proposedById: string }[];
+}

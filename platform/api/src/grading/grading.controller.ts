@@ -104,8 +104,28 @@ export class GradingController {
   propose(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) { need(b, { dimensions: 'array', reason: 'string' }); return this.svc.proposeOverride(id, a, b); }
   @Post('grading/overrides/:id/decide') @Roles(...ADMINS)
   decideOv(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) { need(b, { decision: 'string' }); return this.svc.decideOverride(id, a, b.decision, b.reason); }
+  /** Overrides with who proposed and decided them and what grade each concerns (newest first). `status` may list several, comma separated. */
   @Get('grading/overrides') @Roles(...OVERSEE)
-  overrides(@Query('status') status?: string) { return this.prisma.gradeOverride.findMany({ where: status ? { status } : {}, orderBy: { createdAt: 'desc' }, take: 100 }); }
+  async overrides(@Query('status') status?: string) {
+    const rows = await this.prisma.gradeOverride.findMany({ where: status ? { status: { in: status.split(',') } } : {}, orderBy: { createdAt: 'desc' }, take: 100 });
+    const subs = new Map((await this.prisma.submission.findMany({ where: { id: { in: rows.map((r) => r.submissionId) } }, select: { id: true, topicId: true, learnerId: true, attemptNo: true } })).map((x) => [x.id, x]));
+    const topics = new Map((await this.prisma.topic.findMany({ where: { id: { in: [...new Set([...subs.values()].map((x) => x.topicId))] } }, select: { id: true, title: true } })).map((t) => [t.id, t.title]));
+    const grades = new Map((await this.prisma.submissionGrade.findMany({ where: { submissionId: { in: rows.map((r) => r.submissionId) } }, select: { submissionId: true, finalPercent: true } })).map((g) => [g.submissionId, g.finalPercent]));
+    const ids = [...new Set(rows.flatMap((r) => [r.proposedById, ...(r.decidedById ? [r.decidedById] : []), ...(subs.get(r.submissionId) ? [subs.get(r.submissionId)!.learnerId] : [])]))];
+    const names = new Map((await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } })).map((u) => [u.id, u.name]));
+    return rows.map((r) => { const s = subs.get(r.submissionId); return { id: r.id, submissionId: r.submissionId, status: r.status, reason: r.reason, decisionReason: r.decisionReason, createdAt: r.createdAt, decidedAt: r.decidedAt, proposedById: r.proposedById, proposedByName: names.get(r.proposedById) ?? null, decidedByName: r.decidedById ? names.get(r.decidedById) ?? null : null, topic: s ? topics.get(s.topicId) ?? null : null, learnerName: s ? names.get(s.learnerId) ?? null : null, attemptNo: s?.attemptNo ?? null, currentPercent: grades.get(r.submissionId) ?? null }; });
+  }
+  @Get('grading/overrides/:id') @Roles(...OVERSEE) overrideCase(@Param('id') id: string) { return this.svc.overrideCase(id); }
+
+  /** Find a learner's graded work, to review its history or propose an override. A learner is required: this is not a browse-everything list. */
+  @Get('grading/submissions') @Roles(...OVERSEE)
+  async findSubmissions(@Query('learnerId') learnerId: string) {
+    if (!learnerId) throw new BadRequestException('learnerId required');
+    const grades = await this.prisma.submissionGrade.findMany({ where: { learnerId }, orderBy: { createdAt: 'desc' }, take: 100 });
+    const subs = new Map((await this.prisma.submission.findMany({ where: { id: { in: grades.map((g) => g.submissionId) } }, select: { id: true, attemptNo: true, createdAt: true } })).map((s) => [s.id, s]));
+    const topics = new Map((await this.prisma.topic.findMany({ where: { id: { in: [...new Set(grades.map((g) => g.topicId))] } }, select: { id: true, title: true, module: { select: { version: { select: { programme: { select: { code: true, title: true } } } } } } } })).map((t) => [t.id, t]));
+    return grades.map((g) => { const t = topics.get(g.topicId); return { submissionId: g.submissionId, topic: t?.title ?? null, programme: t ? `${t.module.version.programme.title} (${t.module.version.programme.code})` : null, attemptNo: subs.get(g.submissionId)?.attemptNo ?? null, submittedAt: subs.get(g.submissionId)?.createdAt ?? null, state: g.state, finalPercent: g.finalPercent, passed: g.passed }; });
+  }
 
   /** MANUAL unlock rule: an authorised person marks the assignment condition satisfied. Always audited with a reason. */
   @Post('grading/submissions/:id/complete') @Roles(...ADMINS)
@@ -124,7 +144,9 @@ export class GradingController {
   async history(@Param('id') id: string) {
     const sub = await this.prisma.submission.findUnique({ where: { id } });
     if (!sub) throw new NotFoundException();
-    return { submission: { id, attemptNo: sub.attemptNo, submittedAt: sub.createdAt, contentHash: sub.contentHash }, grade: await this.prisma.submissionGrade.findUnique({ where: { submissionId: id } }),
+    const asgn = await this.prisma.assignment.findUniqueOrThrow({ where: { id: sub.assignmentId } }); const policy = await this.svc.policyFor(asgn);
+    const topic = await this.prisma.topic.findUnique({ where: { id: sub.topicId }, select: { title: true } }); const learner = await this.prisma.user.findUnique({ where: { id: sub.learnerId }, select: { name: true } });
+    return { submission: { id, attemptNo: sub.attemptNo, submittedAt: sub.createdAt, contentHash: sub.contentHash, topic: topic?.title ?? null, learnerName: learner?.name ?? null }, policy: { passPercent: policy.passPercent, unlockOn: policy.unlockOn, dimensions: policy.dimensions.map((d) => ({ id: d.id, name: d.name, min: d.min, max: d.max, weight: d.weight })) }, grade: await this.prisma.submissionGrade.findUnique({ where: { submissionId: id } }),
       records: await this.prisma.gradeRecord.findMany({ where: { submissionId: id }, orderBy: { seq: 'asc' } }), tasks: await this.prisma.moderationTask.findMany({ where: { submissionId: id }, orderBy: { createdAt: 'asc' } }), overrides: await this.prisma.gradeOverride.findMany({ where: { submissionId: id } }) };
   }
 

@@ -363,6 +363,18 @@ describe('maker-checker overrides and manual completion', () => {
     await http.post(`/v1/grading/overrides/${ov}/decide`).set(as('assess2')).send({ decision: 'APPROVE' }).expect(409);
     expect((await http.get(`/v1/grading/submissions/${subId}/history`).set(as('auditor')).expect(200)).body.records).toHaveLength(2);
   });
+  it('staff can find a learner\'s work and see an override beside the grade it would replace, with names; others cannot', async () => {
+    const o = (await http.post(`/v1/grading/submissions/${subId}/overrides`).set(as('assess2')).send({ dimensions: [{ id: 'correctness', score: 2 }, { id: 'clarity', score: 2 }], feedback: 'Re-marked', reason: 'Second marker disagrees' }).expect(201)).body.id;
+    await http.get('/v1/grading/submissions').set(as('assess1')).expect(400); await http.get(`/v1/grading/submissions?learnerId=${uid.l5}`).set(as('fac1')).expect(403); await http.get(`/v1/grading/submissions?learnerId=${uid.l5}`).expect(401);
+    const found = (await http.get(`/v1/grading/submissions?learnerId=${uid.l5}`).set(as('assess1')).expect(200)).body; expect(found[0]).toMatchObject({ submissionId: subId, finalPercent: 100, attemptNo: expect.any(Number), topic: expect.any(String), programme: expect.stringMatching(/\(/) });
+    const c = (await http.get(`/v1/grading/overrides/${o}`).set(as('auditor')).expect(200)).body;
+    expect(c).toMatchObject({ status: 'PENDING', proposedByName: expect.any(String), reason: 'Second marker disagrees', submission: { id: subId, learnerName: expect.any(String) }, current: { kind: 'OVERRIDE', finalPercent: 100 } }); expect(c.policy.dimensions.map((d: any) => d.id)).toEqual(expect.arrayContaining(['correctness', 'clarity'])); expect(c.proposed.finalPercent).toBeLessThan(100); expect(c.proposed.dimensions).toHaveLength(2);
+    await http.get(`/v1/grading/overrides/${o}`).set(as('fac1')).expect(403); await http.get('/v1/grading/overrides/00000000-0000-0000-0000-000000000000').set(as('auditor')).expect(404);
+    const done = (await http.get(`/v1/grading/overrides/${ov}`).set(as('auditor')).expect(200)).body; expect(done).toMatchObject({ status: 'APPROVED', current: { kind: 'AI', finalPercent: 75 }, proposed: { finalPercent: 100 } }); // a decided override is compared with the grade it replaced
+    const list = (await http.get('/v1/grading/overrides?status=PENDING,APPROVED').set(as('auditor')).expect(200)).body; expect(list.find((x: any) => x.id === o)).toMatchObject({ status: 'PENDING', currentPercent: 100, topic: expect.any(String), learnerName: expect.any(String), proposedByName: expect.any(String) }); expect(list.some((x: any) => x.id === ov && x.status === 'APPROVED' && x.decidedByName)).toBe(true);
+    const h = (await http.get(`/v1/grading/submissions/${subId}/history`).set(as('auditor')).expect(200)).body; expect(h.policy.dimensions[0]).toHaveProperty('name'); expect(h.submission.topic).toBeTruthy();
+    await http.post(`/v1/grading/overrides/${o}/decide`).set(as('assess1')).send({ decision: 'REJECT', reason: 'Not enough grounds' }).expect(201);
+  });
   it('rejections need a reason', async () => {
     const o = (await http.post(`/v1/grading/submissions/${subId}/overrides`).set(as('assess2')).send({ dimensions: [{ id: 'correctness', score: 0 }, { id: 'clarity', score: 0 }], reason: 'dispute' }).expect(201)).body.id;
     await http.post(`/v1/grading/overrides/${o}/decide`).set(as('assess1')).send({ decision: 'REJECT' }).expect(400);

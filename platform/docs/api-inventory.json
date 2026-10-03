@@ -1154,6 +1154,17 @@
   },
   {
    "method": "GET",
+   "path": "/v1/grading/overrides/:id",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
    "path": "/v1/grading/overrides",
    "public": false,
    "roles": [
@@ -1191,6 +1202,17 @@
    "roles": [
     "ACADEMIC_ADMIN",
     "ASSESSMENT_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/grading/submissions",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "ASSESSMENT_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN"
    ]
   },
   {
