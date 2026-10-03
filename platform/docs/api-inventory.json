@@ -1678,6 +1678,17 @@
    ]
   },
   {
+   "method": "GET",
+   "path": "/v1/teacher/tickets/:id/attachment",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "DOUBT_TEACHER",
+    "PLATFORM_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
    "method": "POST",
    "path": "/v1/teacher/tickets/:id/claim",
    "public": false,

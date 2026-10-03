@@ -1,4 +1,4 @@
-import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Inject, Injectable, NotFoundException, Param, Post, Put, Query, Req } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Inject, Injectable, NotFoundException, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../common/prisma.service';
@@ -412,7 +412,22 @@ export class DoubtsController {
     else where = { assignedTeacherId: a.id };
     if (status) where = { ...where, status };
     const rows = await this.prisma.doubtTicket.findMany({ where, orderBy: [{ priority: 'asc' }, { firstResponseDueAt: 'asc' }], take: 200 });
-    return rows.map(({ contextBundle, learnerId, ...t }) => t);
+    const names = new Map((await this.prisma.user.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.assignedTeacherId).filter((x): x is string => !!x))] } }, select: { id: true, name: true } })).map((u) => [u.id, u.name]));
+    return rows.map(({ contextBundle, learnerId, ...t }) => ({ ...t, assignedTeacherName: t.assignedTeacherId ? names.get(t.assignedTeacherId) ?? null : null }));
+  }
+
+  /** A learner's attachment, for the teacher (or staff) who can see the ticket. Only keys that appear in this ticket's own messages can be fetched. */
+  @Get('teacher/tickets/:id/attachment') @Roles('DOUBT_TEACHER', ...STAFF)
+  async attachment(@Param('id') id: string, @Query('key') key: string, @CurrentActor() a: Actor, @Res() res: any) {
+    const t = await this.prisma.doubtTicket.findUnique({ where: { id } });
+    const staff = a.roles.some((r) => STAFF.includes(r));
+    if (!t || !key || !(t.assignedTeacherId === a.id || staff)) throw new NotFoundException();
+    const msgs = await this.prisma.ticketMessage.findMany({ where: { ticketId: id }, select: { attachments: true } });
+    const att = msgs.flatMap((m) => (Array.isArray(m.attachments) ? (m.attachments as any[]) : [])).find((x) => x?.key === key);
+    if (!att) throw new NotFoundException();
+    const data = await this.storage.get(key);
+    res.setHeader('Content-Type', 'application/octet-stream'); res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', `attachment; filename="${String(att.name ?? 'attachment').replace(/[^\w.\- ]/g, '_')}"`); res.send(data);
   }
 
   @Get('teacher/tickets/:id') @Roles('DOUBT_TEACHER', ...STAFF)
@@ -421,7 +436,8 @@ export class DoubtsController {
     const staff = a.roles.some((r) => STAFF.includes(r));
     if (!t || !(t.assignedTeacherId === a.id || staff || (t.status === 'NEW' && !t.assignedTeacherId))) throw new NotFoundException();
     const learner = await this.prisma.user.findUnique({ where: { id: t.learnerId }, select: { name: true, language: true } }); // no email/phone for teachers
-    return { ...this.svc.asTeacherView(t), learner, messages: await this.svc.thread(this.prisma, id, true), appointments: await this.prisma.appointment.findMany({ where: { ticketId: id } }) };
+    const teacher = t.assignedTeacherId ? await this.prisma.user.findUnique({ where: { id: t.assignedTeacherId }, select: { name: true } }) : null;
+    return { ...this.svc.asTeacherView(t), assignedTeacherName: teacher?.name ?? null, learner, messages: await this.svc.thread(this.prisma, id, true), appointments: await this.prisma.appointment.findMany({ where: { ticketId: id } }) };
   }
 
   @Post('teacher/tickets/:id/claim') @Roles('DOUBT_TEACHER') claim(@Param('id') id: string, @CurrentActor() a: Actor) { return this.svc.claim(id, a); }

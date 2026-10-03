@@ -82,3 +82,4 @@ blockquote { margin: .4rem 0; padding-left: .8rem; border-left: 3px solid var(--
 .barcol small { font-size: .7rem; color: var(--muted, #667); }
 .cols { display: flex; gap: 24px; flex-wrap: wrap; }
 .card table th, .card table td { padding: 4px 12px 4px 0; text-align: left; vertical-align: top; }
+.subcard.internal { background: #fff8e6; border-left: 3px solid #d9a400; padding-left: .6rem; }

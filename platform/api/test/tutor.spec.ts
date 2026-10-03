@@ -262,6 +262,12 @@ describe('doubt centre: teachers and routing', () => {
     const up = (await http.put('/v1/doubts/upload?name=wiring.png').set(as('learner')).set('content-type', 'application/octet-stream').send(Buffer.from('png')).expect(200)).body;
     await http.post(`/v1/me/doubts/${t1}/messages`).set(as('learner')).send({ body: 'photo', attachments: [up] }).expect(201);
     await http.post(`/v1/teacher/tickets/${t1}/reply`).set(as('tA')).send({ body: 'ok', attachments: [up] }).expect(403); // learner's file, not the teacher's
+    expect((await http.get(`/v1/teacher/tickets/${t1}`).set(as('support')).expect(200)).body.assignedTeacherName).toBe('tA Person');
+    // the assigned teacher (and staff) can read the learner's attachment; nobody else, and only files that belong to this ticket
+    const dl = await http.get(`/v1/teacher/tickets/${t1}/attachment`).query({ key: up.key }).set(as('tA')).expect(200); expect(dl.headers['content-disposition']).toContain('wiring.png'); expect(dl.headers['x-content-type-options']).toBe('nosniff'); expect(Buffer.from(dl.body).toString()).toBe('png');
+    await http.get(`/v1/teacher/tickets/${t1}/attachment`).query({ key: up.key }).set(as('support')).expect(200);
+    await http.get(`/v1/teacher/tickets/${t1}/attachment`).query({ key: up.key }).set(as('tB')).expect(404); await http.get(`/v1/teacher/tickets/${t1}/attachment`).query({ key: `doubts/${uid.learner}/other.png` }).set(as('tA')).expect(404); await http.get(`/v1/teacher/tickets/${t1}/attachment`).set(as('tA')).expect(404);
+    await http.get(`/v1/teacher/tickets/${t1}/attachment`).query({ key: up.key }).set(as('learner')).expect(403);
   });
   it('resolve -> reopen window -> rating once -> auto-close after 7 days', async () => {
     await http.post(`/v1/me/doubts/${t1}/rating`).set(as('learner')).send({ rating: 5 }).expect(409); // not resolved yet

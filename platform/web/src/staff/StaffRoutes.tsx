@@ -11,6 +11,8 @@ import ExamReport from './ExamReport';
 import ExamCase from './ExamCase';
 import Content from './Content';
 import ContentVersion from './ContentVersion';
+import Doubts from './Doubts';
+import DoubtTicket from './DoubtTicket';
 import Account from '../pages/Account';
 
 /** Everything under /staff. Each page also checks the role (and the API checks it again on every call). */
@@ -26,6 +28,8 @@ export default function StaffRoutes() {
       <Route path="examops" element={<ExamOps />} />
       <Route path="examops/attempts/:attemptId" element={<ExamCase />} />
       <Route path="examops/exams/:examId/report" element={<ExamReport />} />
+      <Route path="doubts" element={<Doubts />} />
+      <Route path="doubts/tickets/:ticketId" element={<DoubtTicket />} />
       <Route path="labs" element={<LabDesk />} />
       <Route path="operations" element={<Operations />} />
       <Route path="account" element={<Account />} />

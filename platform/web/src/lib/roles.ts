@@ -9,6 +9,7 @@ export const AREAS = {
   moderation: { title: 'Grading', blurb: 'Review assignments that need a person, and decide appeals.', view: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN', 'ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN'], act: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN'] },
   examops: { title: 'Exam integrity', blurb: 'Review incidents and appeals, decide outcomes, and release results.', view: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN', 'FACULTY_REVIEWER', 'ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN'], act: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN'] },
   content: { title: 'Content', blurb: 'Write programmes, quizzes and assignments, and take them through review to publication.', view: ['CONTENT_AUTHOR', 'ACADEMIC_ADMIN', 'FACULTY_REVIEWER', 'APPROVER_PUBLISHER', 'AUDITOR', 'SUPER_ADMIN'], act: ['CONTENT_AUTHOR', 'ACADEMIC_ADMIN'] },
+  doubts: { title: 'Doubt desk', blurb: "Answer learners' questions, review reusable answers, and keep replies on time.", view: ['DOUBT_TEACHER', 'SUPPORT_OPERATOR', 'ACADEMIC_ADMIN', 'PLATFORM_ADMIN', 'FACULTY_REVIEWER', 'AUDITOR'], act: ['DOUBT_TEACHER'] },
   labs: { title: 'Lab desk', blurb: 'Plan sessions, show the check-in code, record attendance.', view: ['LAB_COORDINATOR', 'ACADEMIC_ADMIN'] },
   operations: { title: 'Operations', blurb: 'Integrity checks, audit trail, platform settings.', view: ['PLATFORM_ADMIN', 'SUPER_ADMIN', 'AUDITOR', 'ACADEMIC_ADMIN', 'EXAM_ADMIN', 'ASSESSMENT_ADMIN'] },
 } as const;
@@ -19,3 +20,5 @@ export const EXAM_STATUS_ROLES = ['EXAM_ADMIN', 'ASSESSMENT_ADMIN', 'FACULTY_REV
 export const roleLabel = (r: string) => r.toLowerCase().split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
 /** Exam-operations actions, one list per server rule. */
 export const EXAMOPS = { caseView: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN', 'EXAM_ADMIN', 'AUDITOR'], adjudicate: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN'], release: ['ASSESSMENT_ADMIN', 'ACADEMIC_ADMIN'], proctor: ['EXAM_ADMIN', 'ASSESSMENT_ADMIN'], evidence: ['FACULTY_REVIEWER', 'ASSESSMENT_ADMIN', 'EXAM_ADMIN'] } as const;
+/** Doubt-desk actions, one list per server rule. */
+export const DOUBTS = { tickets: ['DOUBT_TEACHER', 'SUPPORT_OPERATOR', 'ACADEMIC_ADMIN', 'PLATFORM_ADMIN'], staff: ['SUPPORT_OPERATOR', 'ACADEMIC_ADMIN', 'PLATFORM_ADMIN'], faqRead: ['FACULTY_REVIEWER', 'ACADEMIC_ADMIN', 'DOUBT_TEACHER', 'AUDITOR'], faqReview: ['FACULTY_REVIEWER', 'ACADEMIC_ADMIN'], teachersRead: ['ACADEMIC_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT_OPERATOR'], teachersEdit: ['ACADEMIC_ADMIN', 'PLATFORM_ADMIN'], report: ['ACADEMIC_ADMIN', 'AUDITOR', 'PLATFORM_ADMIN', 'SUPER_ADMIN', 'SUPPORT_OPERATOR'], teacher: ['DOUBT_TEACHER'] } as const;
