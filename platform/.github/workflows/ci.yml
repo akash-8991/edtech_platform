@@ -24,6 +24,8 @@ jobs:
       - run: npx prisma migrate deploy
         env: { DATABASE_URL: postgresql://edtech:edtech@localhost:5433/edtech_test }
       - run: npx tsc -p tsconfig.build.json --noEmit
+      - name: Real ffmpeg and Docker for the live media and sandbox tests (otherwise they are skipped)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg openssl && docker pull python:3.12-alpine
       - name: Migration policy (expand/contract)
         run: npx ts-node scripts/migration-lint.ts
       - name: Tests with coverage (fails below the thresholds in package.json)
@@ -33,6 +35,17 @@ jobs:
         with: { name: coverage, path: platform/api/coverage/lcov-report }
       - name: Dependency audit (runtime, fail on high)
         run: npm audit --omit=dev --audit-level=high
+  infra:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: platform/infra/terraform } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.9.8 }
+      - run: terraform fmt -recursive -check
+      - run: python3 scripts/check-references.py
+      - name: Validate (downloads the AWS provider; no credentials needed)
+        run: terraform init -backend=false -input=false && terraform validate
   web:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: platform/web } }

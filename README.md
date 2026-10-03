@@ -17,6 +17,9 @@ An AI-assisted, multidisciplinary learning-delivery platform: governed course au
 | use it on a phone, in Hindi, offline; QR check-in; single sign-on | [Learner experience](platform/docs/guides/06-learner-experience.md) |
 | deliver adaptive-bitrate video | [Adaptive video](platform/docs/guides/07-adaptive-video.md) |
 | understand or change the API schemas | [API contracts](platform/docs/guides/08-api-contracts.md) |
+| push notifications and the Android/iOS app | [Mobile and push](platform/docs/guides/09-mobile-and-push.md) |
+| build the AWS environment from code | [Terraform](platform/infra/terraform/README.md) |
+| see the latest two-user end-to-end result | [E2E report](platform/docs/quality/e2e-two-users.md) |
 | understand the design | [Architecture](platform/docs/architecture.md), [decision log](platform/docs/decision-log.md), [traceability](platform/docs/traceability.md) |
 | run it in production | [Runbooks](platform/docs/ops/runbooks.md), [SLOs and alerts](platform/docs/ops/slo-and-alerts.md), [DR plan](platform/docs/ops/dr-plan.md), [migrations](platform/docs/ops/migrations.md), [scaling](platform/docs/ops/scaling.md), [key rotation](platform/docs/security/key-rotation.md) |
 | review security and privacy | [Threat model](platform/docs/security/threat-model.md), [security review](platform/docs/security/security-review.md), [privacy data map](platform/docs/privacy/data-map-and-retention.md) |

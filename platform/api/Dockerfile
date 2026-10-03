@@ -28,3 +28,16 @@ USER node
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "dist/src/main.js"]
+
+# ---- worker: the runtime image plus ffmpeg, which builds the adaptive-bitrate ladder (FFMPEG_BIN / FFPROBE_BIN default to the PATH) -------------------------
+FROM runtime AS worker
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+USER node
+CMD ["node", "dist/src/worker.js"]
+
+# ---- grader: the worker plus the Docker CLI, used ONLY against the socket proxy (DOCKER_HOST=tcp://docker-proxy:2375), never a raw socket ------------------------
+FROM docker:27-cli AS dockercli
+FROM worker AS grader
+COPY --from=dockercli /usr/local/bin/docker /usr/local/bin/docker
+CMD ["node", "dist/src/worker.js"]

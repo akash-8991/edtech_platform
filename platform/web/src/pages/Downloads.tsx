@@ -30,6 +30,7 @@ export default function Downloads({ offlineMode = false }: { offlineMode?: boole
         <ul className="plain">{items.map((l) => { const expired = Date.parse(l.expiresAt) <= Date.now(); return (
           <li key={l.assetId}><Card title={expired ? l.title : <Link to={`/downloads/${l.assetId}`}>{l.title}</Link>} actions={expired ? <Badge tone="warn">{t('Expired')}</Badge> : <Badge tone="ok">{t('Ready')}</Badge>}>
             <p className="muted">{t('{min} min · {size} · saved {date}', { min: minutes(l.durationSec), size: mb(l.size), date: fmtDate(l.downloadedAt) })} · {t('expires {when}', { when: fmtDateTime(l.expiresAt) })}</p>
+            {l.rungs && <p className="muted">{t('Adapts to your device: {list}', { list: l.rungs.map((r) => r.name).join(', ') })}</p>}
             <div className="choices">{!expired && <Link className="button" to={`/downloads/${l.assetId}`}>{t('Watch offline')}</Link>}<button className="secondary" onClick={() => void remove(l)}>{t('Remove')}</button></div></Card></li>); })}</ul>
         <Card title={t('Storage')}><p>{t('{size} used by downloads.', { size: mb(usage?.used ?? 0) })}{usage?.free !== undefined ? ` ${t('About {size} free on this device.', { size: mb(usage.free) })}` : ''}</p>
           <div className="choices">{online && !offlineMode && <button className="secondary" onClick={() => void check()}>{t('Check my access now')}</button>}<button className="secondary" onClick={() => void removeAll()}>{t('Remove all downloads')}</button></div></Card></>)}

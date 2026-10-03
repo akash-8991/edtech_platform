@@ -44,7 +44,7 @@ export default function Topic() {
 
       <Card title={t('1. Watch')} actions={<><Badge tone={videoDone ? 'ok' : 'warn'}>{videoDone ? t('Done') : t('To do')}</Badge>
         <label className="inline"><input type="checkbox" checked={low} onChange={(e) => { setLow(e.target.checked); localStorage.setItem('edtech.low', e.target.checked ? '1' : '0'); }} /> {t('Low-bandwidth mode')}</label></>}>
-        {playback ? <><VideoPlayer key={playback.assetId + playback.mode} topicId={topicId} playback={playback} onProgress={reload} />{me && <DownloadButton topicId={topicId} entitlementId={entitlementId} title={topic.title} language={playback.language} userId={me.id} assetId={playback.assetId} />}</>
+        {playback ? <><VideoPlayer key={playback.assetId + playback.mode} topicId={topicId} playback={playback} onProgress={reload} />{me && <DownloadButton topicId={topicId} entitlementId={entitlementId} title={topic.title} language={playback.language} userId={me.id} assetId={playback.assetId} adaptive={playback.adaptive?.rungs} />}</>
           : !online ? <p className="muted">{t('The video needs a connection. If you saved this lesson, open it from your downloads.')} <Link to="/downloads">{t('My downloads')}</Link></p> : <Loading what={t('Preparing the lesson')} />}
       </Card>
 

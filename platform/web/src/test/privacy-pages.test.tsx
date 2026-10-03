@@ -32,7 +32,7 @@ describe('privacy helpers', () => {
   });
   it('applies accessibility preferences to the document and remembers them locally', () => {
     applyPrefs({ highContrast: true, reducedMotion: true, largeTargets: true, textSpacing: 'wider', fontScale: 1.5, language: 'hi' }); const r = document.documentElement;
-    expect(r.dataset).toMatchObject({ contrast: 'high', motion: 'reduced', targets: 'large', spacing: 'wider' }); expect(r.style.getPropertyValue('--font-scale')).toBe('1.5'); expect(r.lang).toBe('hi');
+    expect(r.dataset).toMatchObject({ contrast: 'high', motion: 'reduced', targets: 'large', spacing: 'wider' }); expect(r.style.getPropertyValue('--font-scale')).toBe('1.5');
     applyPrefs({}); expect(r.dataset.contrast).toBe('normal'); expect(r.style.getPropertyValue('--font-scale')).toBe('1'); savePrefsLocal({ lowBandwidth: true, fontScale: 2 }); expect(loadPrefsLocal()).toEqual({ lowBandwidth: true, fontScale: 2 }); expect(localStorage.getItem('edtech.low')).toBe('1');
     localStorage.setItem('edtech.prefs', '{bad'); expect(loadPrefsLocal()).toEqual({});
   });

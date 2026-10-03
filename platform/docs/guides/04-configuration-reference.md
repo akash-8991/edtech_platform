@@ -133,6 +133,12 @@ Check connectivity and cost after setting keys: `cd platform/api && npm run ai:s
 | `POLICY_MAX_PAUSED_DAYS` | `60` | Total paused days allowed. |
 | `POLICY_PAUSE_NOTICE_DAYS` | `0` | Notice required before a pause. |
 | `OFFLINE_DAYS` | `7` | Offline licence lifetime. |
+| `PUSH_MODE` | unset | `off`, `log` (dev) or `live` (needs VAPID and/or FCM keys). |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | unset | Web Push keys (`npx web-push generate-vapid-keys`) and a `mailto:` contact. |
+| `FCM_SERVICE_ACCOUNT` | unset | Firebase service-account JSON for native push (Android, and iOS through APNs). |
+| `PUSH_SWEEP_MS` | `5000` | How often the worker looks for notifications to push. |
+| `WORKER_JOB_KINDS` | unset (all) | Comma list of job kinds this worker may claim, e.g. `GRADE_SUBMISSION` on the grader host; the general worker uses `CURRICULUM,TOPIC_CONTENT,TRANSCODE`. |
+| `WORKER_SWEEPS` | on | `0` turns the periodic sweeps off for a job-only worker (the grader host). |
 | `HLS_TTL_MIN` | `180` | How long one playback's adaptive-stream tokens last (minutes). |
 | `FFMPEG_BIN`, `FFPROBE_BIN` | `ffmpeg`, `ffprobe` | Media tools the worker runs for adaptive builds. |
 | `TRANSCODE_TIMEOUT_MIN` | `90` | Time limit per ffmpeg/ffprobe call. |

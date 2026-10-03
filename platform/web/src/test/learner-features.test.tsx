@@ -129,7 +129,7 @@ describe('adaptive video', () => {
 
 describe('caption and language preferences', () => {
   it('applies caption size and background to the page', () => {
-    const root = document.createElement('html'); applyPrefs({ captionSize: 'larger', captionBackground: false, language: 'hi' }, root); expect(root.dataset.captionSize).toBe('larger'); expect(root.dataset.captionBg).toBe('none'); expect(root.lang).toBe('hi');
+    const root = document.createElement('html'); applyPrefs({ captionSize: 'larger', captionBackground: false, language: 'hi' }, root); expect(root.dataset.captionSize).toBe('larger'); expect(root.dataset.captionBg).toBe('none');
     applyPrefs({}, root); expect(root.dataset.captionSize).toBe('normal'); expect(root.dataset.captionBg).toBe('solid');
   });
 });
@@ -166,5 +166,16 @@ describe('app shell', () => {
     Object.defineProperty(navigator, 'onLine', { value: true, configurable: true }); act(() => { window.dispatchEvent(new Event('online')); });
     await waitFor(() => expect(calls.some((c) => c.url === '/v1/learning-events')).toBe(true)); await waitFor(() => expect(screen.queryByText(/You are offline/)).toBeNull()); expect(JSON.parse(localStorage.getItem('edtech.events') ?? '[]')).toEqual([]);
     fireEvent(window, new Event('offline'));
+  });
+});
+
+describe('staff console is English only', () => {
+  it('stays in English for someone who reads the learner portal in Hindi, and the learner portal is still Hindi', async () => {
+    api.setTokens({ accessToken: 'AT', refreshToken: 'RT' });
+    route({ 'GET /v1/auth/me': () => me(['PLATFORM_ADMIN', 'LEARNER']), 'GET /v1/me/preferences': () => res(200, { language: 'hi' }), 'GET /v1/admin/entitlements?limit=50': () => res(200, []), 'GET /v1/catalogue': () => res(200, []), 'GET /v1/me/entitlements': () => res(200, []) });
+    localStorage.setItem('edtech.prefs', JSON.stringify({ language: 'hi' }));
+    const shell = (path: string) => render(<MemoryRouter initialEntries={[path]}><AuthProvider><PrefsProvider><App /></PrefsProvider></AuthProvider></MemoryRouter>);
+    const a = shell('/staff/entitlements'); await screen.findByRole('heading', { name: 'Entitlements' }); expect(document.documentElement.lang).toBe('en'); expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument(); expect(screen.queryByLabelText('भाषा')).toBeNull(); expect(screen.queryByText('आपके')).toBeNull(); a.unmount();
+    shell('/'); await screen.findByRole('heading', { name: 'मेरे कोर्स' }); expect(document.documentElement.lang).toBe('hi');
   });
 });

@@ -13,7 +13,7 @@ import { messageFor, ApiError } from '../api/client';
 
 /** Source files a learner sees. The staff console is English only and is deliberately not scanned. */
 const FILES = [...readdirSync('src/pages').map((f) => `src/pages/${f}`), ...readdirSync('src/components').map((f) => `src/components/${f}`), 'src/App.tsx', 'src/auth.tsx', 'src/prefs.tsx', 'src/api/client.ts',
-  ...['format', 'grades', 'labs', 'privacy', 'titles'].map((n) => `src/lib/${n}.ts`), ...readdirSync('src/lib/offline').map((f) => `src/lib/offline/${f}`)].filter((f) => /\.tsx?$/.test(f));
+  ...['format', 'grades', 'labs', 'privacy', 'titles', 'push'].map((n) => `src/lib/${n}.ts`), ...readdirSync('src/lib/offline').map((f) => `src/lib/offline/${f}`)].filter((f) => /\.tsx?$/.test(f));
 const CALL = /\b(?:t|tt|tr|mark)\(\s*('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g;
 const used = new Map<string, string>();
 for (const f of FILES) for (const m of readFileSync(f, 'utf8').matchAll(CALL)) used.set(m[1].slice(1, -1).replace(/\\'/g, "'").replace(/\\"/g, '"'), f);

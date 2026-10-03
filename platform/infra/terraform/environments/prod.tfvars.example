@@ -1,0 +1,25 @@
+# Production. Copy to prod.tfvars, fill in, review the plan with two people, then:  terraform apply -var-file=environments/prod.tfvars
+environment    = "prod"
+domain_name    = "learn.institute.edu"
+hosted_zone_id = "" # or the Route 53 zone id
+alarm_email    = "platform-oncall@institute.edu"
+
+# Sizing starts here and moves with the load tests you run on this environment.
+db_instance_class    = "db.m6g.large"
+db_allocated_storage = 100
+redis_node_type      = "cache.t4g.small"
+api_min_tasks        = 2
+api_max_tasks        = 12
+worker_cpu           = 2048
+worker_memory        = 4096
+
+enable_waf              = true
+waf_rate_limit_per_5min = 20000
+
+# Code grading (needs the EC2 grader host). Pin the sandbox image by digest: docker pull python:3.12-alpine && docker inspect --format '{{index .RepoDigests 0}}' python:3.12-alpine
+enable_grader        = false
+sandbox_image_python = ""
+
+push_mode          = "off" # "live" once VAPID_* and/or FCM_SERVICE_ACCOUNT are in the app secret
+image_tag          = "bootstrap"
+extra_cors_origins = ["capacitor://localhost", "https://localhost"] # the native apps

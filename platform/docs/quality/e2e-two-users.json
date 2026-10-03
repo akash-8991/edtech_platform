@@ -1,0 +1,608 @@
+{
+ "when": "2026-10-03T13:08:15.188Z",
+ "users": 2,
+ "apiInstances": 2,
+ "together_ms": 2106,
+ "total_ms": 14107,
+ "passed": 89,
+ "failed": 0,
+ "failures": [],
+ "checks": [
+  {
+   "user": "staff",
+   "step": "upload master",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "staff",
+   "step": "upload 360p",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "staff",
+   "step": "upload transcript",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "staff",
+   "step": "upload captions",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "staff",
+   "step": "queue the adaptive build",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "staff",
+   "step": "real ffmpeg built the ladder",
+   "ok": true,
+   "detail": "[\"240p\",\"360p\",\"480p\",\"720p\"]"
+  },
+  {
+   "user": "staff",
+   "step": "publish: FACULTY_REVIEW",
+   "ok": true,
+   "detail": "{\"id\":\"4f3bcbc0-4544-4c98-b511-e54c482b6784\",\"programmeId\":\"b65e3819-a5c0-4b49-b895-3e25be582f24\",\"version\":1,\"state\":\"FACULTY_REVIEW\",\"authorId\":\"8853126d-b2aa"
+  },
+  {
+   "user": "staff",
+   "step": "publish: FACULTY_APPROVED",
+   "ok": true,
+   "detail": "{\"id\":\"4f3bcbc0-4544-4c98-b511-e54c482b6784\",\"programmeId\":\"b65e3819-a5c0-4b49-b895-3e25be582f24\",\"version\":1,\"state\":\"FACULTY_APPROVED\",\"authorId\":\"8853126d-b2"
+  },
+  {
+   "user": "staff",
+   "step": "publish: ADMIN_APPROVAL",
+   "ok": true,
+   "detail": "{\"id\":\"4f3bcbc0-4544-4c98-b511-e54c482b6784\",\"programmeId\":\"b65e3819-a5c0-4b49-b895-3e25be582f24\",\"version\":1,\"state\":\"ADMIN_APPROVAL\",\"authorId\":\"8853126d-b2aa"
+  },
+  {
+   "user": "staff",
+   "step": "publish: PUBLISHED",
+   "ok": true,
+   "detail": "{\"id\":\"4f3bcbc0-4544-4c98-b511-e54c482b6784\",\"programmeId\":\"b65e3819-a5c0-4b49-b895-3e25be582f24\",\"version\":1,\"state\":\"PUBLISHED\",\"authorId\":\"8853126d-b2aa-4694"
+  },
+  {
+   "user": "staff",
+   "step": "question bank",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "staff",
+   "step": "define the exam",
+   "ok": true,
+   "detail": "{\"id\":\"0954a11d-8789-47a3-bc18-430c3ecc7e32\",\"versionId\":\"4f3bcbc0-4544-4c98-b511-e54c482b6784\",\"code\":\"E2EX\",\"title\":\"Final\",\"status\":\"DRAFT\",\"durationMin\":30,\"passPercent\":50,\"maxAttempts\":2,\"cooldo"
+  },
+  {
+   "user": "staff",
+   "step": "schedule the sitting",
+   "ok": true,
+   "detail": "{\"id\":\"69ef6714-3ce7-41f3-bee5-5cf0d6893039\",\"examId\":\"0954a11d-8789-47a3-bc18-430c3ecc7e32\",\"startsAt\":\"2026-10-03T14:08:09.362Z\",\"endsAt\":\"2026-10-03T16:08:09.362Z\",\"mode\":\"REMOTE\",\"centre\":null,\"ca"
+  },
+  {
+   "user": "staff",
+   "step": "eligibility exception for asha",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "staff",
+   "step": "eligibility exception for ravi",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "sign in (own API instance)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "sees only their own entitlement",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "sign in (own API instance)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "progress starts at 0%",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "cannot read the other learner's progress",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "sees only their own entitlement",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "opens the topic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "playback offers the adaptive ladder first",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "master playlist has 4 signed variants",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "progress starts at 0%",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "cannot read the other learner's progress",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "opens the topic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "playback offers the adaptive ladder first",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "master playlist has 4 signed variants",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "every rung downloads through signed URLs and decodes cleanly",
+   "ok": true,
+   "detail": "4/4"
+  },
+  {
+   "user": "asha",
+   "step": "watch time accepted",
+   "ok": true,
+   "detail": "[{\"eventId\":\"24dbe4c5-a167-4bc0-a8c1-4655eb02451e\",\"status\":\"accepted\"},{\"eventId\":\"deda1c3c-0975-45df-8468-b4c2faf59194\",\"status\":\"accepted\"}]"
+  },
+  {
+   "user": "asha",
+   "step": "replayed events are duplicates, not double counted",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "quiz opens after the video",
+   "ok": true,
+   "detail": "{\"attemptId\":\"4907d0fc-f030-4888-9ed5-6baf4c7b91ef\",\"passPercent\":60,\"questions\":[{\"id\":\"4374d4fc-0e54-49df-9edc-84aaad5eed9e\",\"type\":\"MCQ_SINGLE\",\"text\":\"What "
+  },
+  {
+   "user": "asha",
+   "step": "quiz passed",
+   "ok": true,
+   "detail": "{\"scorePercent\":100,\"passed\":true,\"attemptsRemaining\":1,\"results\":[{\"questionId\":\"4374d4fc-0e54-49df-9edc-84aaad5eed9e\",\"correct\":true,\"rationale\":null},{\"quest"
+  },
+  {
+   "user": "ravi",
+   "step": "every rung downloads through signed URLs and decodes cleanly",
+   "ok": true,
+   "detail": "4/4"
+  },
+  {
+   "user": "asha",
+   "step": "a retried submit with the same key replays the answer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "watch time accepted",
+   "ok": true,
+   "detail": "[{\"eventId\":\"00cc47a3-b2a9-4e49-a52a-d7af6a1f2e0b\",\"status\":\"accepted\"},{\"eventId\":\"422fef1e-643b-4cb4-85c4-08f15851454d\",\"status\":\"accepted\"}]"
+  },
+  {
+   "user": "asha",
+   "step": "assignment submitted and queued for evaluation",
+   "ok": true,
+   "detail": "{\"submissionId\":\"c2461e9e-92f7-407f-80cb-862e315481e7\",\"attemptNo\":1,\"status\":\"PENDING_AI\",\"unlockRule\":\"SUBMISSION\"}"
+  },
+  {
+   "user": "asha",
+   "step": "sees only their own submission",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "replayed events are duplicates, not double counted",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "quiz opens after the video",
+   "ok": true,
+   "detail": "{\"attemptId\":\"63f75e7e-aef3-41ed-a55c-f619ce1a39a9\",\"passPercent\":60,\"questions\":[{\"id\":\"4374d4fc-0e54-49df-9edc-84aaad5eed9e\",\"type\":\"MCQ_SINGLE\",\"text\":\"What "
+  },
+  {
+   "user": "asha",
+   "step": "asks a teacher",
+   "ok": true,
+   "detail": "{\"id\":\"2c93e95c-bda5-4a01-9d1a-93e7a57cecde\",\"number\":1,\"subject\":\"Question from asha\",\"category\":\"CONTENT\",\"priority\":\"P3\",\"status\":\"ASSIGNED\",\"topicId\":null,\""
+  },
+  {
+   "user": "ravi",
+   "step": "quiz passed",
+   "ok": true,
+   "detail": "{\"scorePercent\":100,\"passed\":true,\"attemptsRemaining\":1,\"results\":[{\"questionId\":\"4374d4fc-0e54-49df-9edc-84aaad5eed9e\",\"correct\":true,\"rationale\":null},{\"quest"
+  },
+  {
+   "user": "asha",
+   "step": "registers a device",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "a retried submit with the same key replays the answer",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "assignment submitted and queued for evaluation",
+   "ok": true,
+   "detail": "{\"submissionId\":\"640986ac-fab0-429e-a2bd-459dd9f1eab8\",\"attemptNo\":1,\"status\":\"PENDING_AI\",\"unlockRule\":\"SUBMISSION\"}"
+  },
+  {
+   "user": "ravi",
+   "step": "sees only their own submission",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "saves two rungs for offline and they decrypt and play",
+   "ok": true,
+   "detail": "2/2"
+  },
+  {
+   "user": "ravi",
+   "step": "asks a teacher",
+   "ok": true,
+   "detail": "{\"id\":\"32f6badb-4d9f-48ea-a073-e5c64b7102c1\",\"number\":2,\"subject\":\"Question from ravi\",\"category\":\"CONTENT\",\"priority\":\"P3\",\"status\":\"ASSIGNED\",\"topicId\":null,\""
+  },
+  {
+   "user": "asha",
+   "step": "licences are valid",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "registers a device",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "registers for push",
+   "ok": true,
+   "detail": "{\"id\":\"11a9cbd8-36ae-4b99-bcbc-07df90fe7e44\",\"platform\":\"WEB\",\"createdAt\":\"2026-10-03T13:08:10.892Z\",\"lastSeenAt\":\"2026-10-03T13:08:10.892Z\",\"userAgent\":\"node\"}"
+  },
+  {
+   "user": "asha",
+   "step": "a test push is delivered to the stand-in push service",
+   "ok": true,
+   "detail": "{\"devices\":1,\"sent\":1}"
+  },
+  {
+   "user": "ravi",
+   "step": "saves two rungs for offline and they decrypt and play",
+   "ok": true,
+   "detail": "2/2"
+  },
+  {
+   "user": "asha",
+   "step": "registers for the exam (eligible after the topic)",
+   "ok": true,
+   "detail": "{\"id\":\"bebeca53-c99c-4b05-9f0a-53b12c1297f1\",\"examId\":\"0954a11d-8789-47a3-bc18-430c3ecc7e32\",\"sessionId\":\"69ef6714-3ce7-41f3-bee5-5cf0d6893039\",\"learnerId\":\"2ffc41c6-def2-4e3e-a239-988ecaf2e978\",\"enti"
+  },
+  {
+   "user": "ravi",
+   "step": "licences are valid",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "registers for push",
+   "ok": true,
+   "detail": "{\"id\":\"cfa42928-2e0f-4af7-a8bc-a58de8b3fe5f\",\"platform\":\"WEB\",\"createdAt\":\"2026-10-03T13:08:11.199Z\",\"lastSeenAt\":\"2026-10-03T13:08:11.199Z\",\"userAgent\":\"node\"}"
+  },
+  {
+   "user": "ravi",
+   "step": "a test push is delivered to the stand-in push service",
+   "ok": true,
+   "detail": "{\"devices\":1,\"sent\":1}"
+  },
+  {
+   "user": "ravi",
+   "step": "registers for the exam (eligible after the topic)",
+   "ok": true,
+   "detail": "{\"id\":\"8ebbf5f2-f2e5-4f3e-9d20-1a1760cc757e\",\"examId\":\"0954a11d-8789-47a3-bc18-430c3ecc7e32\",\"sessionId\":\"69ef6714-3ce7-41f3-bee5-5cf0d6893039\",\"learnerId\":\"22e2d9f3-0984-4b27-a69d-a7b4f02732ff\",\"enti"
+  },
+  {
+   "user": "ravi",
+   "step": "checks in",
+   "ok": true,
+   "detail": "{\"attemptId\":\"729a0c70-2456-43ba-9918-139badf22727\",\"status\":\"CHECKED_IN\",\"device\":{\"ok\":true,\"problems\":[]},\"idCheck\":\"PENDING\",\"launchUrl\":\"https://mock.proctor/launch/mock-1-729a0c\",\"mode\":\"REMOTE\""
+  },
+  {
+   "user": "asha",
+   "step": "checks in",
+   "ok": true,
+   "detail": "{\"attemptId\":\"bc7a2ac3-63e1-42f5-8221-b7e6c55ea871\",\"status\":\"CHECKED_IN\",\"device\":{\"ok\":true,\"problems\":[]},\"idCheck\":\"PENDING\",\"launchUrl\":\"https://mock.proctor/launch/mock-1-bc7a2a\",\"mode\":\"REMOTE\""
+  },
+  {
+   "user": "ravi",
+   "step": "identity confirmed by the proctoring webhook",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "identity confirmed by the proctoring webhook",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "starts the exam (server clock)",
+   "ok": true,
+   "detail": "{\"attemptId\":\"729a0c70-2456-43ba-9918-139badf22727\",\"sessionToken\":\"d03846a16de711c148e90cd6d24197175809fc58ac7d395e\",\"serverTime\":\"2026-10-03T13:08:11.434Z\",\"deadlineAt\":\"2026-10-03T13:38:11.434Z\",\"w"
+  },
+  {
+   "user": "asha",
+   "step": "starts the exam (server clock)",
+   "ok": true,
+   "detail": "{\"attemptId\":\"bc7a2ac3-63e1-42f5-8221-b7e6c55ea871\",\"sessionToken\":\"e5dfbc9f27124c27575483da23f6e067343db91bb9f029f0\",\"serverTime\":\"2026-10-03T13:08:11.436Z\",\"deadlineAt\":\"2026-10-03T13:38:11.436Z\",\"w"
+  },
+  {
+   "user": "ravi",
+   "step": "autosave 1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "a stale autosave is ignored, not applied",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "autosave 1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "a stale autosave is ignored, not applied",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "autosave 2",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "ravi",
+   "step": "the other learner cannot write to this attempt",
+   "ok": true,
+   "detail": "404"
+  },
+  {
+   "user": "asha",
+   "step": "autosave 2",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "asha",
+   "step": "the other learner cannot write to this attempt",
+   "ok": true,
+   "detail": "404"
+  },
+  {
+   "user": "ravi",
+   "step": "submits with a receipt",
+   "ok": true,
+   "detail": "{\"receiptCode\":\"7767-C452-6902\",\"submittedAt\":\"2026-10-03T13:08:11.469Z\",\"autoSubmitted\":false,\"answered\":5}"
+  },
+  {
+   "user": "asha",
+   "step": "submits with a receipt",
+   "ok": true,
+   "detail": "{\"receiptCode\":\"B1B4-FB49-9D0F\",\"submittedAt\":\"2026-10-03T13:08:11.474Z\",\"autoSubmitted\":false,\"answered\":5}"
+  },
+  {
+   "user": "ravi",
+   "step": "result is held for release, not shown early",
+   "ok": true,
+   "detail": "{\"attemptId\":\"729a0c70-2456-43ba-9918-139badf22727\",\"status\":\"SUBMITTED\",\"receiptCode\":\"7767-C452-6902\",\"submittedAt\":\"2026-10-03T13:08:11.469Z\",\"state\":\"UNDER_"
+  },
+  {
+   "user": "ravi",
+   "step": "notified about the topic, the exam registration and submission",
+   "ok": true,
+   "detail": "exam.submitted,exam.registered,programme.completed,topic.completed"
+  },
+  {
+   "user": "asha",
+   "step": "result is held for release, not shown early",
+   "ok": true,
+   "detail": "{\"attemptId\":\"bc7a2ac3-63e1-42f5-8221-b7e6c55ea871\",\"status\":\"SUBMITTED\",\"receiptCode\":\"B1B4-FB49-9D0F\",\"submittedAt\":\"2026-10-03T13:08:11.474Z\",\"state\":\"UNDER_"
+  },
+  {
+   "user": "asha",
+   "step": "notified about the topic, the exam registration and submission",
+   "ok": true,
+   "detail": "exam.submitted,exam.registered,programme.completed,topic.completed"
+  },
+  {
+   "user": "asha",
+   "step": "push: English messages arrive, decrypted by the device",
+   "ok": true,
+   "detail": "[\"This is a test notification.\",\"You are registered for an exam session.\",\"Your exam was submitted.\"]"
+  },
+  {
+   "user": "ravi",
+   "step": "push: Hindi messages arrive, decrypted by the device",
+   "ok": true,
+   "detail": "[\"यह एक परीक्षण सूचना है।\",\"आपकी परीक्षा जमा हो गई।\",\"आप एक परीक्षा सत्र के लिए पंजीकृत हैं।\"]"
+  },
+  {
+   "user": "both",
+   "step": "push: nobody received the other person's notification",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "both",
+   "step": "push: each notification created after subscribing is delivered exactly once",
+   "ok": true,
+   "detail": "{\"asha\":[\"test\",\"exam.registered\",\"exam.submitted\"],\"ravi\":[\"test\",\"exam.submitted\",\"exam.registered\"]}"
+  },
+  {
+   "user": "both",
+   "step": "exactly 2 accepted heartbeat events per learner stored",
+   "ok": true,
+   "detail": "4"
+  },
+  {
+   "user": "both",
+   "step": "two exam attempts, one per learner, both submitted",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "user": "both",
+   "step": "the audit hash chain verifies after concurrent activity",
+   "ok": true,
+   "detail": "{\"events\":23,\"intact\":true,\"firstBrokenIndex\":null}"
+  },
+  {
+   "user": "both",
+   "step": "platform integrity checks are clean",
+   "ok": true,
+   "detail": "{\"ok\":true,\"checkedAt\":\"2026-10-03T13:08:15.181Z\",\"audit\":{\"events\":23,\"intact\":true,\"firstBroken\":null},\"examLogs\":{\"attempts\":2,\"broken\":[]},\"counts\":{\"users\":11,\"entitlements\":2,\"submissions\":2,\"gradeRecords\":0,\"examAttempts\":2,\"examSubm"
+  },
+  {
+   "user": "both",
+   "step": "staff report shows both learners with the topic done",
+   "ok": true,
+   "detail": "{\"summary\":{\"learners\":2,\"avgPercent\":100,\"atRisk\":0,\"scope\":\"page\"},\"rows\":[{\"learner\":\"asha\",\"email\":\"asha@e2e.test\",\"cohort\":\"C1\",\"status\":\"ACTIVE\",\"completedTopics\":1,\"totalTopics\":1,\"percent\":100"
+  },
+  {
+   "user": "both",
+   "step": "no server errors in either API instance or the worker",
+   "ok": true,
+   "detail": ""
+  }
+ ],
+ "slowest": [
+  {
+   "step": "POST /v1/exams/:id/register",
+   "calls": 2,
+   "p50": 229,
+   "p95": 229,
+   "max": 229
+  },
+  {
+   "step": "POST /v1/doubts",
+   "calls": 2,
+   "p50": 222,
+   "p95": 222,
+   "max": 222
+  },
+  {
+   "step": "POST /v1/quiz-attempts/:id/submit",
+   "calls": 4,
+   "p50": 43,
+   "p95": 163,
+   "max": 163
+  },
+  {
+   "step": "hls variant",
+   "calls": 8,
+   "p50": 9,
+   "p95": 152,
+   "max": 152
+  },
+  {
+   "step": "hls segment",
+   "calls": 24,
+   "p50": 10,
+   "p95": 72,
+   "max": 150
+  },
+  {
+   "step": "GET /v1/offline/licenses",
+   "calls": 2,
+   "p50": 91,
+   "p95": 91,
+   "max": 91
+  },
+  {
+   "step": "POST /v1/learning-events",
+   "calls": 4,
+   "p50": 27,
+   "p95": 84,
+   "max": 84
+  },
+  {
+   "step": "POST /v1/me/push/test",
+   "calls": 2,
+   "p50": 72,
+   "p95": 72,
+   "max": 72
+  }
+ ],
+ "exam": {
+  "a": "bc7a2ac3-63e1-42f5-8221-b7e6c55ea871",
+  "b": "729a0c70-2456-43ba-9918-139badf22727"
+ }
+}

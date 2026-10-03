@@ -140,6 +140,10 @@
    "description": "Proctoring provider webhook."
   },
   {
+   "name": "push",
+   "description": "Push notification configuration."
+  },
+  {
    "name": "quiz-attempts",
    "description": "Quiz submission."
   },
@@ -321,8 +325,8 @@
          "value": {
           "type": [
            "array",
-           "boolean",
-           "integer"
+           "integer",
+           "boolean"
           ],
           "items": {
            "type": "string"
@@ -355,8 +359,8 @@
           "value": {
            "type": [
             "array",
-            "boolean",
-            "integer"
+            "integer",
+            "boolean"
            ],
            "items": {
             "type": "string"
@@ -4550,8 +4554,8 @@
           },
           "entitlementId": {
            "type": [
-            "string",
-            "null"
+            "null",
+            "string"
            ],
            "format": "uuid"
           },
@@ -4567,8 +4571,8 @@
           },
           "learnerId": {
            "type": [
-            "string",
-            "null"
+            "null",
+            "string"
            ],
            "format": "uuid"
           },
@@ -4580,8 +4584,8 @@
           },
           "reason": {
            "type": [
-            "null",
-            "string"
+            "string",
+            "null"
            ]
           },
           "status": {
@@ -5548,8 +5552,8 @@
            },
            "correlationId": {
             "type": [
-             "null",
-             "string"
+             "string",
+             "null"
             ]
            },
            "createdAt": {
@@ -5561,8 +5565,8 @@
            },
            "ip": {
             "type": [
-             "null",
-             "string"
+             "string",
+             "null"
             ]
            },
            "objectId": {
@@ -5576,8 +5580,8 @@
            },
            "reason": {
             "type": [
-             "null",
-             "string"
+             "string",
+             "null"
             ]
            },
            "seq": {
@@ -28751,6 +28755,9 @@
              "topicId"
             ]
            },
+           "pushedAt": {
+            "description": "null in every sample seen; the field can hold a value other times"
+           },
            "readAt": {
             "description": "null in every sample seen; the field can hold a value other times"
            },
@@ -28766,6 +28773,7 @@
            "createdAt",
            "id",
            "payload",
+           "pushedAt",
            "readAt",
            "type",
            "userId"
@@ -28920,6 +28928,9 @@
          "playbackSpeed": {
           "type": "number"
          },
+         "push": {
+          "type": "boolean"
+         },
          "reducedMotion": {
           "type": "boolean"
          }
@@ -28951,16 +28962,13 @@
           "playbackSpeed": {
            "type": "number"
           },
+          "push": {
+           "type": "boolean"
+          },
           "reducedMotion": {
            "type": "boolean"
           }
-         },
-         "required": [
-          "captions",
-          "fontScale",
-          "highContrast",
-          "language"
-         ]
+         }
         }
        }
       }
@@ -29284,6 +29292,384 @@
        "application/json": {
         "schema": {
          "$ref": "#/components/schemas/ValidationError"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing, expired or revoked credentials",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Conflicts with the current state",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited; honour Retry-After",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/me/push/devices/{id}": {
+   "delete": {
+    "operationId": "deleteMePushDevicesId",
+    "summary": "Stop push notifications to one device",
+    "tags": [
+     "me"
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "x-public": false,
+    "x-roles": [],
+    "description": "Any signed-in user.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "ok"
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Validation failed",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationError"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing, expired or revoked credentials",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found, or not visible to you",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Conflicts with the current state",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited; honour Retry-After",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/me/push/devices": {
+   "get": {
+    "operationId": "getMePushDevices",
+    "summary": "My devices that receive push notifications",
+    "tags": [
+     "me"
+    ],
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "x-public": false,
+    "x-roles": [],
+    "description": "Any signed-in user.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "properties": {
+           "createdAt": {
+            "type": "string",
+            "format": "date-time"
+           },
+           "id": {
+            "type": "string",
+            "format": "uuid"
+           },
+           "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+           },
+           "platform": {
+            "type": "string"
+           },
+           "userAgent": {
+            "description": "null in every sample seen; the field can hold a value other times"
+           }
+          },
+          "required": [
+           "createdAt",
+           "id",
+           "lastSeenAt",
+           "platform",
+           "userAgent"
+          ]
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing, expired or revoked credentials",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited; honour Retry-After",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "operationId": "postMePushDevices",
+    "summary": "Register this browser or phone for push notifications",
+    "tags": [
+     "me"
+    ],
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "x-public": false,
+    "x-roles": [],
+    "description": "Any signed-in user.",
+    "requestBody": {
+     "required": false,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "keys": {
+          "type": "object",
+          "properties": {
+           "auth": {
+            "type": "string"
+           },
+           "p256dh": {
+            "type": "string"
+           }
+          },
+          "required": [
+           "auth",
+           "p256dh"
+          ]
+         },
+         "language": {
+          "type": "string"
+         },
+         "platform": {
+          "type": "string"
+         },
+         "token": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Created",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "createdAt": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "id": {
+           "type": "string",
+           "format": "uuid"
+          },
+          "lastSeenAt": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "platform": {
+           "type": "string"
+          },
+          "userAgent": {
+           "description": "null in every sample seen; the field can hold a value other times"
+          }
+         },
+         "required": [
+          "createdAt",
+          "id",
+          "lastSeenAt",
+          "platform",
+          "userAgent"
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Validation failed",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationError"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing, expired or revoked credentials",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Conflicts with the current state",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited; honour Retry-After",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/me/push/test": {
+   "post": {
+    "operationId": "postMePushTest",
+    "summary": "Send a test notification to my devices",
+    "tags": [
+     "me"
+    ],
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "x-public": false,
+    "x-roles": [],
+    "x-rate-limit-per-minute": 6,
+    "description": "Any signed-in user.",
+    "responses": {
+     "201": {
+      "description": "Created",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "devices": {
+           "type": "integer"
+          },
+          "sent": {
+           "type": "integer"
+          }
+         },
+         "required": [
+          "devices",
+          "sent"
+         ]
         }
        }
       }
@@ -31470,6 +31856,9 @@
          "deviceId": {
           "type": "string"
          },
+         "label": {
+          "type": "string"
+         },
          "topicId": {
           "type": "string",
           "format": "uuid"
@@ -31551,6 +31940,29 @@
           "licenseId": {
            "type": "string",
            "format": "uuid"
+          },
+          "rung": {
+           "type": "object",
+           "properties": {
+            "bandwidth": {
+             "type": "integer"
+            },
+            "height": {
+             "type": "integer"
+            },
+            "name": {
+             "type": "string"
+            },
+            "width": {
+             "type": "integer"
+            }
+           },
+           "required": [
+            "bandwidth",
+            "height",
+            "name",
+            "width"
+           ]
           },
           "tag": {
            "type": "string"
@@ -32356,6 +32768,9 @@
               "preferences": {
                "type": "integer"
               },
+              "pushDevices": {
+               "type": "integer"
+              },
               "refreshTokens": {
                "type": "integer"
               },
@@ -32374,6 +32789,7 @@
               "devices",
               "notifications",
               "preferences",
+              "pushDevices",
               "refreshTokens",
               "ticketMessages",
               "tickets",
@@ -33626,6 +34042,75 @@
      },
      "409": {
       "description": "Conflicts with the current state",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Rate limited; honour Retry-After",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/push/config": {
+   "get": {
+    "operationId": "getPushConfig",
+    "summary": "What push notifications this server can send (web, native) and the web public key",
+    "tags": [
+     "push"
+    ],
+    "security": [
+     {
+      "bearerAuth": []
+     }
+    ],
+    "x-public": false,
+    "x-roles": [],
+    "description": "Any signed-in user.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "enabled": {
+           "type": "boolean"
+          },
+          "native": {
+           "type": "boolean"
+          },
+          "web": {
+           "type": "boolean"
+          },
+          "webPublicKey": {
+           "description": "null in every sample seen; the field can hold a value other times"
+          }
+         },
+         "required": [
+          "enabled",
+          "native",
+          "web",
+          "webPublicKey"
+         ]
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing, expired or revoked credentials",
       "content": {
        "application/json": {
         "schema": {
@@ -37242,6 +37727,44 @@
         "schema": {
          "type": "object",
          "properties": {
+          "adaptive": {
+           "type": "object",
+           "properties": {
+            "rungs": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "approxBytes": {
+                "type": "integer"
+               },
+               "bandwidth": {
+                "type": "integer"
+               },
+               "height": {
+                "type": "integer"
+               },
+               "name": {
+                "type": "string"
+               },
+               "width": {
+                "type": "integer"
+               }
+              },
+              "required": [
+               "approxBytes",
+               "bandwidth",
+               "height",
+               "name",
+               "width"
+              ]
+             }
+            }
+           },
+           "required": [
+            "rungs"
+           ]
+          },
           "assetId": {
            "type": "string",
            "format": "uuid"

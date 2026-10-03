@@ -7,7 +7,7 @@ import { ProgressionService } from './learning';
 import { StorageService } from './storage';
 import { hasLearningAccess } from './domain/entitlement';
 import { masterKeys, mediaSecrets, openWith, sealWith, verifyAny } from './security/keyring';
-import { HLS_MIME, childKey, rewritePlaylist, segmentMime } from './media/abr';
+import { HLS_MIME, childKey, packBundle, rewritePlaylist, segmentMime, segmentNames } from './media/abr';
 import { decryptBuffer, encryptBuffer, signToken, unwrapWithMaster, verifyToken, wrapForDevice, wrapWithMaster } from './domain/media-crypto';
 
 const secret = () => mediaSecrets().current;
@@ -39,13 +39,15 @@ export class MediaController {
     const { topic, row } = await this.prog.context(this.prisma, a.id, id);
     const asset = this.pick(topic, language);
     if (!asset) throw new NotFoundException('no video for topic');
-    const f = asset.files as Record<string, { key: string }>;
+    const f = asset.files as Record<string, any>;
     const order = mode === 'low' ? ['audio', 'transcript', 'captions', '360p', 'slides'] : ['720p', '360p', 'master', 'audio', 'transcript', 'captions', 'slides'];
     const streams: { label: string; mime: string; url: string }[] = order.filter((l) => f[l]).map((l) => ({ label: l, mime: MIME[l], url: this.url(f[l].key, a.id) }));
     // Adaptive ladder first (normal mode only): the player picks a rung from measured bandwidth; the single-file renditions stay as fallback.
     if (mode !== 'low' && f.hls?.key) streams.unshift({ label: 'hls', mime: HLS_MIME, url: `/v1/media/hls/${signToken(secret(), { k: f.hls.key, exp: Date.now() + HLS_TTL(), sub: a.id })}` });
     if (!streams.length) throw new NotFoundException('no renditions');
-    return { assetId: asset.id, language: asset.language, durationSec: asset.durationSec, mode: mode === 'low' ? 'low' : 'normal', streams,
+    // what a device could save for offline use: the rungs of the ladder (the client picks how many)
+    const adaptive = mode !== 'low' && f.hls?.rungs ? { rungs: (f.hls.rungs as any[]).map((r) => ({ name: r.name, width: r.width, height: r.height, bandwidth: r.bandwidth, approxBytes: Math.round((r.bandwidth * (asset.durationSec ?? 0)) / 8) })) } : undefined;
+    return { assetId: asset.id, language: asset.language, durationSec: asset.durationSec, mode: mode === 'low' ? 'low' : 'normal', ...(adaptive && { adaptive }), streams,
       interactions: publicInteractions(asset.interactions as any[]), resume: { sec: row.p?.resumeAssetId === asset.id ? (row.p?.resumeSec ?? 0) : 0 } };
   }
 
@@ -88,6 +90,15 @@ export class MediaController {
     return res.end(body);
   }
 
+  /** One rung of the ladder as a single bundle (playlist + every segment), read from the object store. */
+  private async hlsBundle(_assetId: string, hlsKey: string, rung: string) {
+    const base = `${hlsKey.split('/').slice(0, -1).join('/')}/${rung}`;
+    const playlist = (await this.storage.get(`${base}/index.m3u8`)).toString('utf8');
+    let names: string[]; try { names = segmentNames(playlist); } catch { throw new BadRequestException('adaptive rendition is not downloadable'); }
+    const segments = await Promise.all(names.map(async (name) => ({ name, data: await this.storage.get(`${base}/${name}`) })));
+    return packBundle(rung, playlist, segments);
+  }
+
   // ---- Offline ---------------------------------------------------------------------------------------------
   @Post('offline/devices') @Roles('LEARNER')
   async registerDevice(@Body() b: any, @CurrentActor() a: Actor) {
@@ -113,18 +124,20 @@ export class MediaController {
   @Post('offline/licenses') @Roles('LEARNER')
   async license(@Body() b: any, @CurrentActor() a: Actor) {
     need(b, { deviceId: 'string', topicId: 'string' });
+    if (b.label !== undefined && typeof b.label !== 'string') throw new BadRequestException('label must be a string');
     const device = await this.prisma.device.findUnique({ where: { userId_deviceId: { userId: a.id, deviceId: b.deviceId } } });
     if (!device || device.status !== 'ACTIVE') throw new ForbiddenException('device not registered');
     const { topic, ent } = await this.prog.context(this.prisma, a.id, b.topicId);
     const asset = this.pick(topic, b.language);
-    const label = asset && OFFLINE_LABELS.find((l) => (asset.files as any)[l]);
+    if (asset && b.label?.startsWith('hls-') && !(asset.files as any).hls?.rungs?.some((r: any) => `hls-${r.name}` === b.label)) throw new NotFoundException('no such adaptive rendition');
+    const label: string | undefined = b.label?.startsWith('hls-') ? b.label : b.label ? (asset && OFFLINE_LABELS.includes(b.label) && (asset.files as any)[b.label] ? b.label : undefined) : asset && OFFLINE_LABELS.find((l) => (asset.files as any)[l]);
     if (!asset || !label) throw new NotFoundException('nothing to download');
-    const file = (asset.files as any)[label];
+    const file = (asset.files as any)[label]; // undefined for an adaptive rung: its bytes are assembled from the ladder
 
     // Encrypt once per (asset,label); concurrent requests converge via the unique key.
     let pkg = await this.prisma.offlinePackage.findUnique({ where: { assetId_label: { assetId: asset.id, label } } });
     if (!pkg) {
-      const enc = encryptBuffer(await this.storage.get(file.key));
+      const enc = encryptBuffer(label.startsWith('hls-') ? await this.hlsBundle(asset.id, (asset.files as any).hls.key, label.slice(4)) : await this.storage.get(file.key));
       const key = `offline/${asset.id}/${label}.enc`;
       await this.storage.put(key, enc.data);
       pkg = await this.prisma.offlinePackage.upsert({ where: { assetId_label: { assetId: asset.id, label } }, update: {}, create: { assetId: asset.id, label, storageKey: key, wrappedKey: sealWith(masterKeys(), enc.key), iv: enc.iv.toString('base64'), tag: enc.tag.toString('base64') } });
@@ -132,7 +145,8 @@ export class MediaController {
     const expiresAt = new Date(Math.min(ent.endAt.getTime(), Date.now() + OFFLINE_DAYS * 86_400_000));
     const lic = await this.prisma.offlineLicense.create({ data: { deviceRowId: device.id, entitlementId: ent.id, assetId: asset.id, packageId: pkg.id, wrappedKey: wrapForDevice(device.publicKeyPem, openWith(masterKeys(), pkg.wrappedKey)), expiresAt } });
     return { licenseId: lic.id, assetId: asset.id, label, expiresAt, wrappedKey: lic.wrappedKey, iv: pkg.iv, tag: pkg.tag, cipher: 'AES-256-GCM', keyWrap: 'RSA-OAEP-SHA256',
-      downloadUrl: this.url(pkg.storageKey, a.id, 60 * 60_000, 'application/octet-stream'), interactions: publicInteractions(asset.interactions as any[]), durationSec: asset.durationSec };
+      downloadUrl: this.url(pkg.storageKey, a.id, 60 * 60_000, 'application/octet-stream'),
+      ...(label.startsWith('hls-') && { rung: (asset.files as any).hls.rungs.find((r: any) => `hls-${r.name}` === label) }), interactions: publicInteractions(asset.interactions as any[]), durationSec: asset.durationSec };
   }
 
   /** Clients poll this on connect; a licence is valid only while ACTIVE, unexpired, and the entitlement still grants access. */

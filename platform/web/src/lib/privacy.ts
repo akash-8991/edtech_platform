@@ -29,7 +29,7 @@ export const hasOpen = (rs: PrivacyRequest[], type: string) => rs.some((r) => r.
 export function applyPrefs(p: Prefs, root: HTMLElement = document.documentElement) {
   root.dataset.contrast = p.highContrast ? 'high' : 'normal'; root.dataset.motion = p.reducedMotion ? 'reduced' : 'normal'; root.dataset.targets = p.largeTargets ? 'large' : 'normal'; root.dataset.spacing = p.textSpacing ?? 'normal';
   root.style.setProperty('--font-scale', String(p.fontScale ?? 1)); root.dataset.captionSize = p.captionSize ?? 'normal'; root.dataset.captionBg = p.captionBackground === false ? 'none' : 'solid';
-  if (p.language) root.lang = p.language;
+  // the page language (<html lang>) is set by LocaleProvider, which also knows the staff console is English only
 }
 export const savePrefsLocal = (p: Prefs) => { try { localStorage.setItem('edtech.prefs', JSON.stringify(p)); if (typeof p.lowBandwidth === 'boolean') localStorage.setItem('edtech.low', p.lowBandwidth ? '1' : '0'); } catch { /* storage blocked */ } };
 export const loadPrefsLocal = (): Prefs => { try { return JSON.parse(localStorage.getItem('edtech.prefs') ?? '{}'); } catch { return {}; } };

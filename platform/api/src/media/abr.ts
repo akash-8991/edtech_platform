@@ -78,3 +78,28 @@ export function childKey(parentKey: string, uri: string): string {
   return joined;
 }
 export const segmentMime = (key: string) => (key.endsWith('.ts') ? 'video/mp2t' : key.endsWith('.m4s') || key.endsWith('.mp4') ? 'video/mp4' : key.endsWith('.aac') ? 'audio/aac' : 'application/octet-stream');
+
+/**
+ * Offline bundle of ONE rung: every segment plus its playlist in a single file, so one encrypted download and one licence cover a whole
+ * rung. Layout: "EDHLS1" | u32 header length (big endian) | header JSON {v, rung, playlist, segments:[{name,length}]} | segment bytes in order.
+ * The client rebuilds playable playlists from it after decrypting in memory.
+ */
+export const BUNDLE_MAGIC = 'EDHLS1';
+export interface BundleHeader { v: 1; rung: string; playlist: string; segments: { name: string; length: number }[] }
+const SEGMENT_NAME = /^[A-Za-z0-9_.-]+\.ts$/;
+export function segmentNames(playlist: string): string[] {
+  const names = playlist.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+  for (const n of names) if (!SEGMENT_NAME.test(n)) throw new Error('unexpected segment reference');
+  return names;
+}
+export function packBundle(rung: string, playlist: string, segments: { name: string; data: Buffer }[]): Buffer {
+  const header = Buffer.from(JSON.stringify({ v: 1, rung, playlist, segments: segments.map((s) => ({ name: s.name, length: s.data.length })) } satisfies BundleHeader));
+  const len = Buffer.alloc(4); len.writeUInt32BE(header.length);
+  return Buffer.concat([Buffer.from(BUNDLE_MAGIC), len, header, ...segments.map((s) => s.data)]);
+}
+export function unpackBundle(buf: Buffer): { header: BundleHeader; segments: { name: string; data: Buffer }[] } {
+  if (buf.subarray(0, 6).toString() !== BUNDLE_MAGIC) throw new Error('not a bundle');
+  const n = buf.readUInt32BE(6); const header = JSON.parse(buf.subarray(10, 10 + n).toString()) as BundleHeader; let at = 10 + n;
+  const segments = header.segments.map((s) => { const data = buf.subarray(at, at + s.length); at += s.length; return { name: s.name, data }; });
+  if (at !== buf.length) throw new Error('bundle length mismatch'); return { header, segments };
+}

@@ -1,9 +1,8 @@
 # Cloud deployment guide (AWS reference, ap-south-1)
 
-> **Status, read first.** This is a complete *reference procedure*, written from the platform's tested behaviour and AWS's documented CLI. **It has not been executed against a real AWS account**: no infrastructure-as-code exists yet and the cloud provider has not been chosen by the institute (an open decision, see [`../decision-log.md`](../decision-log.md)). What *is* verified: the container image builds, the stack runs under Docker Compose, the production configuration guard, a production-mode boot, and the database/PgBouncer/replica behaviour on a local machine. Treat every cloud command below as a draft to rehearse in a **non-production account first**, and expect to adjust names, sizes and policies. Section 12 maps the same design to Azure and Google Cloud.
+> **Status, read first.** Infrastructure as code now exists: **[`infra/terraform`](../../infra/terraform/README.md)** builds everything in this guide (and CloudFront, WAF, alarms and the optional grader host). It is statically checked in CI but **has not been applied to a real AWS account**, and `terraform validate`/`plan` have not yet run (see its README). This document remains the manual, step-by-step reference procedure and explains each piece; prefer the Terraform for a real environment so it is repeatable. Neither has been executed against a real account.
 >
-> Do not go live on this guide alone: [`../release/gate-evidence.md`](../release/gate-evidence.md) lists what is still missing (client apps, penetration test, live-provider validation, scale test).
-
+> Do not go live on this guide alone: [`../release/gate-evidence.md`](../release/gate-evidence.md) lists what is still missing (penetration test, accessibility audit with people, live-provider validation, scale test on the deployed environment).
 ---
 
 ## 1. Target architecture

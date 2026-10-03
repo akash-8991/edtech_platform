@@ -1,8 +1,9 @@
 import { api as defaultApi } from '../../api/client';
-import type { Interaction, Playback } from '../../api/types';
+import type { AdaptiveRung, Interaction, Playback } from '../../api/types';
 import { tr } from '../i18n';
 import { decryptLesson, deviceKeys } from './crypto';
 import { idbAll, idbClear, idbDelete, idbGet, idbPut } from './idb';
+import { canPlayAdaptiveOffline, localPlaylist, masterFor, parseBundle, pickRungs, type Quality, type RungInfo } from './bundle';
 
 export type OfflineCode = 'expired' | 'revoked' | 'clock' | 'missing' | 'storage' | 'unsupported' | 'network' | 'failed';
 export class OfflineError extends Error {
@@ -14,8 +15,13 @@ export const offlineMessage = (e: unknown): string => e instanceof OfflineError 
 export interface OfflineLesson {
   assetId: string; licenseId: string; topicId: string; entitlementId: string; userId: string; title: string; language: string; label: string; durationSec: number; interactions: Interaction[];
   wrappedKey: string; iv: string; tag: string; expiresAt: string; downloadedAt: string; size: number; captions?: string; transcript?: string;
+  /** Present for an adaptive lesson: one encrypted bundle and one licence per saved rung (the fields above then describe the first). */
+  rungs?: OfflineRung[];
 }
-interface LicenseResponse { licenseId: string; assetId: string; label: string; expiresAt: string; wrappedKey: string; iv: string; tag: string; downloadUrl: string; interactions: Interaction[]; durationSec: number }
+export interface OfflineRung extends RungInfo { licenseId: string; wrappedKey: string; iv: string; tag: string; size: number }
+const blobKey = (assetId: string, rung?: string) => (rung ? `${assetId}|${rung}` : assetId);
+export const licenseIdsOf = (l: Pick<OfflineLesson, 'licenseId' | 'rungs'>) => l.rungs?.map((r) => r.licenseId) ?? [l.licenseId];
+interface LicenseResponse { rung?: { name: string; width: number; height: number; bandwidth: number }; licenseId: string; assetId: string; label: string; expiresAt: string; wrappedKey: string; iv: string; tag: string; downloadUrl: string; interactions: Interaction[]; durationSec: number }
 interface LicenseStatus { licenseId: string; assetId: string; expiresAt: string; status: string; valid: boolean }
 type ApiLike = Pick<typeof defaultApi, 'get' | 'post'> & { baseUrl?: string };
 
@@ -39,36 +45,64 @@ export class OfflineLessons {
   }
   async has(assetId: string) { return !!(await idbGet('lessons', assetId)); }
 
-  async download(a: { topicId: string; entitlementId: string; title: string; language: string; userId: string }, onProgress?: (fraction: number) => void): Promise<OfflineLesson> {
+  /**
+   * Saves a lesson. When the lesson has an adaptive ladder (and the browser can play one from memory) the chosen rungs are saved, so offline
+   * playback adapts to the device exactly like streaming; otherwise the single file is saved. `quality` picks the rungs.
+   */
+  async download(a: { topicId: string; entitlementId: string; title: string; language: string; userId: string }, onProgress?: (fraction: number) => void, opts: { quality?: Quality } = {}): Promise<OfflineLesson> {
     if (!this.supported()) throw new OfflineError('unsupported', tr('This browser cannot keep lessons offline.'));
     if (!online()) throw new OfflineError('network', tr('You need a connection to download a lesson.'));
     const keys = await deviceKeys();
     try {
       await this.api.post('/v1/offline/devices', { deviceId: keys.deviceId, publicKeyPem: keys.publicKeyPem });
-      const lic = await this.api.post<LicenseResponse>('/v1/offline/licenses', { deviceId: keys.deviceId, topicId: a.topicId, language: a.language });
-      const res = await this.fetchImpl(this.abs(lic.downloadUrl)); if (!res.ok) throw new OfflineError('failed', tr('The download did not work. Check your connection and try again.'));
-      const total = Number(res.headers.get('Content-Length')) || 0; await this.checkSpace(total);
-      const data = await this.readAll(res, total, onProgress);
+      let pb: Playback | undefined; try { pb = await this.api.get<Playback>(`/v1/topics/${a.topicId}/playback?language=${encodeURIComponent(a.language)}`); } catch { /* the single file still works */ }
+      const rungs = pb?.adaptive?.rungs?.length && canPlayAdaptiveOffline() ? pickRungs(pb.adaptive.rungs, opts.quality ?? 'standard') : [];
+      const lesson = rungs.length ? await this.saveAdaptive(a, rungs, onProgress) : await this.saveSingle(a, onProgress);
       // captions and transcript are small text files from the normal playback manifest; the lesson works without them
-      let captions: string | undefined, transcript: string | undefined;
       try {
-        const pb = await this.api.get<Playback>(`/v1/topics/${a.topicId}/playback?language=${encodeURIComponent(a.language)}`);
-        const text = async (label: string) => { const s = pb.streams.find((x) => x.label === label); return s ? (await (await this.fetchImpl(this.abs(s.url))).text()) : undefined; };
-        [captions, transcript] = await Promise.all([text('captions').catch(() => undefined), text('transcript').catch(() => undefined)]);
+        const text = async (label: string) => { const s = pb?.streams.find((x) => x.label === label); return s ? (await (await this.fetchImpl(this.abs(s.url))).text()) : undefined; };
+        [lesson.captions, lesson.transcript] = await Promise.all([text('captions').catch(() => undefined), text('transcript').catch(() => undefined)]);
       } catch { /* optional */ }
-      const lesson: OfflineLesson = { assetId: lic.assetId, licenseId: lic.licenseId, topicId: a.topicId, entitlementId: a.entitlementId, userId: a.userId, title: a.title, language: a.language, label: lic.label, durationSec: lic.durationSec, interactions: lic.interactions ?? [],
-        wrappedKey: lic.wrappedKey, iv: lic.iv, tag: lic.tag, expiresAt: lic.expiresAt, downloadedAt: new Date(this.now()).toISOString(), size: data.byteLength, captions, transcript };
-      await idbPut('blobs', lic.assetId, data); await idbPut('lessons', lic.assetId, lesson); await this.touch();
+      await idbPut('lessons', lesson.assetId, lesson); await this.touch();
       void navigator.storage?.persist?.().catch(() => undefined);
       return lesson;
     } catch (e) {
       if (e instanceof OfflineError) throw e;
       const status = (e as { status?: number })?.status;
-      throw new OfflineError(status === 409 || status === 403 ? 'failed' : 'failed', status === 409 ? tr('You can keep lessons on at most 3 devices. Remove one from another device first.') : status === 403 ? tr('Downloads are not available for this lesson right now.') : tr('The download did not work. Check your connection and try again.'));
+      throw new OfflineError('failed', status === 409 ? tr('You can keep lessons on at most 3 devices. Remove one from another device first.') : status === 403 ? tr('Downloads are not available for this lesson right now.') : tr('The download did not work. Check your connection and try again.'));
     }
   }
 
-  async remove(assetId: string) { await idbDelete('lessons', assetId); await idbDelete('blobs', assetId); }
+  private base(a: { topicId: string; entitlementId: string; title: string; language: string; userId: string }, lic: LicenseResponse) {
+    return { assetId: lic.assetId, licenseId: lic.licenseId, topicId: a.topicId, entitlementId: a.entitlementId, userId: a.userId, title: a.title, language: a.language, label: lic.label, durationSec: lic.durationSec, interactions: lic.interactions ?? [],
+      wrappedKey: lic.wrappedKey, iv: lic.iv, tag: lic.tag, expiresAt: lic.expiresAt, downloadedAt: new Date(this.now()).toISOString() };
+  }
+  private async fetchEncrypted(lic: LicenseResponse, onChunk?: (f: number) => void) {
+    const res = await this.fetchImpl(this.abs(lic.downloadUrl)); if (!res.ok) throw new OfflineError('failed', tr('The download did not work. Check your connection and try again.'));
+    const total = Number(res.headers.get('Content-Length')) || 0; await this.checkSpace(total); return this.readAll(res, total, onChunk);
+  }
+  private async saveSingle(a: { topicId: string; entitlementId: string; title: string; language: string; userId: string }, onProgress?: (f: number) => void): Promise<OfflineLesson> {
+    const lic = await this.api.post<LicenseResponse>('/v1/offline/licenses', { deviceId: (await deviceKeys()).deviceId, topicId: a.topicId, language: a.language });
+    const data = await this.fetchEncrypted(lic, onProgress); await idbPut('blobs', blobKey(lic.assetId), data);
+    return { ...this.base(a, lic), size: data.byteLength };
+  }
+  private async saveAdaptive(a: { topicId: string; entitlementId: string; title: string; language: string; userId: string }, picks: AdaptiveRung[], onProgress?: (f: number) => void): Promise<OfflineLesson> {
+    const deviceId = (await deviceKeys()).deviceId; const weight = picks.reduce((n, r) => n + Math.max(1, r.approxBytes), 0); let done = 0; const saved: OfflineRung[] = []; let first: LicenseResponse | undefined;
+    for (const r of picks) {
+      const lic = await this.api.post<LicenseResponse>('/v1/offline/licenses', { deviceId, topicId: a.topicId, language: a.language, label: `hls-${r.name}` }); first ??= lic;
+      const share = Math.max(1, r.approxBytes) / weight; const data = await this.fetchEncrypted(lic, (f) => onProgress?.(Math.min(1, done + f * share)));
+      done += share; await idbPut('blobs', blobKey(lic.assetId, r.name), data);
+      saved.push({ name: r.name, width: r.width, height: r.height, bandwidth: r.bandwidth, licenseId: lic.licenseId, wrappedKey: lic.wrappedKey, iv: lic.iv, tag: lic.tag, size: data.byteLength });
+    }
+    onProgress?.(1);
+    return { ...this.base(a, first!), label: 'hls', size: saved.reduce((n, r) => n + r.size, 0), rungs: saved };
+  }
+
+  async remove(assetId: string) {
+    const l = await idbGet<OfflineLesson>('lessons', assetId);
+    for (const r of l?.rungs ?? []) await idbDelete('blobs', blobKey(assetId, r.name));
+    await idbDelete('lessons', assetId); await idbDelete('blobs', blobKey(assetId));
+  }
   async removeAll() { await idbClear('lessons'); await idbClear('blobs'); }
 
   /** While online, asks the server which licences are still good and deletes the rest (revoked, expired, entitlement ended). Only this person's lessons are judged: the server answers for the signed-in user alone. */
@@ -77,24 +111,33 @@ export class OfflineLessons {
     const have = await this.list(userId); if (!have.length) return [];
     let remote: LicenseStatus[]; try { remote = await this.api.get<LicenseStatus[]>(`/v1/offline/licenses?deviceId=${encodeURIComponent((await deviceKeys()).deviceId)}`); } catch { return []; }
     const ok = new Map(remote.map((r) => [r.licenseId, r])); const removed: string[] = [];
-    for (const l of have) { const r = ok.get(l.licenseId); if (!r || !r.valid) { await this.remove(l.assetId); removed.push(l.assetId); } }
+    for (const l of have) { if (!licenseIdsOf(l).every((id) => ok.get(id)?.valid)) { await this.remove(l.assetId); removed.push(l.assetId); } } // an adaptive lesson is only as valid as its weakest rung
     await this.touch(); return removed;
   }
 
   /** Decrypts a lesson in memory and returns a Playback the normal player understands. Call `release()` when done. */
   async open(assetId: string): Promise<{ playback: Playback; lesson: OfflineLesson; release: () => void }> {
-    const lesson = await idbGet<OfflineLesson>('lessons', assetId); const data = await idbGet<ArrayBuffer>('blobs', assetId);
-    if (!lesson || !data) throw new OfflineError('missing', tr('This lesson is no longer on this device.'));
+    const lesson = await idbGet<OfflineLesson>('lessons', assetId);
+    const blobs = lesson ? await Promise.all((lesson.rungs ?? [undefined]).map((r) => idbGet<ArrayBuffer>('blobs', blobKey(assetId, r?.name)))) : [];
+    if (!lesson || blobs.some((b) => !b)) throw new OfflineError('missing', tr('This lesson is no longer on this device.'));
     if (online()) { const gone = await this.sync(lesson.userId); if (gone.includes(assetId)) throw new OfflineError('revoked', tr('Your access to this lesson has ended, so it was removed from this device.')); }
     const now = this.now(); const seen = (await idbGet<number>('kv', 'lastSeen')) ?? 0;
     if (now + SKEW_MS < seen) throw new OfflineError('clock', tr("This device's clock looks wrong. Connect to the internet to continue."));
     if (Date.parse(lesson.expiresAt) <= now) { await this.remove(assetId); throw new OfflineError('expired', tr('This download has expired. Connect to the internet and download it again.')); }
-    const keys = await deviceKeys(); let plain: ArrayBuffer;
-    try { plain = await decryptLesson({ data, wrappedKey: lesson.wrappedKey, iv: lesson.iv, tag: lesson.tag }, keys.privateKey); }
-    catch { throw new OfflineError('failed', tr('This lesson could not be unlocked on this device. Delete it and download it again.')); }
+    const keys = await deviceKeys(); const urls: string[] = []; const url = (parts: BlobPart[], type: string) => { const u = URL.createObjectURL(new Blob(parts, { type })); urls.push(u); return u; };
+    const unlock = async (data: ArrayBuffer, k: { wrappedKey: string; iv: string; tag: string }) => { try { return await decryptLesson({ data, ...k }, keys.privateKey); } catch { throw new OfflineError('failed', tr('This lesson could not be unlocked on this device. Delete it and download it again.')); } };
+    let media: { label: string; mime: string; url: string };
+    if (lesson.rungs) {
+      const built: { info: RungInfo; url: string }[] = [];
+      for (const [i, r] of lesson.rungs.entries()) {
+        const plain = await unlock(blobs[i]!, r); let bundle; try { bundle = parseBundle(plain); } catch { throw new OfflineError('failed', tr('This lesson could not be unlocked on this device. Delete it and download it again.')); }
+        const segUrl = new Map(bundle.segments.map((s) => [s.name, url([plain.slice(s.start, s.start + s.length)], 'video/mp2t')]));
+        built.push({ info: r, url: url([localPlaylist(bundle.header.playlist, (n) => segUrl.get(n))], 'application/vnd.apple.mpegurl') });
+      }
+      media = { label: 'offline-hls', mime: 'application/vnd.apple.mpegurl', url: url([masterFor(built)], 'application/vnd.apple.mpegurl') };
+    } else media = { label: 'offline', mime: 'video/mp4', url: url([await unlock(blobs[0]!, lesson)], 'video/mp4') };
     await this.touch();
-    const urls: string[] = []; const url = (parts: BlobPart[], type: string) => { const u = URL.createObjectURL(new Blob(parts, { type })); urls.push(u); return u; };
-    const streams = [{ label: 'offline', mime: 'video/mp4', url: url([plain], 'video/mp4') }, ...(lesson.captions ? [{ label: 'captions', mime: 'text/vtt', url: url([lesson.captions], 'text/vtt') }] : []), ...(lesson.transcript ? [{ label: 'transcript', mime: 'text/plain', url: url([lesson.transcript], 'text/plain') }] : [])];
+    const streams = [media, ...(lesson.captions ? [{ label: 'captions', mime: 'text/vtt', url: url([lesson.captions], 'text/vtt') }] : []), ...(lesson.transcript ? [{ label: 'transcript', mime: 'text/plain', url: url([lesson.transcript], 'text/plain') }] : [])];
     return { lesson, playback: { assetId: lesson.assetId, language: lesson.language, durationSec: lesson.durationSec, mode: 'normal', streams, interactions: lesson.interactions, resume: { sec: 0 } }, release: () => urls.forEach((u) => URL.revokeObjectURL(u)) };
   }
 

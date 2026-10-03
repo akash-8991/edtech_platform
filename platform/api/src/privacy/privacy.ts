@@ -154,7 +154,7 @@ export class PrivacyService {
       counts.ticketMessages = (await tx.ticketMessage.updateMany({ where: { ticketId: { in: ticketIds } }, data: { body: '[erased]', attachments: [] } })).count;
       counts.tickets = (await tx.doubtTicket.updateMany({ where: { learnerId: u.id }, data: { subject: '[erased]', contextBundle: {} } })).count;
       counts.applications = (await tx.learnerApplication.updateMany({ where: { learnerId: u.id }, data: { email: `erased-${u.id}@invalid.local`, name: 'Erased learner' } })).count;
-      counts.notifications = (await tx.notification.deleteMany({ where: { userId: u.id } })).count; counts.preferences = (await tx.userPreference.deleteMany({ where: { userId: u.id } })).count;
+      counts.notifications = (await tx.notification.deleteMany({ where: { userId: u.id } })).count; counts.pushDevices = (await tx.pushDevice.deleteMany({ where: { userId: u.id } })).count; counts.preferences = (await tx.userPreference.deleteMany({ where: { userId: u.id } })).count;
       counts.devices = (await tx.device.deleteMany({ where: { userId: u.id } })).count; await tx.offlineLicense.updateMany({ where: { entitlementId: { in: (await tx.entitlement.findMany({ where: { learnerId: u.id }, select: { id: true } })).map((e) => e.id) }, status: 'ACTIVE' }, data: { status: 'REVOKED', revokedAt: new Date(), revokeReason: 'erasure' } });
       counts.refreshTokens = (await tx.refreshToken.deleteMany({ where: { sessionId: { in: (await tx.userSession.findMany({ where: { userId: u.id }, select: { id: true } })).map((s) => s.id) } } })).count;
       await tx.user.update({ where: { id: u.id }, data: { email: `erased-${u.id}@invalid.local`, name: 'Erased learner', externalId: null, passwordHash: null, status: 'ERASED', erasedAt: new Date(), mfaEnabled: false, mfaSecretEnc: null, mfaBackupHashes: [], language: 'en' } });
@@ -201,7 +201,7 @@ export class PrivacyService {
   static PREF_RULES: Record<string, (v: any) => boolean> = {
     captions: (v) => typeof v === 'boolean', transcriptByDefault: (v) => typeof v === 'boolean', audioDescription: (v) => typeof v === 'boolean', highContrast: (v) => typeof v === 'boolean', reducedMotion: (v) => typeof v === 'boolean',
     lowBandwidth: (v) => typeof v === 'boolean', largeTargets: (v) => typeof v === 'boolean', playbackSpeed: (v) => typeof v === 'number' && v >= 0.5 && v <= 2, fontScale: (v) => typeof v === 'number' && v >= 0.8 && v <= 2.5, language: (v) => ['en', 'hi'].includes(v),
-    captionLanguage: (v) => ['en', 'hi'].includes(v), captionSize: (v) => ['normal', 'large', 'larger'].includes(v), captionBackground: (v) => typeof v === 'boolean', textSpacing: (v) => ['normal', 'wide', 'wider'].includes(v),
+    captionLanguage: (v) => ['en', 'hi'].includes(v), captionSize: (v) => ['normal', 'large', 'larger'].includes(v), captionBackground: (v) => typeof v === 'boolean', push: (v) => typeof v === 'boolean', textSpacing: (v) => ['normal', 'wide', 'wider'].includes(v),
   };
   async setPrefs(a: Actor, b: any) {
     const bad = Object.keys(b ?? {}).filter((k) => !PrivacyService.PREF_RULES[k] || !PrivacyService.PREF_RULES[k](b[k])); if (bad.length) throw new BadRequestException({ error: 'invalid_preferences', fields: bad });

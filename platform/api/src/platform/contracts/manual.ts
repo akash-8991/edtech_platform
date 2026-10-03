@@ -12,10 +12,11 @@ export const TAGS: Record<string, string> = {
   incidents: 'Proctoring incident evidence.', labs: 'Lab sessions, attendance and evidence.', 'learning-events': 'Learning telemetry (heartbeats, interaction answers).', me: 'The signed-in learner.',
   media: 'Signed media delivery (single files and adaptive HLS).', moderation: 'Human review of AI-graded work.', offline: 'Offline devices and licences.', ops: 'Operational integrity checks.',
   privacy: 'Privacy requests, retention and legal hold.', proctor: 'Proctor actions on an attempt.', proctoring: 'Proctoring provider webhook.', 'quiz-attempts': 'Quiz submission.', reports: 'Operational reports.',
-  openapi: 'This document.', teacher: 'Doubt teacher workspace.', topics: 'Topic delivery for learners.', tutor: 'Grounded AI tutor.', metrics: 'Prometheus metrics.',
+  openapi: 'This document.', push: 'Push notification configuration.', teacher: 'Doubt teacher workspace.', topics: 'Topic delivery for learners.', tutor: 'Grounded AI tutor.', metrics: 'Prometheus metrics.',
 };
 
 export const SUMMARIES: Record<string, string> = {
+  'GET /v1/push/config': 'What push notifications this server can send (web, native) and the web public key', 'POST /v1/me/push/devices': 'Register this browser or phone for push notifications', 'GET /v1/me/push/devices': 'My devices that receive push notifications', 'DELETE /v1/me/push/devices/:id': 'Stop push notifications to one device', 'POST /v1/me/push/test': 'Send a test notification to my devices',
   'GET /v1/openapi.json': 'This API description (OpenAPI 3.1)', 'GET /health': 'Liveness probe', 'GET /health/ready': 'Readiness probe (database, cache, storage)', 'GET /metrics': 'Prometheus metrics (bearer METRICS_TOKEN)',
   'GET /v1/admin/config': 'List platform settings', 'PUT /v1/admin/config/:key': 'Change one platform setting',
   'GET /v1/admin/users': 'Search people', 'POST /v1/admin/users': 'Create an account', 'GET /v1/admin/users/:id': 'One person with roles and history',

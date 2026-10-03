@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { onNativeNotificationTap } from './lib/push';
 import { useAuth } from './auth';
 import Account from './pages/Account';
 import Course from './pages/Course';
@@ -33,7 +34,9 @@ import StaffRoutes from './staff/StaffRoutes';
 
 function Shell() {
   const { me, loading, signOut } = useAuth(); const t = useT(); const online = useOnline(); const { lang, setLang } = useLocale(); const [menu, setMenu] = useState(false); const loc = useLocation();
+  const navigate = useNavigate();
   useEffect(() => { setMenu(false); }, [loc.pathname]); // a tapped link closes the phone menu
+  useEffect(() => onNativeNotificationTap((path) => navigate(path)), [navigate]); // native app: a tapped push opens its screen
   if (loading) return <Loading what={t('Starting')} />;
   if (!me) return <Navigate to={online ? '/login' : '/offline'} replace />; // offline with no session: the saved lessons are still reachable
   if (!isLearner(me.roles)) return <Navigate to="/staff" replace />; // staff use the console, not the learner portal

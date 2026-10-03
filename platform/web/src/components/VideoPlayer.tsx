@@ -22,11 +22,12 @@ export function VideoPlayer({ topicId, playback, onProgress }: { topicId: string
   const [transcript, setTranscript] = useState<string | null>(null);
   const video = playback.streams.find((s) => s.mime.startsWith('video/'));
   const audio = playback.streams.find((s) => s.mime.startsWith('audio/'));
-  const src = playback.mode === 'low' ? audio ?? video : video ?? audio;
+  const savedLadder = playback.streams.find((s) => s.label === 'offline-hls'); // an adaptive lesson saved on this device: always played with hls.js from memory
+  const src = playback.mode === 'low' ? audio ?? video : video ?? audio ?? (savedLadder && { label: savedLadder.label, mime: 'video/mp4', url: savedLadder.url });
   const transcriptUrl = playback.streams.find((s) => s.label === 'transcript')?.url;
   const captionsUrl = playback.streams.find((s) => s.label === 'captions')?.url;
   const hlsUrl = playback.mode === 'low' ? undefined : playback.streams.find((s) => s.mime === HLS)?.url;
-  const [levels, setLevels] = useState<number[]>([]); const [quality, setQuality] = useState(-1); const hls = useRef<{ currentLevel: number; destroy: () => void } | null>(null); const resumed = useRef(false);
+  const [broken, setBroken] = useState(false); const [levels, setLevels] = useState<number[]>([]); const [quality, setQuality] = useState(-1); const hls = useRef<{ currentLevel: number; destroy: () => void } | null>(null); const resumed = useRef(false);
 
   const push = async (events: LearningEvent[]) => { outbox.add(events); const r = await outbox.flush(); if (r.some((x) => x.status === 'accepted')) onProgress(); };
   useEffect(() => { void outbox.flush(); const onHide = () => { if (document.visibilityState === 'hidden') void push(tracker.flush()); }; document.addEventListener('visibilitychange', onHide); return () => { document.removeEventListener('visibilitychange', onHide); void push(tracker.flush()); }; /* eslint-disable-next-line */ }, []);
@@ -35,9 +36,9 @@ export function VideoPlayer({ topicId, playback, onProgress }: { topicId: string
   // Adaptive streaming: Safari plays HLS itself; every other browser gets hls.js (loaded only when a lesson has an adaptive ladder). Any failure falls back to the single-file rendition.
   useEffect(() => {
     const el = media.current; if (!el || !hlsUrl) return; let gone = false; let player: any;
-    const fallback = () => { if (!gone && video) { player?.destroy?.(); hls.current = null; el.src = video.url; } };
+    const fallback = () => { if (!gone && video) { player?.destroy?.(); hls.current = null; el.src = video.url; } else if (!gone && savedLadder) setBroken(true); };
     (async () => {
-      if (el.canPlayType(HLS)) { el.src = hlsUrl; return; }
+      if (!savedLadder && el.canPlayType(HLS)) { el.src = hlsUrl; return; } // Safari reads a real playlist itself, but not one made of in-memory blobs
       try {
         const { default: Hls } = await import('hls.js'); if (gone) return; if (!Hls.isSupported()) return fallback();
         player = new Hls({ capLevelToPlayerSize: true, maxBufferLength: 30, startLevel: 0 }); hls.current = player;
@@ -64,6 +65,7 @@ export function VideoPlayer({ topicId, playback, onProgress }: { topicId: string
   const Tag = (src?.mime.startsWith('audio/') ? 'audio' : 'video') as 'video';
 
   if (!src) return <p className="note warn">{t('No playable stream is available for this topic.')}</p>;
+  if (broken) return <p className="note warn" role="alert">{t('This browser cannot play this saved lesson. Delete it and save it again, or watch it online.')}</p>;
   return (
     <div>
       <Tag ref={media} controls preload="metadata" src={hlsUrl ? undefined : src.url} className="player" onLoadedMetadata={seekToResume} onTimeUpdate={onTime} onPause={() => void push(tracker.flush())} onEnded={() => void push(tracker.flush())}

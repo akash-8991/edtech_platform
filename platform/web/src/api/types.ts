@@ -10,7 +10,8 @@ export interface TopicProgress {
 export interface Progress { entitlementId: string; percentComplete: number; topics: TopicProgress[] }
 export interface Interaction { id: string; atSec: number; kind: string; prompt?: string; options?: string[]; required?: boolean }
 export interface Stream { label: string; mime: string; url: string }
-export interface Playback { assetId: string; language: string; durationSec: number; mode: 'low' | 'normal'; streams: Stream[]; interactions: Interaction[]; resume: { sec: number } }
+export interface AdaptiveRung { name: string; width: number; height: number; bandwidth: number; approxBytes: number }
+export interface Playback { assetId: string; language: string; durationSec: number; mode: 'low' | 'normal'; adaptive?: { rungs: AdaptiveRung[] }; streams: Stream[]; interactions: Interaction[]; resume: { sec: number } }
 export interface TopicDetail {
   id: string; title: string; outcomes?: string[]; assets: { id: string; kind: string; language: string; durationSec: number }[];
   quiz: { passPercent: number; maxAttempts: number; questions: number } | null;
@@ -66,7 +67,7 @@ export type RequestType = 'EXPORT' | 'CORRECTION' | 'ERASURE';
 export interface PrivacyRequest { id: string; type: RequestType | string; status: string; requestedAt: string; completedAt?: string | null; exportExpiresAt?: string | null; decisionReason?: string | null }
 export interface Prefs {
   captions?: boolean; transcriptByDefault?: boolean; audioDescription?: boolean; highContrast?: boolean; reducedMotion?: boolean; lowBandwidth?: boolean; largeTargets?: boolean;
-  playbackSpeed?: number; fontScale?: number; language?: 'en' | 'hi'; captionLanguage?: 'en' | 'hi'; captionSize?: 'normal' | 'large' | 'larger'; captionBackground?: boolean; textSpacing?: 'normal' | 'wide' | 'wider';
+  playbackSpeed?: number; fontScale?: number; language?: 'en' | 'hi'; captionLanguage?: 'en' | 'hi'; captionSize?: 'normal' | 'large' | 'larger'; captionBackground?: boolean; push?: boolean; textSpacing?: 'normal' | 'wide' | 'wider';
 }
 export interface SessionInfo { id: string; current: boolean; method: string; mfa: boolean; device?: string; createdAt: string; lastSeenAt?: string; expiresAt: string }
 

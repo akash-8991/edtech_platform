@@ -385,7 +385,27 @@ model Notification {
   payload   Json
   readAt    DateTime?
   createdAt DateTime  @default(now())
+  // push delivery is a consumer of this outbox: set once every device of the user has been tried
+  pushedAt  DateTime?
   @@index([userId, createdAt])
+  @@index([pushedAt, createdAt])
+}
+
+// A browser or phone that may receive push notifications for one person. Web: token = the push-service endpoint, keys = {p256dh, auth}.
+// Native app: token = the FCM registration token (Firebase carries Android and iOS/APNs).
+model PushDevice {
+  id         String    @id @default(uuid())
+  userId     String
+  platform   String    // WEB | IOS | ANDROID
+  token      String    @unique
+  keys       Json?
+  language   String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  failures   Int       @default(0)
+  disabledAt DateTime?
+  @@index([userId])
 }
 
 model Device {

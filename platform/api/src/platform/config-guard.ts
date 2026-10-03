@@ -17,6 +17,12 @@ export function productionConfigProblems(env: NodeJS.ProcessEnv): string[] {
   if (env.MFA_ENFORCE === '0') p.push('MFA_ENFORCE=0 is not allowed in production');
   if (env.RATE_LIMIT_DISABLED === '1') p.push('RATE_LIMIT_DISABLED=1 is not allowed in production');
   if (!env.CORS_ORIGINS && !env.CORS_NONE) p.push('set CORS_ORIGINS (or CORS_NONE=1 if no browser origin calls this API)');
+  if (env.PUSH_MODE === 'log') p.push('PUSH_MODE=log only writes to the log: use live or leave it unset');
+  if (env.PUSH_MODE === 'live') {
+    if (!env.VAPID_PUBLIC_KEY && !env.FCM_SERVICE_ACCOUNT) p.push('PUSH_MODE=live needs VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY (web) and/or FCM_SERVICE_ACCOUNT (Android and iOS)');
+    if (env.VAPID_PUBLIC_KEY && !env.VAPID_PRIVATE_KEY) p.push('VAPID_PRIVATE_KEY is not set');
+    if (env.FCM_SERVICE_ACCOUNT) { try { const sa = JSON.parse(env.FCM_SERVICE_ACCOUNT); if (!sa.project_id || !sa.client_email || !sa.private_key) throw 0; } catch { p.push('FCM_SERVICE_ACCOUNT must be the service-account JSON (project_id, client_email, private_key)'); } }
+  }
   if (env.SANDBOX_MODE === 'docker' && !env.SANDBOX_IMAGE_PYTHON) p.push('SANDBOX_IMAGE_PYTHON must be pinned when the sandbox is enabled');
   return p;
 }

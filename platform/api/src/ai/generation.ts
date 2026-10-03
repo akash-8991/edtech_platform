@@ -16,6 +16,7 @@ import { GatewayService, RunResult } from './gateway';
 import { PromptRegistry, referencesBlock, render } from './prompts';
 import { SCHEMAS } from './schemas';
 import { TranscodeService } from '../media/transcode';
+import { PushService } from '../push/push';
 import { blocking, checkContent, checkCurriculum, ContentOut, CurriculumOut, Finding, judgeFindings, translationFindings } from './quality';
 
 export interface Ref { id: string; title?: string; text: string }
@@ -189,8 +190,8 @@ export class GenerationService {
 // ---- Worker: DB-backed queue, safe across multiple API instances (FOR UPDATE SKIP LOCKED) ----------------------------
 @Injectable()
 export class JobWorker implements OnModuleInit, OnModuleDestroy {
-  private log = new Logger('job-worker'); private timer?: NodeJS.Timeout; private busy = 0; private lastSweep = 0; private lastExamSweep = 0; private lastPrivacy = 0; private lastRetention = 0; private lastIntegrity = 0;
-  constructor(private prisma: PrismaService, private gen: GenerationService, @Optional() private doubts?: DoubtService, @Optional() private grading?: GradingService, @Optional() private examOps?: ExamOpsService, @Optional() private privacy?: PrivacyService, @Optional() private integrity?: IntegrityService, @Optional() private transcode?: TranscodeService) {}
+  private log = new Logger('job-worker'); private timer?: NodeJS.Timeout; private busy = 0; private lastSweep = 0; private lastExamSweep = 0; private lastPrivacy = 0; private lastRetention = 0; private lastIntegrity = 0; private lastPush = 0;
+  constructor(private prisma: PrismaService, private gen: GenerationService, @Optional() private doubts?: DoubtService, @Optional() private grading?: GradingService, @Optional() private examOps?: ExamOpsService, @Optional() private privacy?: PrivacyService, @Optional() private integrity?: IntegrityService, @Optional() private transcode?: TranscodeService, @Optional() private push?: PushService) {}
 
   onModuleInit() {
     // PROCESS_ROLE=api serves HTTP only; =worker (src/worker.ts) runs the queue and sweeps; =all (default, dev/small pilots) does both.
@@ -203,9 +204,11 @@ export class JobWorker implements OnModuleInit, OnModuleDestroy {
   private async tickInner() {
     const max = Number(process.env.AI_WORKER_CONCURRENCY ?? 3);
     while (this.busy < max && (await this.runOnce())) { /* keep claiming until empty or at capacity */ }
+    if (process.env.WORKER_SWEEPS === '0') return; // a job-only worker (the grader host) leaves the periodic sweeps to the general worker
     if (this.examOps && Date.now() - this.lastExamSweep > 15_000) { this.lastExamSweep = Date.now(); await this.examOps.sweep().catch((e) => this.log.warn(`exam sweep failed: ${e?.message}`)); } // time-critical: every 15s
     if (this.privacy && Date.now() - this.lastPrivacy > 30_000) { this.lastPrivacy = Date.now(); await this.privacy.process().catch((e) => this.log.warn(`privacy processing failed: ${e?.message}`)); if (Date.now() - this.lastRetention > 24 * 3600_000) { this.lastRetention = Date.now(); await this.privacy.retention(false).catch((e) => this.log.warn(`retention failed: ${e?.message}`)); } }
     if (this.integrity && Date.now() - this.lastIntegrity > Number(process.env.INTEGRITY_CHECK_HOURS ?? 6) * 3_600_000) { this.lastIntegrity = Date.now(); await this.integrity.runScheduled().catch((e) => this.log.warn(`integrity check errored: ${e?.message}`)); }
+    if (this.push && Date.now() - this.lastPush > Number(process.env.PUSH_SWEEP_MS ?? 5_000)) { this.lastPush = Date.now(); await this.push.sweep().catch((e) => this.log.warn(`push sweep failed: ${e?.message}`)); }
     if (this.doubts && Date.now() - this.lastSweep > 60_000) { this.lastSweep = Date.now(); await this.doubts.sweep().catch((e) => this.log.warn(`doubt sweep failed: ${e?.message}`)); }
   }
 
@@ -218,9 +221,11 @@ export class JobWorker implements OnModuleInit, OnModuleDestroy {
     // recover jobs stuck RUNNING (worker crashed): requeue up to 3 attempts, then fail
     await this.prisma.$executeRaw`UPDATE "GenerationJob" SET status='QUEUED' WHERE status='RUNNING' AND "startedAt" < (${stale} AT TIME ZONE 'UTC') AND attempts < 3`;
     await this.prisma.$executeRaw`UPDATE "GenerationJob" SET status='FAILED', error='worker lost after 3 attempts', "finishedAt"=(${now} AT TIME ZONE 'UTC') WHERE status='RUNNING' AND "startedAt" < (${stale} AT TIME ZONE 'UTC') AND attempts >= 3`;
+    // A worker may be limited to some kinds of job (WORKER_JOB_KINDS=GRADE_SUBMISSION on the grader host, which alone has Docker; the general worker leaves grading to it).
+    const kinds = (process.env.WORKER_JOB_KINDS ?? '').split(',').map((k) => k.trim()).filter(Boolean); const any = kinds.length === 0;
     const claimed = await this.prisma.$queryRaw<{ id: string }[]>`
       UPDATE "GenerationJob" SET status='RUNNING', "startedAt"=(${now} AT TIME ZONE 'UTC'), attempts=attempts+1
-      WHERE id = (SELECT id FROM "GenerationJob" WHERE status='QUEUED' AND ("runAfter" IS NULL OR "runAfter" <= (${now} AT TIME ZONE 'UTC')) ORDER BY "createdAt" LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING id`;
+      WHERE id = (SELECT id FROM "GenerationJob" WHERE status='QUEUED' AND (${any} OR kind = ANY(${kinds}::text[])) AND ("runAfter" IS NULL OR "runAfter" <= (${now} AT TIME ZONE 'UTC')) ORDER BY "createdAt" LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING id`;
     if (!claimed.length) return false;
     this.busy++;
     try {

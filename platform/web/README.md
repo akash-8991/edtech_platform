@@ -6,7 +6,9 @@ React 18 + TypeScript + Vite single-page app: the **learner portal** (`/`) and a
 
 **Also built (see `../docs/guides/06-learner-experience.md`):** **Hindi** for the whole learner app (language selector, ~570 strings, test-enforced), **offline** (device-bound encrypted saved lessons, a per-person read cache, a service worker, an offline bar that sends queued watch time when back online), **captions** (WebVTT in the learner's language with size/background/on-off choices), **adaptive-bitrate video** playback (hls.js, quality choice), **in-app QR scanning** for lab check-in (camera, with typing as the fallback), **single sign-on** (OIDC button and `/sso/callback`), and a **responsive layout** for phone, tablet, laptop and large screens (phone menu, touch targets, safe areas, scrolling tables). The **staff console** now also has people, privacy requests, exam set-up (create, schedule, question bank, accommodations, eligibility overrides), entitlements and a reports hub.
 
-**Not built yet / not verified:** push notifications; staff console in Hindi (by design); the service worker has not been run in a real browser here (unit-tested only), SSO has not been run against a real identity provider, and the Hindi text has not been reviewed by a native speaker. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices and is checked by an automated net after every test, but has not been tested with assistive technology.
+**Also built:** push notifications (per device, in Privacy and data; Web Push and, in the native app, Firebase) and a Capacitor shell for Android and iOS (`../mobile`, see `../docs/guides/09-mobile-and-push.md`).
+
+**Not built yet / not verified:** the iOS project and any compiled app; a push through the real Google/Apple services; staff console in Hindi (by design); the service worker has not been run in a real browser here (unit-tested only), SSO has not been run against a real identity provider, and the Hindi text has not been reviewed by a native speaker. No independent accessibility audit has been done; the markup follows WCAG 2.1 AA practices and is checked by an automated net after every test, but has not been tested with assistive technology.
 
 ## Run it
 
@@ -23,7 +25,7 @@ Sign in with a learner account. Locally, create one: approve an application (use
 ## Check it
 
 ```bash
-npm run typecheck && npm test      # 326 tests: the learner and staff screens, API client, heartbeat tracker, exam stack, Hindi coverage, offline (real WebCrypto + IndexedDB), QR decoding, SSO, adaptive video, service worker
+npm run typecheck && npm test      # 348 tests: the learner and staff screens, API client, heartbeat tracker, exam stack, Hindi coverage, offline (real WebCrypto + IndexedDB), QR decoding, SSO, adaptive video, service worker
 npm run build                      # production bundle in dist/ (app ~360 kB, 119 kB gzipped; the staff console, hls.js and the QR reader load on demand)
 ```
 

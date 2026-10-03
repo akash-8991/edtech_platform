@@ -25,3 +25,20 @@ self.addEventListener('fetch', (event) => {
   }
   event.respondWith(caches.open(SHELL).then((c) => c.match(req).then((hit) => { const net = fetch(req).then((res) => { if (res.ok) void c.put(req, res.clone()); return res; }).catch(() => hit); return hit || net; })));
 });
+
+/* ---- push notifications --------------------------------------------------------------------------------------------------------------------------------
+ * The server sends {title, body, url, tag}. Show it, and on a tap open (or focus) the app at `url`, same origin only. */
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch { d = { body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(d.title || 'Learning Portal', { body: d.body || '', tag: d.tag || undefined, icon: '/icon-192.png', badge: '/icon-192.png', data: { url: typeof d.url === 'string' ? d.url : '/notifications' }, renotify: !!d.tag }));
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  let target = new URL('/notifications', self.location.origin);
+  try { const u = new URL(event.notification.data && event.notification.data.url ? event.notification.data.url : '/', self.location.origin); if (u.origin === self.location.origin) target = u; } catch { /* keep the default */ }
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+    for (const w of wins) { if ('focus' in w) { if ('navigate' in w) w.navigate(target.href); return w.focus(); } }
+    return self.clients.openWindow ? self.clients.openWindow(target.href) : undefined;
+  }));
+});

@@ -58,8 +58,8 @@
      "value": {
       "type": [
        "array",
-       "boolean",
-       "integer"
+       "integer",
+       "boolean"
       ],
       "items": {
        "type": "string"
@@ -81,8 +81,8 @@
     "value": {
      "type": [
       "array",
-      "boolean",
-      "integer"
+      "integer",
+      "boolean"
      ],
      "items": {
       "type": "string"
@@ -1910,8 +1910,8 @@
      },
      "entitlementId": {
       "type": [
-       "string",
-       "null"
+       "null",
+       "string"
       ],
       "format": "uuid"
      },
@@ -1927,8 +1927,8 @@
      },
      "learnerId": {
       "type": [
-       "string",
-       "null"
+       "null",
+       "string"
       ],
       "format": "uuid"
      },
@@ -1940,8 +1940,8 @@
      },
      "reason": {
       "type": [
-       "null",
-       "string"
+       "string",
+       "null"
       ]
      },
      "status": {
@@ -2499,8 +2499,8 @@
       },
       "correlationId": {
        "type": [
-        "null",
-        "string"
+        "string",
+        "null"
        ]
       },
       "createdAt": {
@@ -2512,8 +2512,8 @@
       },
       "ip": {
        "type": [
-        "null",
-        "string"
+        "string",
+        "null"
        ]
       },
       "objectId": {
@@ -2527,8 +2527,8 @@
       },
       "reason": {
        "type": [
-        "null",
-        "string"
+        "string",
+        "null"
        ]
       },
       "seq": {
@@ -2597,7 +2597,7 @@
       "format": "uuid"
      }
     },
-    "x-samples": 196
+    "x-samples": 206
    }
   },
   "body": {
@@ -2619,7 +2619,7 @@
     "password"
    ]
   },
-  "bodyObserved": 196
+  "bodyObserved": 206
  },
  "POST /v1/auth/logout": {
   "responses": {
@@ -3170,7 +3170,7 @@
      "rights",
      "topicId"
     ],
-    "x-samples": 23
+    "x-samples": 27
    }
   }
  },
@@ -3275,7 +3275,7 @@
      "hls",
      "job"
     ],
-    "x-samples": 2
+    "x-samples": 3
    }
   }
  },
@@ -3296,7 +3296,7 @@
      "jobId",
      "status"
     ],
-    "x-samples": 3
+    "x-samples": 4
    }
   }
  },
@@ -3452,7 +3452,7 @@
      "state",
      "version"
     ],
-    "x-samples": 8
+    "x-samples": 9
    }
   },
   "body": {
@@ -3607,7 +3607,7 @@
     "modules"
    ]
   },
-  "bodyObserved": 8
+  "bodyObserved": 9
  },
  "GET /v1/authoring/programmes": {
   "responses": {
@@ -3736,7 +3736,7 @@
      "id",
      "title"
     ],
-    "x-samples": 6
+    "x-samples": 7
    }
   },
   "body": {
@@ -3758,7 +3758,7 @@
     "title"
    ]
   },
-  "bodyObserved": 6
+  "bodyObserved": 7
  },
  "POST /v1/authoring/topics/:id/assets": {
   "responses": {
@@ -3857,7 +3857,7 @@
      "rights",
      "topicId"
     ],
-    "x-samples": 11
+    "x-samples": 12
    }
   },
   "body": {
@@ -3925,7 +3925,7 @@
     "language"
    ]
   },
-  "bodyObserved": 11
+  "bodyObserved": 12
  },
  "GET /v1/authoring/topics/:id/assignment-policy": {
   "responses": {
@@ -4279,7 +4279,7 @@
      "rubric",
      "topicId"
     ],
-    "x-samples": 3
+    "x-samples": 4
    }
   },
   "body": {
@@ -4297,7 +4297,7 @@
     "instructions"
    ]
   },
-  "bodyObserved": 3
+  "bodyObserved": 4
  },
  "GET /v1/authoring/topics/:id/manifest": {
   "responses": {
@@ -4521,7 +4521,7 @@
      "id",
      "questions"
     ],
-    "x-samples": 4
+    "x-samples": 5
    }
   },
   "body": {
@@ -4595,7 +4595,7 @@
     "questions"
    ]
   },
-  "bodyObserved": 4
+  "bodyObserved": 5
  },
  "GET /v1/authoring/versions/:id/accessibility": {
   "responses": {
@@ -5373,7 +5373,7 @@
      "state",
      "version"
     ],
-    "x-samples": 17
+    "x-samples": 21
    }
   },
   "body": {
@@ -5388,7 +5388,7 @@
     "to"
    ]
   },
-  "bodyObserved": 17
+  "bodyObserved": 21
  },
  "GET /v1/authoring/versions/:id/tree": {
   "responses": {
@@ -14710,6 +14710,9 @@
         "topicId"
        ]
       },
+      "pushedAt": {
+       "description": "null in every sample seen; the field can hold a value other times"
+      },
       "readAt": {
        "description": "null in every sample seen; the field can hold a value other times"
       },
@@ -14725,6 +14728,7 @@
       "createdAt",
       "id",
       "payload",
+      "pushedAt",
       "readAt",
       "type",
       "userId"
@@ -14793,17 +14797,14 @@
      "playbackSpeed": {
       "type": "number"
      },
+     "push": {
+      "type": "boolean"
+     },
      "reducedMotion": {
       "type": "boolean"
      }
     },
-    "required": [
-     "captions",
-     "fontScale",
-     "highContrast",
-     "language"
-    ],
-    "x-samples": 2
+    "x-samples": 4
    }
   },
   "body": {
@@ -14824,12 +14825,15 @@
     "playbackSpeed": {
      "type": "number"
     },
+    "push": {
+     "type": "boolean"
+    },
     "reducedMotion": {
      "type": "boolean"
     }
    }
   },
-  "bodyObserved": 2
+  "bodyObserved": 4
  },
  "GET /v1/me/privacy/requests/:id/download": {
   "responses": {}
@@ -14960,6 +14964,145 @@
    ]
   },
   "bodyObserved": 4
+ },
+ "DELETE /v1/me/push/devices/:id": {
+  "responses": {
+   "200": {
+    "type": "object",
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "ok"
+    ],
+    "x-samples": 1
+   }
+  }
+ },
+ "GET /v1/me/push/devices": {
+  "responses": {
+   "200": {
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "createdAt": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "id": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "lastSeenAt": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "platform": {
+       "type": "string"
+      },
+      "userAgent": {
+       "description": "null in every sample seen; the field can hold a value other times"
+      }
+     },
+     "required": [
+      "createdAt",
+      "id",
+      "lastSeenAt",
+      "platform",
+      "userAgent"
+     ]
+    },
+    "x-samples": 6
+   }
+  }
+ },
+ "POST /v1/me/push/devices": {
+  "responses": {
+   "201": {
+    "type": "object",
+    "properties": {
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "lastSeenAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "platform": {
+      "type": "string"
+     },
+     "userAgent": {
+      "description": "null in every sample seen; the field can hold a value other times"
+     }
+    },
+    "required": [
+     "createdAt",
+     "id",
+     "lastSeenAt",
+     "platform",
+     "userAgent"
+    ],
+    "x-samples": 21
+   }
+  },
+  "body": {
+   "type": "object",
+   "properties": {
+    "keys": {
+     "type": "object",
+     "properties": {
+      "auth": {
+       "type": "string"
+      },
+      "p256dh": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "auth",
+      "p256dh"
+     ]
+    },
+    "language": {
+     "type": "string"
+    },
+    "platform": {
+     "type": "string"
+    },
+    "token": {
+     "type": "string"
+    }
+   }
+  },
+  "bodyObserved": 21
+ },
+ "POST /v1/me/push/test": {
+  "responses": {
+   "201": {
+    "type": "object",
+    "properties": {
+     "devices": {
+      "type": "integer"
+     },
+     "sent": {
+      "type": "integer"
+     }
+    },
+    "required": [
+     "devices",
+     "sent"
+    ],
+    "x-samples": 2
+   }
+  }
  },
  "DELETE /v1/me/sessions/:id": {
   "responses": {
@@ -15803,7 +15946,7 @@
      "status",
      "userId"
     ],
-    "x-samples": 1
+    "x-samples": 3
    }
   },
   "body": {
@@ -15821,7 +15964,7 @@
     "publicKeyPem"
    ]
   },
-  "bodyObserved": 1
+  "bodyObserved": 3
  },
  "GET /v1/offline/licenses": {
   "responses": {
@@ -15929,6 +16072,29 @@
       "type": "string",
       "format": "uuid"
      },
+     "rung": {
+      "type": "object",
+      "properties": {
+       "bandwidth": {
+        "type": "integer"
+       },
+       "height": {
+        "type": "integer"
+       },
+       "name": {
+        "type": "string"
+       },
+       "width": {
+        "type": "integer"
+       }
+      },
+      "required": [
+       "bandwidth",
+       "height",
+       "name",
+       "width"
+      ]
+     },
      "tag": {
       "type": "string"
      },
@@ -15950,13 +16116,16 @@
      "tag",
      "wrappedKey"
     ],
-    "x-samples": 2
+    "x-samples": 5
    }
   },
   "body": {
    "type": "object",
    "properties": {
     "deviceId": {
+     "type": "string"
+    },
+    "label": {
      "type": "string"
     },
     "topicId": {
@@ -15970,7 +16139,7 @@
     "topicId"
    ]
   },
-  "bodyObserved": 2
+  "bodyObserved": 5
  },
  "GET /v1/openapi.json": {
   "responses": {}
@@ -16358,6 +16527,9 @@
          "preferences": {
           "type": "integer"
          },
+         "pushDevices": {
+          "type": "integer"
+         },
          "refreshTokens": {
           "type": "integer"
          },
@@ -16376,6 +16548,7 @@
          "devices",
          "notifications",
          "preferences",
+         "pushDevices",
          "refreshTokens",
          "ticketMessages",
          "tickets",
@@ -16980,6 +17153,34 @@
    }
   },
   "bodyObserved": 29
+ },
+ "GET /v1/push/config": {
+  "responses": {
+   "200": {
+    "type": "object",
+    "properties": {
+     "enabled": {
+      "type": "boolean"
+     },
+     "native": {
+      "type": "boolean"
+     },
+     "web": {
+      "type": "boolean"
+     },
+     "webPublicKey": {
+      "description": "null in every sample seen; the field can hold a value other times"
+     }
+    },
+    "required": [
+     "enabled",
+     "native",
+     "web",
+     "webPublicKey"
+    ],
+    "x-samples": 1
+   }
+  }
  },
  "POST /v1/quiz-attempts/:id/submit": {
   "responses": {
@@ -18851,6 +19052,44 @@
    "200": {
     "type": "object",
     "properties": {
+     "adaptive": {
+      "type": "object",
+      "properties": {
+       "rungs": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "approxBytes": {
+           "type": "integer"
+          },
+          "bandwidth": {
+           "type": "integer"
+          },
+          "height": {
+           "type": "integer"
+          },
+          "name": {
+           "type": "string"
+          },
+          "width": {
+           "type": "integer"
+          }
+         },
+         "required": [
+          "approxBytes",
+          "bandwidth",
+          "height",
+          "name",
+          "width"
+         ]
+        }
+       }
+      },
+      "required": [
+       "rungs"
+      ]
+     },
      "assetId": {
       "type": "string",
       "format": "uuid"
@@ -18937,7 +19176,7 @@
      "resume",
      "streams"
     ],
-    "x-samples": 6
+    "x-samples": 8
    }
   },
   "query": [

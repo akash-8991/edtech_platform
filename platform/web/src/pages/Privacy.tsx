@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { api } from '../api/client';
 import type { Consent, Prefs, PrivacyRequest } from '../api/types';
 import { Badge, Card, ErrorNote, Hold } from '../components/ui';
 import { usePrefs } from '../prefs';
@@ -7,6 +6,8 @@ import { canDownload, describeRequest, hasOpen, PURPOSES, typeLabel } from '../l
 import { idempotencyKey } from '../lib/format';
 import { chooseLang, fmtDate, fmtDateTime, LANGS, mark, useT } from '../lib/i18n';
 import { useAuth } from '../auth';
+import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
+import { api } from '../api/client';
 
 export default function Privacy() {
   const t = useT(); const [consents, setConsents] = useState<Consent[] | null>(null); const [reqs, setReqs] = useState<PrivacyRequest[] | null>(null); const [error, setError] = useState<unknown>(null);
@@ -19,6 +20,7 @@ export default function Privacy() {
       <p className="muted">{t('You are in control of how your information is used. Everything you do here is recorded in an audit trail.')}</p>
       <ConsentCard consents={consents} onChange={setConsents} />
       <DataRequests reqs={reqs} reload={load} />
+      <NotificationsCard />
       <PreferencesCard />
     </div>
   );
@@ -107,6 +109,27 @@ function PreferencesCard() {
       <label htmlFor="pf-cl">{t('Caption language')}</label><select id="pf-cl" value={prefs.captionLanguage ?? prefs.language ?? 'en'} onChange={(e) => void set({ captionLanguage: e.target.value as 'en' | 'hi' })}>{LANGS.map((l) => <option key={l.code} value={l.code}>{l.native}</option>)}</select>
       <label htmlFor="pf-lang">{t('Language')}</label><select id="pf-lang" value={prefs.language ?? chooseLang(undefined, me?.language)} onChange={(e) => void set({ language: e.target.value as 'en' | 'hi' })}>{LANGS.map((l) => <option key={l.code} value={l.code}>{l.native}</option>)}</select>
       <p className="muted">{t('The screens and the course content are shown in this language where a translation exists. Course videos and captions follow your caption language when that version has been published.')}</p>
+    </Card>
+  );
+}
+
+/** Push notifications on THIS device, plus the account-wide switch. */
+function NotificationsCard() {
+  const t = useT(); const { prefs, save } = usePrefs(); const { me } = useAuth(); const [state, setState] = useState<PushState | null>(null); const [busy, setBusy] = useState(false); const [note, setNote] = useState(''); const [error, setError] = useState<unknown>(null);
+  useEffect(() => { pushState().then(setState).catch(() => setState('unsupported')); }, []);
+  const on = async () => { setBusy(true); setError(null); setNote(''); try { setState(await enablePush(prefs.language ?? me?.language ?? 'en')); } catch (e) { setError(e); } finally { setBusy(false); } };
+  const off = async () => { setBusy(true); setError(null); setNote(''); try { await disablePush(); setState('off'); } catch (e) { setError(e); } finally { setBusy(false); } };
+  const test = async () => { setBusy(true); setError(null); try { const r = await api.post<{ devices: number; sent: number }>('/v1/me/push/test'); setNote(r.sent ? t('A test notification was sent to {n} device(s).', { n: r.sent }) : t('No device received it. Check that notifications are allowed for this site or app.')); } catch (e) { setError(e); } finally { setBusy(false); } };
+  const why: Partial<Record<PushState, string>> = { unsupported: mark('This browser cannot show push notifications. On an iPhone or iPad, add this app to the Home Screen first.'), insecure: mark('Push notifications need a secure (https) connection.'), denied: mark('Notifications are blocked for this site or app. Allow them in your browser or phone settings, then come back.'), unavailable: mark('Push notifications are not switched on for this platform yet.') };
+  return (
+    <Card title={t('Push notifications')}>
+      <p className="muted">{t('Get a message on this device when something needs you: a result, feedback, a lab change, a teacher reply. You choose per device; nothing is sent while it is off.')}</p>
+      <ErrorNote error={error} />
+      {state && why[state] && <p className="note warn" role="status">{t(why[state]!)}</p>}
+      {state === 'off' && <button onClick={() => void on()} disabled={busy}>{busy ? t('Working…') : t('Turn on for this device')}</button>}
+      {state === 'on' && <div className="choices"><button className="secondary" onClick={() => void test()} disabled={busy}>{t('Send me a test')}</button><button className="secondary" onClick={() => void off()} disabled={busy}>{t('Turn off for this device')}</button></div>}
+      {note && <p role="status" className="note ok">{note}</p>}
+      <label className="switch" style={{ marginTop: 12 }}><input type="checkbox" role="switch" checked={prefs.push !== false} onChange={(e) => void save({ push: e.target.checked }).catch(setError)} /> {t('Send push notifications to all my devices')}</label>
     </Card>
   );
 }

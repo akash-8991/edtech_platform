@@ -15,6 +15,7 @@ import { AppModule } from '../src/app.module';
 import { hashPassword } from '../src/common/auth';
 import { JobWorker } from '../src/ai/generation';
 import { RUNNER, Run } from '../src/media/transcode';
+import { packBundle, unpackBundle, segmentNames } from '../src/media/abr';
 
 const prisma = new PrismaClient();
 let app: INestApplication; let http: any; const tok: Record<string, string> = {}; const uid: Record<string, string> = {};
@@ -104,5 +105,21 @@ describe('adaptive bitrate (HLS) transcoding', () => {
     for (let i = 0; i < 3; i++) await app.get(JobWorker).runOnce();
     failFfmpeg = false;
     const s = (await http.get(`/v1/authoring/assets/${AD}/renditions`).set(as('author'))).body; expect(s.hls).toBeNull(); expect(s.job.error).toMatch(/ffmpeg 240p failed/);
+  });
+});
+
+describe('offline bundle format', () => {
+  it('round-trips, and refuses a bundle that is truncated, padded or not a bundle', () => {
+    const b = packBundle('360p', '#EXTM3U\n#EXTINF:6,\nseg_00000.ts\n#EXT-X-ENDLIST\n', [{ name: 'seg_00000.ts', data: Buffer.from('abc') }, { name: 'seg_00001.ts', data: Buffer.from('defg') }]);
+    const u = unpackBundle(b); expect(u.header.rung).toBe('360p'); expect(u.segments.map((s) => s.data.toString())).toEqual(['abc', 'defg']);
+    expect(() => unpackBundle(b.subarray(0, b.length - 1))).toThrow(); expect(() => unpackBundle(Buffer.concat([b, Buffer.from('x')]))).toThrow(/mismatch/); expect(() => unpackBundle(Buffer.from('nope nope nope'))).toThrow(/not a bundle/);
+  });
+  it('only plain segment names are accepted from a playlist', () => {
+    expect(segmentNames('#EXTM3U\nseg_00001.ts\n')).toEqual(['seg_00001.ts']);
+    for (const bad of ['../x.ts', '/etc/passwd', 'http://x/y.ts', 'a/b.ts', 'seg.ts?x=1']) expect(() => segmentNames(`#EXTM3U\n${bad}\n`)).toThrow();
+  });
+  it('an unknown adaptive rendition has no licence', async () => {
+    await http.post('/v1/offline/devices').set(as('learner')).send({ deviceId: 'd1', publicKeyPem: require('crypto').generateKeyPairSync('rsa', { modulusLength: 2048 }).publicKey.export({ type: 'spki', format: 'pem' }).toString() }).expect(201);
+    await http.post('/v1/offline/licenses').set(as('learner')).send({ deviceId: 'd1', topicId: T1, label: 'hls-9999p' }).expect(404);
   });
 });

@@ -28,12 +28,14 @@ What works offline, and how:
 | Feature | How it works |
 |---|---|
 | App opens | A service worker (`public/sw.js`) caches the app itself (production builds only) and nothing from the API. |
-| Saved lessons | *Topic → Save for offline* downloads the lesson. The server issues a **device-bound licence**: the lesson is encrypted (AES-256-GCM), its key is wrapped for this browser's RSA key (RSA-OAEP, SHA-256) and the licence expires with the entitlement and in at most `OFFLINE_DAYS` (7). The browser stores only ciphertext in IndexedDB and decrypts in memory when played; the private key is non-extractable. At most 3 devices per learner. |
+| Saved lessons | *Topic → Save for offline* downloads the lesson (adaptive lessons offer *Small / Standard / Best*, see [Adaptive video](07-adaptive-video.md)). The server issues a **device-bound licence**: the lesson is encrypted (AES-256-GCM), its key is wrapped for this browser's RSA key (RSA-OAEP, SHA-256) and the licence expires with the entitlement and in at most `OFFLINE_DAYS` (7). The browser stores only ciphertext in IndexedDB and decrypts in memory when played; the private key is non-extractable. At most 3 devices per learner. |
 | Courses, progress, topic text, notifications, labs, exams list | Read through a small per-person cache: the network always wins; saved copies are shown, with a notice, only when the server cannot be reached. A server *error* is never hidden by old data. Wiped at sign-out. |
 | What you watch offline | Heartbeats and in-video answers are queued on the device and sent when you are back (the server de-duplicates by event id). |
 | Exams, quizzes, assignments, lab check-in | **Online only.** The server owns the clock and the answer sheet; there is deliberately no offline exam. |
 
 Licence rules the app enforces: while online it asks the server which licences are still valid and deletes saved lessons whose access ended (revoked, entitlement paused/ended, expired); offline it checks the expiry and refuses a clock set back. The device can be offline in two ways and both are handled: no network, or a network but an unreachable server (detected by failed requests and probed every 8 s).
+
+Push notifications (new): *Privacy and data → Push notifications*, see [Mobile app and push](09-mobile-and-push.md). The staff console is English only.
 
 Limits to know: saved lessons play without signing in on that device until they expire (a shared device is therefore as private as its browser profile; *Remove all downloads* is on the downloads page); clearing site data deletes the downloads and the device key; storage is the browser's quota (checked before a download). The service worker could not be exercised in the in-app browser used during the build (it refuses registration); its logic is unit-tested and it needs one pass in desktop Chrome and mobile Safari before launch.
 

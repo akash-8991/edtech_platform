@@ -1567,6 +1567,31 @@
   },
   {
    "method": "DELETE",
+   "path": "/v1/me/push/devices/:id",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/me/push/devices",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/push/devices",
+   "public": false,
+   "roles": null
+  },
+  {
+   "method": "POST",
+   "path": "/v1/me/push/test",
+   "public": false,
+   "roles": null,
+   "rateLimit": 6
+  },
+  {
+   "method": "DELETE",
    "path": "/v1/me/sessions/:id",
    "public": false,
    "roles": null
@@ -1807,6 +1832,12 @@
    "method": "POST",
    "path": "/v1/proctoring/webhook",
    "public": true,
+   "roles": null
+  },
+  {
+   "method": "GET",
+   "path": "/v1/push/config",
+   "public": false,
    "roles": null
   },
   {
