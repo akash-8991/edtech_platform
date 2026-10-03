@@ -50,12 +50,80 @@
   },
   {
    "method": "POST",
+   "path": "/v1/admin/users/:id/reset-password",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
    "path": "/v1/admin/users/:id/revoke-sessions",
    "public": false,
    "roles": [
     "PLATFORM_ADMIN",
     "SUPER_ADMIN",
     "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/admin/users/:id/roles",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/admin/users/:id/status",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/admin/users/:id/unlock",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/admin/users/:id",
+   "public": false,
+   "roles": [
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/admin/users",
+   "public": false,
+   "roles": [
+    "ACADEMIC_ADMIN",
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/admin/users",
+   "public": false,
+   "roles": [
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN"
    ]
   },
   {

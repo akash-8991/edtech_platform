@@ -54,7 +54,7 @@ function Directory({ canEdit }: { canEdit: boolean }) {
             <p className="muted">{t.open} of {t.capacity} tickets open · {t.disciplines.join(', ') || 'no subjects'} · {t.languages.map(langName).join(', ')} · {windowsText(t.windows)}{t.skills.length ? ` · skills: ${t.skills.join(', ')}` : ''}</p>
             {canEdit && (edit === t.userId ? <TeacherForm t={t} onSave={(b) => save(t.userId, b)} onCancel={() => setEdit(null)} /> : <button onClick={() => { setEdit(t.userId); setDone(null); }}>Edit {t.name ?? 'teacher'}</button>)}
           </li>))}</ul>)}
-      {canEdit && <Register onSave={(id) => save(id, { active: true })} />}
+      {canEdit && <Register existing={(rows ?? []).map((t) => t.userId)} onSave={(id) => save(id, { active: true })} />}
     </Card>
   );
 }
@@ -76,12 +76,16 @@ function TeacherForm({ t, onSave, onCancel }: { t: TeacherRow; onSave: (b: objec
   );
 }
 
-function Register({ onSave }: { onSave: (id: string) => Promise<boolean> }) {
-  const [id, setId] = useState(''); const [problem, setProblem] = useState<string | null>(null);
+/** Picks from people who already hold the Doubt Teacher role but are not registered at the desk yet. */
+function Register({ existing, onSave }: { existing: string[]; onSave: (id: string) => Promise<boolean> }) {
+  const [cands, setCands] = useState<{ id: string; name: string; email?: string }[] | null>(null); const [pick, setPick] = useState(''); const [problem, setProblem] = useState<string | null>(null); const [error, setError] = useState<unknown>(null);
+  useEffect(() => { api.get<{ id: string; name: string; email?: string; status: string }[]>('/v1/admin/users?role=DOUBT_TEACHER&status=ACTIVE&limit=200').then((r) => setCands(r.filter((x) => !existing.includes(x.id)))).catch(setError); }, [existing.join()]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <form onSubmit={(e) => { e.preventDefault(); if (!/^[0-9a-f-]{36}$/i.test(id.trim())) { setProblem('Paste the person\'s user ID (it looks like 3f2b8c1e-…). They must already hold the Doubt Teacher role.'); return; } void onSave(id.trim()).then((ok) => ok && setId('')); }} noValidate className="subcard">
-      <h3>Register a teacher</h3><label htmlFor="rg-id">User ID</label><input id="rg-id" value={id} onChange={(e) => { setId(e.target.value); setProblem(null); }} />{problem && <p role="alert" className="note error">{problem}</p>}
-      <button>Register</button><p className="muted">Then edit them to set subjects and languages. There is no user directory in this console yet.</p>
+    <form onSubmit={(e) => { e.preventDefault(); if (!pick) { setProblem('Choose a person.'); return; } void onSave(pick).then((ok) => ok && setPick('')); }} noValidate className="subcard">
+      <h3>Register a teacher</h3><ErrorNote error={error} />
+      {!cands ? (!error && <Loading />) : !cands.length ? <p className="muted">Everyone who holds the Doubt Teacher role is already registered. To add someone new, give them the Doubt Teacher role first (People → their record → Roles).</p> : <>
+        <label htmlFor="rg-id">Person</label><select id="rg-id" value={pick} onChange={(e) => { setPick(e.target.value); setProblem(null); }}><option value="">Choose…</option>{cands.map((c) => <option key={c.id} value={c.id}>{c.name}{c.email ? ` (${c.email})` : ''}</option>)}</select>
+        {problem && <p role="alert" className="note error">{problem}</p>}<button>Register</button><p className="muted">Then edit them to set subjects and languages.</p></>}
     </form>
   );
 }

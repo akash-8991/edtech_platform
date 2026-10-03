@@ -155,3 +155,7 @@ export interface FaqRow { id: string; programmeId: string; topicId: string | nul
 export interface TeacherWindow { day: number; start: string; end: string }
 export interface TeacherRow { userId: string; name?: string; active: boolean; available: boolean; disciplines: string[]; skills: string[]; languages: string[]; capacity: number; open: number; lastAssignedAt: string | null; windows: TeacherWindow[] }
 export interface DoubtReportData { since: string; tickets: number; open: number; unassigned: number; slaCompliance: number | null; avgFirstResponseMinutes: number | null; avgResolutionHours: number | null; avgRating: number | null; reopenRate: number | null; bySource: Record<string, number>; byCategory: Record<string, number>; teachers: { teacherId: string; name?: string; assigned: number; resolved: number; breaches: number; avgRating: number | null }[] }
+
+export interface UserRow { id: string; name: string; email?: string; language: string; status: 'ACTIVE' | 'SUSPENDED' | 'ERASED' | string; createdAt: string; lastLoginAt: string | null; locked: boolean; mfaEnabled: boolean; legalHold: boolean; roles: string[]; scopedRoles: { role: string; programmeId: string | null; cohort: string | null }[] }
+export interface UserDetailData extends UserRow { activeSessions: number; teacherProfile: boolean; history: { seq: number; at: string; by: string; action: string; reason: string | null; detail: unknown }[] }
+export interface CreatedUser { id: string; email: string; roles: string[]; temporaryPassword?: string }

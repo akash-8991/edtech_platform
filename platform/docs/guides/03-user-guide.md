@@ -133,6 +133,25 @@ curl -sS -X POST $BASE/v1/auth/logout -H "Authorization: Bearer $TOKEN"     # si
 
 Support/admin can end every session of a user: `POST /v1/admin/users/<userId>/revoke-sessions` `{"reason":"..."}`.
 
+### 2.5 People: creating accounts, roles, suspension **[tested]**
+
+In the staff console this is the **People** area. The same calls over the API (super admin or platform admin to change; auditors and support can read):
+
+```bash
+curl -sS "$BASE/v1/admin/users?q=ada&role=CONTENT_AUTHOR&status=ACTIVE&limit=50" -H "Authorization: Bearer $ADMIN" | jq     # next page: ?cursor=<X-Next-Cursor header>
+curl -sS $BASE/v1/admin/users/<userId> -H "Authorization: Bearer $ADMIN" | jq                    # details + last 25 audited changes
+# new account: returns a one-time temporaryPassword ONCE (omit it with "ssoOnly":true). Give it over a safe channel; they change it from their account page.
+curl -sS -X POST $BASE/v1/admin/users -H "Authorization: Bearer $ADMIN" -H 'Content-Type: application/json' \
+  -d '{"email":"ada@institute.edu","name":"Ada Author","roles":["CONTENT_AUTHOR"]}' | jq
+# roles (global ones): a reason is required; signs them out everywhere so it takes effect at once
+curl -sS -X POST $BASE/v1/admin/users/<userId>/roles -H "Authorization: Bearer $ADMIN" -H 'Content-Type: application/json' -d '{"add":["DOUBT_TEACHER"],"remove":[],"reason":"joins the doubt desk"}'
+curl -sS -X POST $BASE/v1/admin/users/<userId>/status -H "Authorization: Bearer $ADMIN" -H 'Content-Type: application/json' -d '{"status":"SUSPENDED","reason":"left the institute"}'   # or ACTIVE
+curl -sS -X POST $BASE/v1/admin/users/<userId>/unlock -H "Authorization: Bearer $ADMIN" -H 'Content-Type: application/json' -d '{}'
+curl -sS -X POST $BASE/v1/admin/users/<userId>/reset-password -H "Authorization: Bearer $ADMIN" -H 'Content-Type: application/json' -d '{"reason":"cannot get in"}' | jq   # one-time password, shown once
+```
+
+Rules (decision D-086, to be confirmed by the institute): only a super admin creates, grants or manages anyone holding SUPER_ADMIN or PLATFORM_ADMIN; nobody changes their own roles or status; one active super admin always remains; a person keeps at least one role. The first super admin is still created with the setup script (section 2.1).
+
 ### 2.5 Single sign-on (OIDC) **[needs external service]**
 
 Learners normally sign in through the institute's identity provider. Set the `OIDC_*` variables ([configuration reference](04-configuration-reference.md#single-sign-on)), then a client sends the browser to the URL returned by `GET /v1/auth/sso/start`; the provider redirects back to `/v1/auth/sso/callback`. Accounts are **never auto-created** by SSO; an administrator must provision the user first. For staff, the identity provider must assert multi-factor authentication (`amr` claim) or sign-in is refused.
