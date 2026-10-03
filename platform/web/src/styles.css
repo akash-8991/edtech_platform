@@ -1,11 +1,11 @@
 :root {
   --bg: #f7f8fa; --surface: #ffffff; --text: #1a1f2b; --muted: #55607a; --border: #d5dae3; --accent: #1d4ed8; --accent-text: #ffffff;
-  --ok: #0f6b3a; --ok-bg: #e3f6ea; --warn: #8a4b00; --warn-bg: #fff1d6; --err: #a01a1a; --err-bg: #fde8e8; --focus: #f59e0b;
+  --ok: #0f6b3a; --ok-bg: #e3f6ea; --warn: #8a4b00; --warn-bg: #fff1d6; --err: #a01a1a; --err-bg: #fde8e8; --focus: #92400e;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0f1420; --surface: #172033; --text: #e8ecf5; --muted: #a3adc4; --border: #2b3753; --accent: #7aa2ff; --accent-text: #0b1020;
-    --ok: #6fe3a1; --ok-bg: #12301f; --warn: #ffc56b; --warn-bg: #3a2a0c; --err: #ff9a9a; --err-bg: #3a1515; }
+    --ok: #6fe3a1; --ok-bg: #12301f; --warn: #ffc56b; --warn-bg: #3a2a0c; --err: #ff9a9a; --err-bg: #3a1515; --focus: #fbbf24; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; font: 1rem/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
@@ -21,7 +21,7 @@ main { max-width: 860px; margin: 0 auto; padding: 0 16px 48px; }
 .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .muted { color: var(--muted); } .strong { font-weight: 600; }
 .note { padding: 8px 12px; border-radius: 8px; margin: 8px 0; } .note.error { background: var(--err-bg); color: var(--err); } .note.ok { background: var(--ok-bg); color: var(--ok); } .note.warn { background: var(--warn-bg); color: var(--warn); }
-.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 600; } .badge.ok { background: var(--ok-bg); color: var(--ok); } .badge.warn { background: var(--warn-bg); color: var(--warn); } .badge.muted { background: var(--border); color: var(--muted); }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 600; } .badge.ok { background: var(--ok-bg); color: var(--ok); } .badge.warn { background: var(--warn-bg); color: var(--warn); } .badge.muted { background: var(--border); color: var(--text); }
 .bar { height: 10px; background: var(--border); border-radius: 999px; overflow: hidden; } .bar span { display: block; height: 100%; background: var(--accent); transition: width .3s; }
 @media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
 label { display: block; margin: 12px 0 4px; font-weight: 600; } .inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; font-weight: 400; }
@@ -38,7 +38,7 @@ ol.topics, ul.plain, ol.plain { list-style: none; padding: 0; margin: 0; }
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; z-index: 20; padding: 16px; } .modal-body { background: var(--surface); padding: 20px; border-radius: 12px; max-width: 480px; width: 100%; }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; } .transcript { white-space: pre-wrap; background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px; max-height: 260px; overflow: auto; }
 @media (max-width: 520px) { h1 { font-size: 1.35rem; } .top { gap: 6px 12px; } .top nav { order: 3; flex-basis: 100%; gap: 4px 14px; } .brand { flex: 1; } }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 button.secondary { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
 .exam { position: relative; padding-bottom: 32px; }
@@ -85,3 +85,10 @@ blockquote { margin: .4rem 0; padding-left: .8rem; border-left: 3px solid var(--
 .subcard.internal { background: #fff8e6; border-left: 3px solid #d9a400; padding-left: .6rem; }
 .secret { font-size: 1.1rem; padding: 4px 8px; background: var(--bg); border: 1px solid var(--line, #d0d5dd); border-radius: 4px; user-select: all; }
 a.button { display: inline-block; font: inherit; padding: 10px 16px; border-radius: 8px; background: var(--accent); color: var(--accent-text); text-decoration: none; min-height: 44px; box-sizing: border-box; line-height: 24px; }
+
+/* Accessibility audit fixes (docs/quality/accessibility-audit.md): target size 24 px (WCAG 2.5.8), checkboxes and radios large enough to hit. */
+.top nav a { display: inline-flex; align-items: center; min-height: 28px; }
+input[type=checkbox], input[type=radio] { width: 24px; height: 24px; margin: 0 6px 0 0; vertical-align: middle; }
+main:focus { outline: none; } /* main is a focus target after a page change, not a control: the page content is the indicator */
+input[type=checkbox], input[type=radio] { min-width: 24px; min-height: 24px; flex: 0 0 24px; }
+.card-head h2 a { display: inline-block; min-height: 24px; }

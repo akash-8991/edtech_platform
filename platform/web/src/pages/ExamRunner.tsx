@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, messageFor } from '../api/client';
 import type { ExamReceipt, ExamResult, ExamStart, SaveResult } from '../api/types';
 import { ExamQuestionView, isAnswered } from '../components/ExamQuestionView';
-import { ErrorNote, Loading } from '../components/ui';
+import { ErrorNote, Loading, Modal } from '../components/ui';
 import { Autosaver, FatalSaveError, type SaveStatus } from '../lib/autosave';
 import { fmtRemaining, ServerClock } from '../lib/clock';
 import { watchSignals } from '../lib/signals';
@@ -92,7 +92,7 @@ export default function ExamRunner() {
   const resumeHere = async () => { setError(null); try { const data = await api.post<ExamStart>(`/v1/exam-attempts/${attemptId}/resume`, { deviceId: navigator.userAgent.slice(0, 60) }); token.current = data.sessionToken; clock.sync(data.serverTime); setExam(data); setReplaced(false); buildSaver({ ...data, answers: { ...(data.answers ?? {}) } }); } catch (e) { setError(e); } };
 
   // ---- render --------------------------------------------------------------------------------------------------------------------------------------------
-  if (phase === 'loading') return error ? <div><ErrorNote error={error} /><p><Link to="/exams">Back to exams</Link></p></div> : <Loading what="Loading your exam" />;
+  if (phase === 'loading') return error ? <div><h1>Your exam</h1><ErrorNote error={error} /><p><Link to="/exams">Back to exams</Link></p></div> : <div><h1>Your exam</h1><Loading what="Loading your exam" /></div>;
   if (phase === 'begin') return (
     <div className="exam-begin"><h1>{status === 'IN_PROGRESS' ? 'Resume your exam' : 'Start your exam'}</h1>
       <ul><li>The timer is controlled by the server and keeps running if you close this page.</li><li>Your answers are saved automatically; you can see the save status at the top.</li>
@@ -103,7 +103,7 @@ export default function ExamRunner() {
     <div className="card" role="status"><h1>Exam submitted</h1><p>Your answers are recorded{receipt.autoSubmitted ? ' (submitted automatically when time ran out)' : ''}. You answered {receipt.answered} question(s).</p>
       <p>Keep your receipt code: <strong className="mono">{receipt.receiptCode}</strong></p><p className="muted">Results are released after review. You will be notified.</p>
       <Link to={`/exam-results/${attemptId}`}>View status</Link> · <Link to="/exams">Back to exams</Link></div>);
-  if (!exam) return <Loading />;
+  if (!exam) return <div><h1>Your exam</h1><Loading /></div>;
 
   const q = exam.questions[idx]; const answered = exam.questions.filter((x) => isAnswered(answers[x.id])).length; const unanswered = exam.questions.length - answered;
   const low = remaining <= 5 * 60_000;
@@ -123,11 +123,11 @@ export default function ExamRunner() {
       <ExamQuestionView q={q} n={idx + 1} total={exam.questions.length} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} flagged={flags.has(q.id)} onFlag={() => setFlags((f) => { const n = new Set(f); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n; })} />
       <div className="row"><button className="secondary" disabled={idx === 0} onClick={() => setIdx(idx - 1)}>Previous</button><span className="muted">{answered} of {exam.questions.length} answered</span><button disabled={idx === exam.questions.length - 1} onClick={() => setIdx(idx + 1)}>Next</button></div>
       {confirm && (
-        <div className="modal" role="dialog" aria-modal="true" aria-labelledby="sub-t"><div className="modal-body">
+        <Modal labelledBy="sub-t" onEscape={() => setConfirm(false)}>
           <h3 id="sub-t">Submit your exam?</h3>
           <p>{unanswered ? <><strong>{unanswered}</strong> question(s) are unanswered.</> : 'You have answered every question.'} {flags.size ? `${flags.size} flagged for review. ` : ''}You cannot change your answers after submitting.</p>
-          <div className="choices"><button autoFocus onClick={() => void submit(false)}>Yes, submit now</button><button className="secondary" onClick={() => setConfirm(false)}>Go back</button></div>
-        </div></div>)}
+          <div className="choices"><button onClick={() => void submit(false)}>Yes, submit now</button><button className="secondary" onClick={() => setConfirm(false)}>Go back</button></div>
+        </Modal>)}
     </div>
   );
 }

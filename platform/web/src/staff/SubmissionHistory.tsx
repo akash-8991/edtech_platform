@@ -18,7 +18,7 @@ function Page({ canAct }: { canAct: boolean }) {
   const load = useCallback(async (clear = true) => { try { setH(await api.get<History>(`/v1/grading/submissions/${submissionId}/history`)); if (clear) setError(null); } catch (e) { setError(e); } }, [submissionId]);
   useEffect(() => { setH(null); setDone(null); void load(); }, [load]);
   const act = async (fn: () => Promise<unknown>, ok: string) => { setError(null); setDone(null); try { await fn(); setDone(ok); await load(false); return true; } catch (e) { setError(e); return false; } };
-  if (!h) return <div><p><Link to="/staff/gradechanges">Back to grade changes</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the grade history" />}</div>;
+  if (!h) return <div><p><Link to="/staff/gradechanges">Back to grade changes</Link></p><h1>Grade history</h1><ErrorNote error={error} />{!error && <Loading what="Loading the grade history" />}</div>;
   const cur = h.records[h.records.length - 1]; const state = h.grade?.state ?? ''; const block = proposeBlock(state); const open = h.overrides.some((o) => o.status === 'PENDING');
   return (
     <div>

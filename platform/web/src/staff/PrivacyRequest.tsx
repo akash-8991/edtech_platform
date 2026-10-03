@@ -19,7 +19,7 @@ function Page({ meId, canDecide }: { meId: string; canDecide: boolean }) {
   useEffect(() => { setR(null); setDone(null); void load(); }, [load]);
   /** Decides, then refreshes but keeps a refusal on screen (the reason is what the decider needs to read). */
   const decide = async (decision: 'APPROVE' | 'REJECT', reason: string) => { setError(null); setDone(null); try { await api.post(`/v1/privacy/requests/${requestId}/decide`, { decision, reason }); setDone(decision === 'APPROVE' ? 'Approved. It will be carried out shortly, and the person is told.' : 'Declined. The person is told.'); await load(false); return true; } catch (e) { setError(e); await load(false); return false; } };
-  if (!r) return <div><p><Link to="/staff/privacy">Back to privacy</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the request" />}</div>;
+  if (!r) return <div><p><Link to="/staff/privacy">Back to privacy</Link></p><h1>Privacy request</h1><ErrorNote error={error} />{!error && <Loading what="Loading the request" />}</div>;
   const st = caseStatus(r.status); const block = decideBlock(r, meId); const blockers = r.type === 'ERASURE' ? erasureBlockers(r.subject) : []; const result = describeResult(r);
   return (
     <div>

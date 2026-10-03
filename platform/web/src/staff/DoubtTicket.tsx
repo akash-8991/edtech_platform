@@ -20,7 +20,7 @@ function Ticket({ roles, meId }: { roles: string[]; meId: string }) {
   useEffect(() => { setT(null); setDone(null); void load(); }, [load]);
   /** Runs an action, then refreshes but keeps the error on screen (a refusal's reason is what the person needs to read). */
   const act = async (fn: () => Promise<unknown>, ok: string) => { setError(null); setDone(null); try { await fn(); setDone(ok); await load(false); return true; } catch (e) { setError(e); await load(false); return false; } };
-  if (!t) return <div><p><Link to="/staff/doubts">Back to the doubt desk</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the ticket" />}</div>;
+  if (!t) return <div><p><Link to="/staff/doubts">Back to the doubt desk</Link></p><h1>Ticket</h1><ErrorNote error={error} />{!error && <Loading what="Loading the ticket" />}</div>;
   const sla = slaInfo(t); const ctx = describeContext(t.context); const mine = t.assignedTeacherId === meId; const open = isOpen(t.status);
   const block = resolveBlock(t);
   return (

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { EntitlementSummary, LabActivity, Progress } from '../api/types';
-import { Badge, Card, ErrorNote, Loading } from '../components/ui';
+import { Badge, Card, Hold } from '../components/ui';
 import { blockers, labStatus, liveBooking, slotTime } from '../lib/labs';
 
 export default function Labs() {
@@ -16,8 +16,7 @@ export default function Labs() {
       } catch (e) { setError(e); }
     })();
   }, []);
-  if (error) return <ErrorNote error={error} />;
-  if (!labs) return <Loading what="Loading your labs" />;
+  if (error || !labs) return <Hold title="Labs" error={error} what="Loading your labs" />;
   const done = labs.filter((l) => l.completed).length;
   return (
     <div>

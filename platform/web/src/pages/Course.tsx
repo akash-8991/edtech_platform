@@ -2,14 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Progress } from '../api/types';
-import { Badge, Card, ErrorNote, Loading, Progress as Bar } from '../components/ui';
+import { Badge, Card, Progress as Bar, Hold } from '../components/ui';
 import { describeState } from '../lib/grades';
 
 export default function Course() {
   const { entitlementId = '' } = useParams(); const [p, setP] = useState<Progress | null>(null); const [error, setError] = useState<unknown>(null);
   useEffect(() => { api.get<Progress>(`/v1/me/entitlements/${entitlementId}/progress`).then(setP).catch(setError); }, [entitlementId]);
-  if (error) return <ErrorNote error={error} />;
-  if (!p) return <Loading what="Loading your progress" />;
+  if (error || !p) return <Hold title="Your progress" error={error} what="Loading your progress" />;
   return (
     <div>
       <p><Link to="/">All courses</Link></p>

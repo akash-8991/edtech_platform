@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { GradeView } from '../api/types';
-import { Badge, Card, ErrorNote, Loading, Progress } from '../components/ui';
+import { Badge, Card, ErrorNote, Progress, Hold } from '../components/ui';
 import { appealWindow, describeState, pct } from '../lib/grades';
 import { idempotencyKey } from '../lib/format';
 
@@ -17,7 +17,7 @@ export default function GradeDetail({ pollMs = 15_000 }: { pollMs?: number }) {
   useEffect(() => { if (!g || !describeState(g.state).pending || g.dimensions) return; const t = setInterval(() => void load(), pollMs); return () => clearInterval(t); }, [g, load, pollMs]);
 
   const appeal = async () => { setBusy(true); setError(null); try { await api.post(`/v1/me/submissions/${submissionId}/appeal`, { reason: reason.trim() }, key); setAppealed(true); await load(); } catch (e) { setError(e); } finally { setBusy(false); } };
-  if (!g) return error ? <ErrorNote error={error} /> : <Loading what="Loading your grade" />;
+  if (!g) return <Hold title="Assignment feedback" error={error} what="Loading your grade" />;
   const s = describeState(g.state); const graded = !!g.dimensions;
   return (
     <div>

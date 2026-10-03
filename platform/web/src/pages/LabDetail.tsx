@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
 import type { EntitlementSummary, LabActivity, LabSlot, Progress, UploadedFile } from '../api/types';
-import { Badge, Card, ErrorNote, Loading } from '../components/ui';
+import { Badge, Card, ErrorNote, Hold } from '../components/ui';
 import { idempotencyKey } from '../lib/format';
 import { attendanceWindow, blockers, labStatus, liveBooking, looksLikeUrl, slotTime, tokenFromInput } from '../lib/labs';
 
@@ -23,7 +23,7 @@ export default function LabDetail() {
   useEffect(() => { api.get<EntitlementSummary[]>('/v1/me/entitlements').then((ents) => Promise.all(ents.filter((e) => e.learningAccess).map((e) => api.get<Progress>(`/v1/me/entitlements/${e.id}/progress`).catch(() => null)))).then((ps) => { const t = new Map<string, string>(); ps.forEach((p) => p?.topics.forEach((x) => t.set(x.topicId, x.title))); setTitles(t); }).catch(() => undefined); }, []);
 
   const run = async (id: string, fn: () => Promise<unknown>, ok = '') => { setBusy(id); setError(null); setNotice(''); try { await fn(); setNotice(ok); await load(); } catch (e) { setError(e); await load(false); /* refresh seats and state, but keep the message the learner needs to read */ } finally { setBusy(null); } };
-  if (!lab) return error ? <ErrorNote error={error} /> : <Loading what="Loading the lab" />;
+  if (!lab) return <Hold title="Lab" error={error} what="Loading the lab" />;
   const s = labStatus(lab); const b = liveBooking(lab); const why = blockers(lab, titles);
   return (
     <div>

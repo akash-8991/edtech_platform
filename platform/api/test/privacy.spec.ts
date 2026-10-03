@@ -171,8 +171,8 @@ describe('accessibility: preferences and content readiness', () => {
   });
   it('content readiness report flags missing transcripts and interaction text alternatives; low-bandwidth and audio-only gaps are advisory', () => {
     const topics = [{ title: 'T', mandatory: true, assets: [{ kind: 'VIDEO', language: 'en', files: { master: {} }, interactions: [{ id: 'i1', prompt: '' }, { id: 'i2', prompt: 'ok' }] }, { kind: 'VIDEO', language: 'hi', files: { master: {}, transcript: {}, audio: {}, '360p': {} }, interactions: [] }] }, { title: 'Opt', mandatory: false, assets: [] }];
-    const r = accessibilityReport(topics as any, ['en', 'hi']); expect(r.filter((i) => i.severity === 'BLOCKING').map((i) => i.rule).sort()).toEqual(['interaction_text', 'transcript']); expect(r.filter((i) => i.severity === 'ADVISORY').map((i) => i.rule).sort()).toEqual(['audio_only', 'low_bandwidth']);
-    expect(accessibilityReport([{ title: 'Ok', mandatory: true, assets: [{ kind: 'VIDEO', language: 'en', files: { master: {}, transcript: {}, audio: {}, '360p': {} }, interactions: [] }] }] as any, ['en'])).toEqual([]);
+    const r = accessibilityReport(topics as any, ['en', 'hi']); expect(r.filter((i) => i.severity === 'BLOCKING').map((i) => i.rule).sort()).toEqual(['interaction_text', 'transcript']); expect(r.filter((i) => i.severity === 'ADVISORY').map((i) => i.rule).sort()).toEqual(['audio_only', 'captions', 'captions', 'low_bandwidth']); // captions are advisory until the institute decides to require them (WCAG 1.2.2)
+    expect(accessibilityReport([{ title: 'Ok', mandatory: true, assets: [{ kind: 'VIDEO', language: 'en', files: { master: {}, transcript: {}, captions: {}, audio: {}, '360p': {} }, interactions: [] }] }] as any, ['en'])).toEqual([]);
   });
   it('when enforced, a version cannot go to review until every mandatory video has a transcript', async () => {
     process.env.ACCESSIBILITY_ENFORCE = '1';

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, messageFor } from '../api/client';
 import type { ExamInfo, ExamSessionInfo } from '../api/types';
-import { Badge, Card, ErrorNote, Loading } from '../components/ui';
+import { Badge, Card, ErrorNote, Hold } from '../components/ui';
 
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -12,7 +12,7 @@ export default function Exams() {
   useEffect(() => { void load(); }, [load]);
 
   const act = async (id: string, fn: () => Promise<unknown>) => { setBusy(id); setError(null); try { await fn(); await load(); } catch (e) { setError(e); } finally { setBusy(null); } };
-  if (!exams) return error ? <ErrorNote error={error} /> : <Loading what="Loading your exams" />;
+  if (!exams) return <Hold title="Exams" error={error} what="Loading your exams" />;
   return (
     <div>
       <h1>Exams</h1>

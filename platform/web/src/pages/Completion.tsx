@@ -2,13 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Completion, EntitlementSummary } from '../api/types';
-import { Badge, Card, ErrorNote, Loading, Progress } from '../components/ui';
+import { Badge, Card, Progress, Hold } from '../components/ui';
 
 export default function CompletionPage() {
   const [c, setC] = useState<Completion | null>(null); const [error, setError] = useState<unknown>(null);
   useEffect(() => { (async () => { try { const ents = await api.get<EntitlementSummary[]>('/v1/me/entitlements'); const e = ents.find((x) => x.learningAccess) ?? ents[0]; if (e) setC(await api.get<Completion>(`/v1/me/completion?entitlementId=${e.id}`)); else setError(new Error('none')); } catch (e) { setError(e); } })(); }, []);
-  if (error) return <ErrorNote error={error} />;
-  if (!c) return <Loading what="Loading your completion status" />;
+  if (error || !c) return <Hold title="Programme completion" error={error} what="Loading your completion status" />;
   return (
     <div><h1>Programme completion</h1>
       {c.programmeComplete && <p className="note ok" role="status">You have met every requirement. Certificates are issued by the institute after verification.</p>}

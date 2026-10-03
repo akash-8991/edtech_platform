@@ -18,3 +18,15 @@ for (const name of ['localStorage', 'sessionStorage'] as const) {
   Object.defineProperty(window, name, { value: s, configurable: true, writable: true });
 }
 afterEach(() => { cleanup(); sessionStorage.clear(); localStorage.clear(); });
+
+// ---- accessibility regression net ---------------------------------------------------------------------------------------------------------------
+// After EVERY test, the final DOM is checked with axe-core (WCAG 2.x A/AA and best practice). jsdom has no layout, so contrast and the
+// document-level rules (landmarks, title, language, "one h1": components render as fragments) are covered by the real-browser sweep in
+// docs/quality/accessibility-audit.md instead. Anything element-level (names, labels, roles, ARIA, duplicate ids, list/table structure) fails the test.
+import axe from 'axe-core';
+const SKIP_RULES = ['color-contrast', 'region', 'page-has-heading-one', 'landmark-one-main', 'document-title', 'html-has-lang', 'html-lang-valid', 'bypass', 'landmark-unique', 'landmark-no-duplicate-banner', 'landmark-banner-is-top-level', 'landmark-contentinfo-is-top-level', 'landmark-main-is-top-level', 'landmark-complementary-is-top-level', 'scrollable-region-focusable', 'target-size'];
+afterEach(async () => {
+  if (process.env.A11Y === '0' || !document.body.firstElementChild) return;
+  const r = await axe.run(document.body, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'] }, rules: Object.fromEntries(SKIP_RULES.map((id) => [id, { enabled: false }])) });
+  if (r.violations.length) throw new Error('Accessibility violations:\n' + r.violations.map((v) => `- ${v.id} (${v.impact}): ${v.help}\n    ${v.nodes.slice(0, 3).map((n) => n.html.slice(0, 140)).join('\n    ')}`).join('\n'));
+});

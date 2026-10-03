@@ -4,7 +4,7 @@ import { api, ApiError } from '../api/client';
 import type { Playback, Progress, TopicDetail } from '../api/types';
 import { Assignment } from '../components/Assignment';
 import { Quiz } from '../components/Quiz';
-import { Badge, Card, ErrorNote, Loading } from '../components/ui';
+import { Badge, Card, Loading, Hold } from '../components/ui';
 import { describeState } from '../lib/grades';
 import { VideoPlayer } from '../components/VideoPlayer';
 
@@ -24,8 +24,7 @@ export default function Topic() {
   useEffect(() => { setPlayback(null); api.get<Playback>(`/v1/topics/${topicId}/playback${low ? '?mode=low' : ''}`).then(setPlayback).catch((e) => { if (!(e instanceof ApiError && e.status === 404)) setError(e); }); }, [topicId, low]);
 
   if (error instanceof ApiError && error.status === 403) return (<div><p><Link to={`/courses/${entitlementId}`}>Back to the course</Link></p><p className="note warn" role="alert">This topic is locked. Complete the previous topic first, or check that your access is active.</p></div>);
-  if (error) return <ErrorNote error={error} />;
-  if (!topic || !prog) return <Loading what="Loading the topic" />;
+  if (error || !topic || !prog) return <Hold title="Topic" error={error} what="Loading the topic" />;
   const row = prog.topics.find((t) => t.topicId === topicId);
   const videoDone = row?.videoDone ?? false, quizPassed = row?.quizPassed ?? false, submitted = row?.assignmentSubmitted ?? false;
 

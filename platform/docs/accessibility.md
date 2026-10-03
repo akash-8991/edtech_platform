@@ -1,12 +1,13 @@
 # Accessibility (target: WCAG 2.2 AA, plus Hindi/English and low-bandwidth needs)
 
-**Status: cannot be certified yet.** The platform has no user interface; WCAG conformance applies to the web and mobile clients. This
-document records what the *API and content pipeline* enforce and what every client must do and be tested for.
+**Status: cannot be certified yet.** The web client (learner portal and staff console) was audited on 2026-10-03 by automated tools, a real-browser sweep and
+code review: see [quality/accessibility-audit.md](quality/accessibility-audit.md) for findings, fixes and, importantly, what was **not** tested (screen readers, Hindi,
+real captioned video, people). The native mobile apps do not exist. This document records what the *API and content pipeline* enforce and what every client must do and be tested for.
 
 ## Enforced / provided by the platform
 | Need | Mechanism |
 |---|---|
-| Captions/transcripts | Transcript required for every mandatory video before a version can enter review (production default; `ACCESSIBILITY_ENFORCE`); report at `GET /authoring/versions/:id/accessibility` |
+| Captions/transcripts | Transcript required for every mandatory video before a version can enter review (production default; `ACCESSIBILITY_ENFORCE`); **captions (WebVTT, label `captions`) are delivered and shown on the video; a missing captions file is an advisory finding, not yet blocking (WCAG 1.2.2 needs it: institute decision)**; report at `GET /authoring/versions/:id/accessibility` |
 | Screen-reader access to interactions | Every interaction must have a text prompt (blocking check); quality gate requires audio descriptions for visual-only scenes |
 | Audio-only and low-bandwidth | `audio` and `360p` renditions (advisory checks); low-bandwidth playback mode returns audio + transcript first |
 | Hindi/English parity | Separate reviewed tracks; Hindi fidelity gate; Hindi quiz/assignment text; glossary lock |

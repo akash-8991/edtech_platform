@@ -25,9 +25,9 @@ function Form() {
     const p = validateExam(f, cov); setProblems(p); if (p.length) return; setBusy(true); setError(null);
     try { const e = await api.post<ExamDetail>('/v1/exams', toBody(f)); nav(`/staff/examsetup/exams/${e.id}`); } catch (e) { setError(e); } finally { setBusy(false); }
   };
-  if (!setup) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><ErrorNote error={error} />{!error && <Loading />}</div>;
-  if (setup.changeFrozen) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><p role="alert" className="note error">Exam changes are frozen right now, so a new exam cannot be defined.</p></div>;
-  if (!setup.versions.length) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><Card><p>An exam is defined on a published course, and none is published yet. Publish a course first (Content).</p></Card></div>;
+  if (!setup) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><h1>Define an exam</h1><ErrorNote error={error} />{!error && <Loading />}</div>;
+  if (setup.changeFrozen) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><h1>Define an exam</h1><p role="alert" className="note error">Exam changes are frozen right now, so a new exam cannot be defined.</p></div>;
+  if (!setup.versions.length) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><h1>Define an exam</h1><Card><p>An exam is defined on a published course, and none is published yet. Publish a course first (Content).</p></Card></div>;
   const status = cov ? blueprintStatus(toLines(f), cov) : [];
   return (
     <div>

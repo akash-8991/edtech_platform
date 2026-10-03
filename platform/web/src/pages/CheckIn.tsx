@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
 import type { CheckInResult, ExamInfo } from '../api/types';
 import { collectDeviceReport } from '../lib/device';
-import { Badge, Card, ErrorNote, Loading } from '../components/ui';
+import { Badge, Card, ErrorNote, Hold } from '../components/ui';
 
 /** Consent, device check and identity, then wait until the exam is READY (identity can be confirmed by the proctoring provider or an invigilator). */
 export default function CheckIn() {
@@ -34,7 +34,7 @@ export default function CheckIn() {
     } catch (e) { setError(e instanceof ApiError && e.code === 'consent_required' ? new ApiError(400, { message: 'Consent is required to take this exam.' }) : e); } finally { setBusy(false); }
   };
 
-  if (!exam) return error ? <ErrorNote error={error} /> : <Loading what="Loading" />;
+  if (!exam) return <Hold title="Exam check-in" error={error} what="Loading" />;
   const attempt = res?.attemptId ?? exam.attempts.find((a) => a.status === 'READY' || a.status === 'CHECKED_IN')?.id;
   return (
     <div>

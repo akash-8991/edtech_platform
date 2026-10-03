@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api/client';
 import type { Consent, Prefs, PrivacyRequest } from '../api/types';
-import { Badge, Card, ErrorNote, Loading } from '../components/ui';
+import { Badge, Card, ErrorNote, Hold } from '../components/ui';
 import { usePrefs } from '../prefs';
 import { canDownload, describeRequest, hasOpen, PURPOSES, typeLabel } from '../lib/privacy';
 import { idempotencyKey } from '../lib/format';
@@ -10,7 +10,7 @@ export default function Privacy() {
   const [consents, setConsents] = useState<Consent[] | null>(null); const [reqs, setReqs] = useState<PrivacyRequest[] | null>(null); const [error, setError] = useState<unknown>(null);
   const load = useCallback(async () => { try { const [c, r] = await Promise.all([api.get<Consent[]>('/v1/me/consents'), api.get<PrivacyRequest[]>('/v1/me/privacy/requests')]); setConsents(c); setReqs(r); } catch (e) { setError(e); } }, []);
   useEffect(() => { void load(); }, [load]);
-  if (!consents || !reqs) return error ? <ErrorNote error={error} /> : <Loading what="Loading your privacy settings" />;
+  if (!consents || !reqs) return <Hold title="Privacy and data" error={error} what="Loading your privacy settings" />;
   return (
     <div>
       <h1>Privacy and data</h1>

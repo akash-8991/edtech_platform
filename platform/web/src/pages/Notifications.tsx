@@ -3,14 +3,13 @@ import { api } from '../api/client';
 import type { Notification } from '../api/types';
 import { Link } from 'react-router-dom';
 import { notificationLink, notificationText } from '../lib/format';
-import { Card, ErrorNote, Loading } from '../components/ui';
+import { Card, Hold } from '../components/ui';
 
 export default function Notifications() {
   const [items, setItems] = useState<Notification[] | null>(null); const [error, setError] = useState<unknown>(null);
   useEffect(() => { api.get<Notification[]>('/v1/me/notifications').then(setItems).catch(setError); }, []);
   const read = async (n: Notification) => { try { await api.post(`/v1/me/notifications/${n.id}/read`); setItems((xs) => xs?.map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)) ?? null); } catch (e) { setError(e); } };
-  if (error) return <ErrorNote error={error} />;
-  if (!items) return <Loading what="Loading notifications" />;
+  if (error || !items) return <Hold title="Notifications" error={error} what="Loading notifications" />;
   return (
     <div><h1>Notifications</h1>
       {!items.length ? <Card><p>Nothing new.</p></Card> : <ul className="plain">{items.map((n) => (

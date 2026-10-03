@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { ExamResult } from '../api/types';
-import { Badge, Card, ErrorNote, Loading, Progress } from '../components/ui';
+import { Badge, Card, ErrorNote, Progress, Hold } from '../components/ui';
 
 export default function ExamResultPage() {
   const { attemptId = '' } = useParams(); const [r, setR] = useState<ExamResult | null>(null); const [error, setError] = useState<unknown>(null);
   const [reason, setReason] = useState(''); const [busy, setBusy] = useState(false); const [appealed, setAppealed] = useState(false);
   useEffect(() => { api.get<ExamResult>(`/v1/me/exam-attempts/${attemptId}`).then(setR).catch(setError); }, [attemptId]);
   const appeal = async () => { setBusy(true); setError(null); try { await api.post(`/v1/me/exam-attempts/${attemptId}/appeal`, { reason: reason.trim() }); setAppealed(true); } catch (e) { setError(e); } finally { setBusy(false); } };
-  if (!r) return error ? <ErrorNote error={error} /> : <Loading what="Loading your result" />;
+  if (!r) return <Hold title="Exam result" error={error} what="Loading your result" />;
   return (
     <div>
       <p><Link to="/exams">All exams</Link></p><h1>Exam result</h1>

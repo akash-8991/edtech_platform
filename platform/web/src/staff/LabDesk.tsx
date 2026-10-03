@@ -21,7 +21,7 @@ function LabDeskInner() {
   useEffect(() => { setActs([]); setActId(''); if (!versionId) return; api.get<LabActivityDef[]>(`/v1/authoring/versions/${versionId}/labs`).then((a) => { setActs(a); if (a[0]) setActId(a[0].id); }).catch(setError); }, [versionId]);
   const loadSlots = useCallback(async () => { if (!actId) { setSlots([]); return; } try { setSlots(await api.get<StaffSlot[]>(`/v1/labs/slots?activityId=${actId}&scope=all`)); } catch (e) { setError(e); } }, [actId]);
   useEffect(() => { setSlots(null); setOpenSlot(null); void loadSlots(); }, [loadSlots]);
-  if (!versions) return error ? <ErrorNote error={error} /> : <Loading what="Loading" />;
+  if (!versions) return <div><h1>Lab desk</h1>{error ? <ErrorNote error={error} /> : <Loading what="Loading" />}</div>;
   const act = acts.find((a) => a.id === actId);
   return (
     <div>

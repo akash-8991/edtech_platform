@@ -17,7 +17,7 @@ function Case() {
   const { taskId = '' } = useParams(); const nav = useNavigate();
   const [c, setC] = useState<CaseFile | null>(null); const [error, setError] = useState<unknown>(null);
   useEffect(() => { api.get<CaseFile>(`/v1/moderation/tasks/${taskId}`).then(setC).catch(setError); }, [taskId]);
-  if (!c) return error ? <div><ErrorNote error={error} /><p><Link to="/staff/moderation">Back to the queue</Link></p></div> : <Loading what="Opening the case file" />;
+  if (!c) return <div><h1>Grading case</h1>{error ? <><ErrorNote error={error} /><p><Link to="/staff/moderation">Back to the queue</Link></p></> : <Loading what="Opening the case file" />}</div>;
   return (
     <div>
       <p><Link to="/staff/moderation">Back to the queue</Link></p>

@@ -21,7 +21,7 @@ function Page({ meId, roles }: { meId: string; roles: string[] }) {
   useEffect(() => { setE(null); setDone(null); void load(); }, [load]);
   /** Runs an action, then refreshes but keeps a refusal on screen (what the server says is what the person must read). */
   const act = async (fn: () => Promise<unknown>, ok: string) => { setError(null); setDone(null); setIssues(null); try { await fn(); setDone(ok); await load(false); return true; } catch (er) { if (er instanceof ApiError && Array.isArray(er.body?.issues)) setIssues(er.body.issues); else setError(er); await load(false); return false; } };
-  if (!e) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the exam" />}</div>;
+  if (!e) return <div><p><Link to="/staff/examsetup">Back to exam set-up</Link></p><h1>Exam</h1><ErrorNote error={error} />{!error && <Loading what="Loading the exam" />}</div>;
   const block = publishBlock(e, meId);
   return (
     <div>

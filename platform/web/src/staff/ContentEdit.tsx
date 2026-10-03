@@ -4,7 +4,7 @@ import type { AuthoredAsset, AuthoredModule, AuthoredTopic, VersionTree } from '
 import { Badge, Card, ErrorNote } from '../components/ui';
 import { blankCriteria, blankQuestion, draftFromQuestion, move, questionFromDraft, removeOption, topicStatus, toEditBody, validateQuestion, validateRubric, type CriterionDraft, type QuestionDraft } from '../lib/content';
 
-const LABELS: [string, string, boolean][] = [['master', 'Master video (required)', true], ['transcript', 'Transcript (required for accessibility)', true], ['720p', '720p video', false], ['360p', '360p low-bandwidth video', false], ['audio', 'Audio only', false], ['slides', 'Slides', false]];
+const LABELS: [string, string, boolean][] = [['master', 'Master video (required)', true], ['transcript', 'Transcript (required for accessibility)', true], ['captions', 'Captions file (WebVTT, .vtt): shown on the video', false], ['720p', '720p video', false], ['360p', '360p low-bandwidth video', false], ['audio', 'Audio only', false], ['slides', 'Slides', false]];
 const langName = (l: string) => (l === 'hi' ? 'Hindi' : 'English');
 let seq = 0; const tmp = () => `new-${++seq}`;
 const sizeText = (b: number) => (b >= 1_048_576 ? `${(b / 1_048_576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
@@ -136,7 +136,7 @@ function AssignmentEditor({ topic, reload, setDone }: { topic: AuthoredTopic; re
     <form onSubmit={(e) => { e.preventDefault(); void save(); }} noValidate>
       <label htmlFor={`ai-${topic.id}`}>Instructions for the learner</label><textarea id={`ai-${topic.id}`} value={ins} onChange={(e) => { setIns(e.target.value); setProblems([]); }} />
       <div className="choices"><label htmlFor={`am-${topic.id}`}>Submissions allowed</label><input id={`am-${topic.id}`} inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value)} style={{ width: '5rem' }} /><label htmlFor={`ap-${topic.id}`}>Pass mark (%)</label><input id={`ap-${topic.id}`} inputMode="numeric" value={pass} onChange={(e) => setPass(e.target.value)} style={{ width: '5rem' }} /></div>
-      <h4>Marking criteria</h4><p className="muted">Weights must add up to 100. Each criterion is scored on a standard five-level scale (0–4). Saving rebuilds the scale from these criteria. Late penalties and integrity rules are set through the API.</p>
+      <h3>Marking criteria</h3><p className="muted">Weights must add up to 100. Each criterion is scored on a standard five-level scale (0–4). Saving rebuilds the scale from these criteria. Late penalties and integrity rules are set through the API.</p>
       {cs.map((c, i) => (
         <div key={i} className="choices"><input aria-label={`Criterion ${i + 1} name`} placeholder="Criterion" value={c.criterion} onChange={(e) => setC(i, { criterion: e.target.value })} /><input aria-label={`Criterion ${i + 1} weight`} inputMode="decimal" value={c.weight} onChange={(e) => setC(i, { weight: e.target.value })} style={{ width: '5rem' }} /><input aria-label={`Criterion ${i + 1} description`} placeholder="What excellent looks like (optional)" value={c.description} onChange={(e) => setC(i, { description: e.target.value })} style={{ flex: 1 }} />{cs.length > 1 && <button type="button" className="link" onClick={() => { setCs(cs.filter((_, k) => k !== i)); setProblems([]); }}>Remove criterion {i + 1}</button>}</div>))}
       <button type="button" onClick={() => setCs([...cs, { criterion: '', weight: '', description: '' }])}>Add a criterion</button>
@@ -157,7 +157,7 @@ function VideoEditor({ topic, languages, reload, setDone }: { topic: AuthoredTop
     <div>
       {topic.assets.map((a) => <AssetFiles key={a.id} a={a} reload={reload} setDone={setDone} />)}
       <form onSubmit={(e) => { e.preventDefault(); void register(); }} noValidate className="subcard">
-        <h4>Add a video</h4>
+        <h3>Add a video</h3>
         <label htmlFor={`vl-${topic.id}`}>Language</label><select id={`vl-${topic.id}`} value={lang} onChange={(e) => { setLang(e.target.value); setProblem(null); }}>{languages.map((l) => <option key={l} value={l}>{langName(l)}</option>)}</select>
         <label htmlFor={`vm-${topic.id}`}>Length (minutes)</label><input id={`vm-${topic.id}`} inputMode="decimal" value={mins} onChange={(e) => { setMins(e.target.value); setProblem(null); }} style={{ width: '6rem' }} />
         <label htmlFor={`vr-${topic.id}`}>Rights and licence</label><input id={`vr-${topic.id}`} value={rights} onChange={(e) => { setRights(e.target.value); setProblem(null); }} />
@@ -178,7 +178,7 @@ function AssetFiles({ a, reload, setDone }: { a: AuthoredAsset; reload: () => Pr
   };
   return (
     <div className="subcard">
-      <h4>{langName(a.language)} {a.kind.toLowerCase()} <span className="muted">{a.durationSec ? `${Math.round(a.durationSec / 60)} min` : ''}</span></h4>
+      <h3>{langName(a.language)} {a.kind.toLowerCase()} <span className="muted">{a.durationSec ? `${Math.round(a.durationSec / 60)} min` : ''}</span></h3>
       <ul className="plain">{LABELS.map(([k, l, req]) => (
         <li key={k} className="choices"><span>{l}: {files[k] ? <Badge tone="ok">uploaded · {sizeText(files[k].size)}</Badge> : <Badge tone={req ? 'warn' : 'muted'}>{req ? 'missing' : 'not added'}</Badge>}</span>
           <label className="inline"><input type="file" aria-label={`${files[k] ? 'Replace' : 'Upload'} ${k}`} ref={(el) => { inputs.current[k] = el; }} disabled={busy !== null} onChange={(e) => void upload(k, e.target.files?.[0])} /></label>{busy === k && <span role="status">Uploading…</span>}</li>))}</ul>

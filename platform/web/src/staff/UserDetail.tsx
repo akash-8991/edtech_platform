@@ -21,7 +21,7 @@ function Page({ myRoles, meId }: { myRoles: string[]; meId: string }) {
   const act = async <T,>(fn: () => Promise<T>, ok: string): Promise<T | null> => { setError(null); setDone(null); try { const r = await fn(); setDone(ok); await load(false); return r; } catch (e) { setError(e); await load(false); return null; } };
   const note = useRef<HTMLDivElement>(null);
   useEffect(() => { if (done || secret || error) note.current?.scrollIntoView?.({ block: 'nearest' }); }, [done, secret, error]); // the result of an action may be out of sight above the button
-  if (!u) return <div><p><Link to="/staff/users">Back to people</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the record" />}</div>;
+  if (!u) return <div><p><Link to="/staff/users">Back to people</Link></p><h1>Person</h1><ErrorNote error={error} />{!error && <Loading what="Loading the record" />}</div>;
   const self = u.id === meId; const canWrite = hasAny(myRoles, USERS.write) && !self && mayManage(myRoles, u.roles) && u.status !== 'ERASED';
   const reasonPost = (path: string, reason: string) => api.post(`/v1/admin/users/${u.id}/${path}`, { reason });
   return (

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { EntitlementSummary, Progress, SubmissionSummary } from '../api/types';
-import { Badge, Card, ErrorNote, Loading } from '../components/ui';
+import { Badge, Card, Hold } from '../components/ui';
 import { describeState, pct } from '../lib/grades';
 
 export default function Grades() {
@@ -17,8 +17,7 @@ export default function Grades() {
       } catch (e) { setError(e); }
     })();
   }, []);
-  if (error) return <ErrorNote error={error} />;
-  if (!rows) return <Loading what="Loading your grades" />;
+  if (error || !rows) return <Hold title="Assignment grades" error={error} what="Loading your grades" />;
   return (
     <div>
       <h1>Assignment grades</h1>

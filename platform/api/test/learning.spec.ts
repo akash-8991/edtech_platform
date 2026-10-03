@@ -47,7 +47,7 @@ beforeAll(async () => {
     const a = await http.post(`/v1/authoring/topics/${t}/assets`).set(as('author')).send({ language: 'en', durationSec: 100, provenance: { model: 'm', source: 'video_engine' },
       interactions: [{ id: 'ix1', atSec: 30, kind: 'pause_quiz', required: true, prompt: 'q?', correct: 1 }] }).expect(201);
     if (t === T1) A1 = a.body.id;
-    for (const l of ['master', '360p', 'audio', 'transcript']) await http.put(`/v1/authoring/assets/${a.body.id}/files/${l}`).set(as('author')).set('content-type', 'application/octet-stream').send(MP4).expect(200);
+    for (const l of ['master', '360p', 'audio', 'transcript', 'captions']) await http.put(`/v1/authoring/assets/${a.body.id}/files/${l}`).set(as('author')).set('content-type', 'application/octet-stream').send(MP4).expect(200);
     await http.put(`/v1/authoring/topics/${t}/quiz`).set(as('author')).send({ passPercent: 60, maxAttempts: 2, questions: [
       { type: 'MCQ_SINGLE', text: 'q1', options: ['a', 'b'], answer: 1, points: 1, rationale: 'because b' }, { type: 'NUMERIC', text: 'q2', answer: 4, tolerance: 0.1, points: 1 }] }).expect(200);
     await http.put(`/v1/authoring/topics/${t}/assignment`).set(as('author')).send({ instructions: 'do it', maxSubmissions: 2 }).expect(200);
@@ -140,6 +140,7 @@ describe('media delivery', () => {
     const n = (await http.get(`/v1/topics/${T1}/playback`).set(as('learner')).expect(200)).body;
     expect(n.streams[0].label).toBe('360p'); expect(n.durationSec).toBe(100);
     expect(JSON.stringify(n.interactions)).not.toMatch(/correct/);
+    const cap = n.streams.find((x: any) => x.label === 'captions'); expect(cap.mime).toMatch(/^text\/vtt/); expect((await http.get(cap.url).expect(200)).headers['content-type']).toMatch(/^text\/vtt/); // synchronised captions are delivered with the right type
     const low = (await http.get(`/v1/topics/${T1}/playback?mode=low`).set(as('learner')).expect(200)).body;
     expect(low.streams.map((s: any) => s.label).slice(0, 2)).toEqual(['audio', 'transcript']);
     const full = await http.get(n.streams[0].url).expect(200); expect(full.headers['accept-ranges']).toBe('bytes');

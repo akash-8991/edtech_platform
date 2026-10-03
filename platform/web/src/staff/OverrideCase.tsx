@@ -19,7 +19,7 @@ function Page({ meId, canAct }: { meId: string; canAct: boolean }) {
   useEffect(() => { setC(null); setDone(null); void load(); }, [load]);
   /** Decides, then refreshes but keeps a refusal on screen. */
   const decide = async (decision: 'APPROVE' | 'REJECT', reason: string) => { setError(null); setDone(null); try { await api.post(`/v1/grading/overrides/${overrideId}/decide`, { decision, ...(reason ? { reason } : {}) }); setDone(decision === 'APPROVE' ? 'Approved. The grade has changed and the learner has been told.' : 'Declined. The grade is unchanged.'); await load(false); return true; } catch (e) { setError(e); await load(false); return false; } };
-  if (!c) return <div><p><Link to="/staff/gradechanges">Back to grade changes</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the override" />}</div>;
+  if (!c) return <div><p><Link to="/staff/gradechanges">Back to grade changes</Link></p><h1>Grade override</h1><ErrorNote error={error} />{!error && <Loading what="Loading the override" />}</div>;
   const st = overrideStatus(c.status); const block = decideBlock(c, meId); const dim = (id: string) => c.policy.dimensions.find((d) => d.id === id);
   return (
     <div>

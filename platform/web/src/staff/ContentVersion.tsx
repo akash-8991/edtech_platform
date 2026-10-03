@@ -28,7 +28,7 @@ function Page({ roles, meId }: { roles: string[]; meId: string }) {
   useEffect(() => { setT(null); setIssues(null); setDone(null); void load(); }, [load]);
   /** Runs an action, then refreshes but keeps the error on screen (a refusal's reason is what the person needs to read). */
   const act = async (fn: () => Promise<unknown>, ok: string) => { setError(null); setDone(null); setIssues(null); try { await fn(); setDone(ok); await load(false); return true; } catch (e) { if (e instanceof ApiError && Array.isArray(e.body?.issues)) { setIssues(e.body.issues); setError(null); } else setError(e); await load(false); return false; } };
-  if (!t) return <div><p><Link to="/staff/content">Back to content</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the version" />}</div>;
+  if (!t) return <div><p><Link to="/staff/content">Back to content</Link></p><h1>Programme version</h1><ErrorNote error={error} />{!error && <Loading what="Loading the version" />}</div>;
   const canWrite = hasAny(roles, AREAS.content.act) && isDraft(t.state) && (t.authorId === meId || roles.includes('ACADEMIC_ADMIN'));
   const who = (id: string) => t.people[id] ?? 'Someone';
   const open = quality.filter((q) => q.blocking && !q.resolvedAt);

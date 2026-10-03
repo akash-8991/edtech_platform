@@ -66,7 +66,7 @@ describe('shells keep people where they belong', () => {
     withSession(['LAB_COORDINATOR']); app('/'); expect(await screen.findByRole('heading', { name: /Welcome, Sam Staff/ })).toBeInTheDocument(); const nav = screen.getByRole('navigation', { name: 'Staff' }); expect(within(nav).getByRole('link', { name: 'Lab desk' })).toBeInTheDocument(); expect(within(nav).queryByRole('link', { name: 'Admissions' })).toBeNull(); expect(screen.getByLabelText('Your roles')).toHaveTextContent('Lab Coordinator');
   });
   it('sends a learner away from the console, and a page the role may not open back to the console home', async () => {
-    withSession(['LEARNER'], { 'GET /v1/me/entitlements': () => res(200, []), 'GET /v1/catalogue': () => res(200, []) }); app('/staff/admissions'); expect(await screen.findByRole('heading', { name: 'My courses' })).toBeInTheDocument();
+    withSession(['LEARNER'], { 'GET /v1/me/entitlements': () => res(200, []), 'GET /v1/catalogue': () => res(200, []) }); app('/staff/admissions'); expect(await screen.findByText(/not enrolled in a course yet/)).toBeInTheDocument(); expect(screen.getByRole('heading', { level: 1, name: 'My courses' })).toBeInTheDocument();
   });
   it('a role without admissions access is redirected from /staff/admissions', async () => {
     withSession(['LAB_COORDINATOR']); app('/staff/admissions'); expect(await screen.findByRole('heading', { name: /Welcome/ })).toBeInTheDocument(); expect(calls.some((c) => c.url.includes('/v1/applications'))).toBe(false);

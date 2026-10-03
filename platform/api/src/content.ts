@@ -6,7 +6,7 @@ import { AuditService } from './audit';
 import { readBody, ScanProvider, SCANNER, StorageService } from './storage';
 
 const WRITERS = ['ACADEMIC_ADMIN', 'CONTENT_AUTHOR'];
-const LABELS = ['master', '720p', '360p', 'audio', 'transcript', 'slides'];
+const LABELS = ['master', '720p', '360p', 'audio', 'transcript', 'captions', 'slides'];
 const MAX_ASSET = 500 * 1024 * 1024;
 
 /** Authoring of learning components. Only a DRAFT version is editable; components freeze with the version. */

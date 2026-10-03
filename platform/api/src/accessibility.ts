@@ -16,6 +16,7 @@ export function accessibilityReport(topics: A11yTopic[], languages: string[]): A
     for (const l of languages) {
       const v = vids.find((a) => a.language === l); if (!v) continue; // a missing language track is already a readiness error
       if (!v.files?.transcript) out.push({ topic: t.title, language: l, severity: 'BLOCKING', rule: 'transcript', message: `${l} video has no transcript` });
+      if (!v.files?.captions) out.push({ topic: t.title, language: l, severity: 'ADVISORY', rule: 'captions', message: `${l} video has no synchronised captions (WebVTT): the transcript alone does not meet WCAG 1.2.2 for deaf and hard-of-hearing learners` });
       if (!v.files?.audio) out.push({ topic: t.title, language: l, severity: 'ADVISORY', rule: 'audio_only', message: `${l} video has no audio-only rendition` });
       if (!v.files?.['360p']) out.push({ topic: t.title, language: l, severity: 'ADVISORY', rule: 'low_bandwidth', message: `${l} video has no low-bandwidth rendition` });
       for (const ix of (Array.isArray(v.interactions) ? v.interactions : []) as any[]) if (!String(ix?.prompt ?? '').trim()) out.push({ topic: t.title, language: l, severity: 'BLOCKING', rule: 'interaction_text', message: `interaction ${ix?.id ?? '?'} has no text alternative` });

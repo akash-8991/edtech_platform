@@ -20,6 +20,7 @@ import Privacy from './pages/Privacy';
 import Topic from './pages/Topic';
 import Tutor from './pages/Tutor';
 import { Loading } from './components/ui';
+import { RouteAnnouncer } from './components/RouteAnnouncer';
 import { isLearner } from './lib/roles';
 import StaffRoutes from './staff/StaffRoutes';
 
@@ -43,6 +44,8 @@ function Shell() {
 
 export default function App() {
   return (
+    <>
+    <RouteAnnouncer />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<Shell />}>
@@ -68,5 +71,6 @@ export default function App() {
       {StaffRoutes()}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

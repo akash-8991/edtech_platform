@@ -10,7 +10,7 @@ import { masterKeys, mediaSecrets, openWith, sealWith, verifyAny } from './secur
 import { decryptBuffer, encryptBuffer, signToken, unwrapWithMaster, verifyToken, wrapForDevice, wrapWithMaster } from './domain/media-crypto';
 
 const secret = () => mediaSecrets().current;
-const MIME: Record<string, string> = { master: 'video/mp4', '720p': 'video/mp4', '360p': 'video/mp4', audio: 'audio/mpeg', transcript: 'text/plain; charset=utf-8', slides: 'application/pdf' };
+const MIME: Record<string, string> = { master: 'video/mp4', '720p': 'video/mp4', '360p': 'video/mp4', audio: 'audio/mpeg', transcript: 'text/plain; charset=utf-8', captions: 'text/vtt; charset=utf-8', slides: 'application/pdf' };
 const OFFLINE_LABELS = ['360p', 'master']; // smallest first: devices on low bandwidth
 const STREAM_TTL = 10 * 60_000, OFFLINE_DAYS = Number(process.env.OFFLINE_DAYS ?? 7), MAX_DEVICES = 3;
 
@@ -38,7 +38,7 @@ export class MediaController {
     const asset = this.pick(topic, language);
     if (!asset) throw new NotFoundException('no video for topic');
     const f = asset.files as Record<string, { key: string }>;
-    const order = mode === 'low' ? ['audio', 'transcript', '360p', 'slides'] : ['720p', '360p', 'master', 'audio', 'transcript', 'slides'];
+    const order = mode === 'low' ? ['audio', 'transcript', 'captions', '360p', 'slides'] : ['720p', '360p', 'master', 'audio', 'transcript', 'captions', 'slides'];
     const streams = order.filter((l) => f[l]).map((l) => ({ label: l, mime: MIME[l], url: this.url(f[l].key, a.id) }));
     if (!streams.length) throw new NotFoundException('no renditions');
     return { assetId: asset.id, language: asset.language, durationSec: asset.durationSec, mode: mode === 'low' ? 'low' : 'normal', streams,

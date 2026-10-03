@@ -37,7 +37,7 @@ function Case({ roles }: { roles: string[] }) {
   useEffect(() => { setC(null); void load(); }, [load]);
   /** Runs one action, then refreshes the case but keeps the error on screen (a refusal's reason is what the person needs to read). */
   const act = async (fn: () => Promise<unknown>, ok: string) => { setError(null); setDone(null); try { await fn(); setDone(ok); await load(false); return true; } catch (e) { setError(e); await load(false); return false; } };
-  if (!c) return <div><p><Link to="/staff/examops">Back to the queue</Link></p><ErrorNote error={error} />{!error && <Loading what="Loading the case" />}</div>;
+  if (!c) return <div><p><Link to="/staff/examops">Back to the queue</Link></p><h1>Exam case</h1><ErrorNote error={error} />{!error && <Loading what="Loading the case" />}</div>;
   const open = c.incidents.filter((i) => isOpenIncident(i.status)).length;
   return (
     <div>
