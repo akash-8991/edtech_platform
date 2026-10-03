@@ -15,6 +15,8 @@ import Doubts from './Doubts';
 import DoubtTicket from './DoubtTicket';
 import Users from './Users';
 import UserDetail from './UserDetail';
+import PrivacyDesk from './PrivacyDesk';
+import PrivacyRequest from './PrivacyRequest';
 import Account from '../pages/Account';
 
 /** Everything under /staff. Each page also checks the role (and the API checks it again on every call). */
@@ -34,6 +36,8 @@ export default function StaffRoutes() {
       <Route path="doubts/tickets/:ticketId" element={<DoubtTicket />} />
       <Route path="users" element={<Users />} />
       <Route path="users/:userId" element={<UserDetail />} />
+      <Route path="privacy" element={<PrivacyDesk />} />
+      <Route path="privacy/requests/:requestId" element={<PrivacyRequest />} />
       <Route path="labs" element={<LabDesk />} />
       <Route path="operations" element={<Operations />} />
       <Route path="account" element={<Account />} />

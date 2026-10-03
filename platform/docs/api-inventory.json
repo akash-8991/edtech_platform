@@ -1584,6 +1584,17 @@
    ]
   },
   {
+   "method": "GET",
+   "path": "/v1/privacy/requests/:id",
+   "public": false,
+   "roles": [
+    "AUDITOR",
+    "PLATFORM_ADMIN",
+    "SUPER_ADMIN",
+    "SUPPORT_OPERATOR"
+   ]
+  },
+  {
    "method": "POST",
    "path": "/v1/privacy/requests/on-behalf",
    "public": false,

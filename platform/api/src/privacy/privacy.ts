@@ -226,8 +226,29 @@ export class PrivacyController {
   async download(@Param('id') id: string, @CurrentActor() a: Actor, @Res() res: any) { const buf = await this.svc.download(id, a); res.setHeader('Content-Type', 'application/json'); res.setHeader('Content-Disposition', 'attachment; filename="my-data.json"'); res.send(buf); }
 
   @Post('privacy/requests/on-behalf') @Roles('SUPPORT_OPERATOR', ...STAFF) onBehalf(@Body() b: any, @CurrentActor() a: Actor) { need(b, { userId: 'string', type: 'string' }); return this.svc.file(a, b.userId, b.type, b.details); }
+  /** Requests with who they concern and who filed or decided them (names, so staff do not work from ids). Oldest first: the longest-waiting is first in line. */
   @Get('privacy/requests') @Roles(...STAFF, 'SUPPORT_OPERATOR', 'AUDITOR')
-  list(@Query('status') status?: string, @Query('type') type?: string) { return this.prisma.dataSubjectRequest.findMany({ where: { ...(status && { status }), ...(type && { type }) }, orderBy: { requestedAt: 'asc' }, take: 200, select: { id: true, userId: true, type: true, status: true, requestedAt: true, requestedById: true, decidedById: true, result: true } }); }
+  async list(@Query('status') status?: string, @Query('type') type?: string) {
+    const rows = await this.prisma.dataSubjectRequest.findMany({ where: { ...(status && { status: { in: status.split(',') } }), ...(type && { type }) }, orderBy: { requestedAt: 'asc' }, take: 200, select: { id: true, userId: true, type: true, status: true, requestedAt: true, requestedById: true, decidedById: true, decisionReason: true, completedAt: true, exportExpiresAt: true, details: true, result: true } });
+    return this.enrich(rows);
+  }
+  private async enrich<T extends { userId: string; requestedById: string; decidedById: string | null }>(rows: T[]) {
+    const ids = [...new Set(rows.flatMap((r) => [r.userId, r.requestedById, r.decidedById].filter((x): x is string => !!x)))];
+    const people = new Map((await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, email: true } })).map((u) => [u.id, u]));
+    return rows.map((r) => ({ ...r, userName: people.get(r.userId)?.name ?? null, userEmail: people.get(r.userId)?.email ?? null, requestedByName: people.get(r.requestedById)?.name ?? null, decidedByName: r.decidedById ? people.get(r.decidedById)?.name ?? null : null, onBehalf: r.requestedById !== r.userId }));
+  }
+  /** One request with what would stop an erasure and the audited history, so the decision is made with the facts in front of the decider. */
+  @Get('privacy/requests/:id') @Roles(...STAFF, 'SUPPORT_OPERATOR', 'AUDITOR')
+  async one(@Param('id') id: string) {
+    const r = await this.prisma.dataSubjectRequest.findUnique({ where: { id }, select: { id: true, userId: true, type: true, status: true, requestedAt: true, requestedById: true, decidedById: true, decisionReason: true, completedAt: true, exportExpiresAt: true, details: true, result: true } });
+    if (!r) throw new NotFoundException();
+    const [view] = await this.enrich([r]); const u = await this.prisma.user.findUnique({ where: { id: r.userId }, select: { legalHold: true, status: true, erasedAt: true } });
+    const live = await this.prisma.entitlement.count({ where: { learnerId: r.userId, status: { in: ['ACTIVE', 'PAUSED'] }, endAt: { gt: new Date() } } });
+    // The request's own events, plus the carrying-out of an erasure or correction, which is audited against the person rather than the request.
+    const events = await this.prisma.auditEvent.findMany({ where: { OR: [{ objectType: 'DataSubjectRequest', objectId: id }, { objectType: 'User', objectId: r.userId, action: { in: ['privacy.erasure_completed', 'privacy.correction_applied'] }, createdAt: { gte: r.requestedAt } }] }, orderBy: { seq: 'asc' }, select: { seq: true, actorId: true, action: true, reason: true, createdAt: true } });
+    const names = new Map((await this.prisma.user.findMany({ where: { id: { in: [...new Set(events.map((e) => e.actorId).filter((x): x is string => !!x))] } }, select: { id: true, name: true } })).map((x) => [x.id, x.name]));
+    return { ...view, subject: { legalHold: !!u?.legalHold, erased: !!u?.erasedAt, activeEntitlements: live }, history: events.map((e) => ({ at: e.createdAt, by: e.actorId ? names.get(e.actorId) ?? 'Unknown' : 'The system', action: e.action, reason: e.reason })) };
+  }
   @Post('privacy/requests/:id/decide') @Roles(...STAFF) decide(@Param('id') id: string, @Body() b: any, @CurrentActor() a: Actor) { need(b, { decision: 'string', reason: 'string' }); return this.svc.decide(id, a, b.decision, b.reason); }
   @Post('privacy/process') @Roles(...STAFF) process() { return this.svc.process(); }
   @Post('privacy/retention/run') @Roles(...STAFF) retention(@Query('dryRun') dryRun: string | undefined, @CurrentActor() a: Actor) { return this.svc.retention(dryRun === 'true', a); }

@@ -5,7 +5,7 @@ import type { UserDetailData } from '../api/types';
 import { useAuth } from '../auth';
 import { Badge, Card, ErrorNote, Loading } from '../components/ui';
 import { actionLabel, changeProblem, mayGrant, mayManage, ROLE_INFO, roleChange, userStatusLabel, when } from '../lib/users';
-import { canSee, hasAny, roleLabel, USERS } from '../lib/roles';
+import { canSee, hasAny, PRIVACY, roleLabel, USERS } from '../lib/roles';
 
 export default function UserDetail() {
   const { me } = useAuth();
@@ -37,6 +37,7 @@ function Page({ myRoles, meId }: { myRoles: string[]; meId: string }) {
       {canWrite && <Account u={u} onStatus={(s, r) => act(() => api.post(`/v1/admin/users/${u.id}/status`, { status: s, reason: r }), s === 'SUSPENDED' ? 'Suspended and signed out everywhere.' : 'Reactivated.')} onUnlock={() => act(() => api.post(`/v1/admin/users/${u.id}/unlock`, {}), 'Unlocked.')} onReset={async (r) => { const x = await act(() => api.post<{ temporaryPassword: string }>(`/v1/admin/users/${u.id}/reset-password`, { reason: r }), 'Password reset.'); if (x) setSecret(x.temporaryPassword); return !!x; }} />}
       {!self && hasAny(myRoles, USERS.mfaReset) && u.status !== 'ERASED' && mayManage(myRoles, u.roles) && <Danger title="Reset two-step verification" help="Use when they have lost their authenticator and backup codes. They set it up again at their next sign-in, and every device is signed out." button="Reset two-step verification" onGo={(r) => act(() => reasonPost('mfa-reset', r), 'Two-step verification reset.')} disabled={!u.mfaEnabled && 'Two-step verification is not set up for this person.'} />}
       {!self && hasAny(myRoles, USERS.signOut) && u.status !== 'ERASED' && <Danger title="Sign out everywhere" help="Ends every sign-in on every device. They can sign in again unless the account is suspended." button="Sign out everywhere" onGo={(r) => act(() => reasonPost('revoke-sessions', r), 'Signed out everywhere.')} disabled={u.activeSessions === 0 && 'They have no active sign-ins.'} />}
+      {hasAny(myRoles, PRIVACY.decide) && u.status !== 'ERASED' && <Danger title={u.legalHold ? 'Legal hold is on' : 'Legal hold'} help={u.legalHold ? 'While it is on, an erasure request for this person cannot be carried out. Lift it when the matter is closed.' : 'Stops this person\'s data from being erased (for example during a disciplinary or legal matter). Use only on a real instruction, and record it in the reason.'} button={u.legalHold ? 'Lift the legal hold' : 'Place a legal hold'} onGo={(r) => act(() => api.put(`/v1/privacy/users/${u.id}/legal-hold`, { hold: !u.legalHold, reason: r }), u.legalHold ? 'Legal hold lifted.' : 'Legal hold placed.')} />}
       {u.roles.includes('DOUBT_TEACHER') && !u.teacherProfile && <p className="note">They hold the Doubt Teacher role but are not registered at the doubt desk yet: an administrator does that under Doubt desk → Teachers.</p>}
       <Card title="History"><p className="muted">The last 25 things done to this account.</p>{!u.history.length ? <p>Nothing recorded.</p> : <table><thead><tr><th>When</th><th>What</th><th>By</th><th>Reason</th></tr></thead><tbody>{u.history.map((h) => <tr key={h.seq}><td>{when(h.at)}</td><td>{actionLabel(h.action)}</td><td>{h.by}</td><td>{h.reason ?? ''}</td></tr>)}</tbody></table>}</Card>
     </div>

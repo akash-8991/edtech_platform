@@ -99,6 +99,14 @@ describe('correction and erasure', () => {
     await h.post(`/v1/privacy/requests/${r.id}/decide`).set(as('plat2')).send({ decision: 'APPROVE', reason: 'x' }).expect(409); await h.post('/v1/privacy/process').set(as('plat')).expect(201);
     expect(await prisma.user.findUniqueOrThrow({ where: { id: uid.r1 } })).toMatchObject({ name: 'Priya Sharma', language: 'hi', email: 'r1@x.test' }); // email can never be changed this way
   });
+  it('staff see names, the request details and an erasure pre-check with its audited history; learners and outsiders do not', async () => {
+    await mkLearner('v1', { ended: false }); const r = (await h.post('/v1/privacy/requests/on-behalf').set(as('sup')).send({ userId: uid.v1, type: 'ERASURE', details: { reason: 'asked by phone' } }).expect(201)).body;
+    const list = (await h.get('/v1/privacy/requests?status=REQUESTED,APPROVED&type=ERASURE').set(as('auditor')).expect(200)).body; const row = list.find((x: any) => x.id === r.id);
+    expect(row).toMatchObject({ userName: 'v1 Person', userEmail: 'v1@x.test', requestedByName: 'sup Person', onBehalf: true, status: 'REQUESTED', details: { reason: 'asked by phone' } });
+    await h.get(`/v1/privacy/requests/${r.id}`).set(as('v1')).expect(403); await h.get(`/v1/privacy/requests/${r.id}`).expect(401); await h.get('/v1/privacy/requests/00000000-0000-0000-0000-000000000000').set(as('plat')).expect(404);
+    await h.get('/v1/privacy/requests').set(as('v1')).expect(403);
+    const one = (await h.get(`/v1/privacy/requests/${r.id}`).set(as('plat')).expect(200)).body; expect(one.subject).toEqual({ legalHold: false, erased: false, activeEntitlements: 1 }); expect(one.history.map((e: any) => e.action)).toEqual(['privacy.request_filed']); await h.post('/v1/privacy/requests/' + r.id + '/decide').set(as('plat')).send({ decision: 'APPROVE', reason: 'ok' }).expect(201); await prisma.entitlement.updateMany({ where: { learnerId: uid.v1 }, data: { status: 'REVOKED' } }); await h.post('/v1/privacy/process').set(as('plat')).expect(201); expect((await h.get(`/v1/privacy/requests/${r.id}`).set(as('plat'))).body.history.map((e: any) => e.action)).toEqual(['privacy.request_filed', 'privacy.request_approved', 'privacy.erasure_completed']); expect(one.history[0].by).toBe('sup Person');
+  });
   it('erasure is blocked while an entitlement is live or a legal hold applies', async () => {
     await mkLearner('b1'); const r = (await h.post('/v1/me/privacy/requests').set(as('b1')).send({ type: 'ERASURE', password: PW, details: { reason: 'leaving' } }).expect(201)).body;
     await h.post(`/v1/privacy/requests/${r.id}/decide`).set(as('plat')).send({ decision: 'APPROVE', reason: 'verified' }).expect(201); await h.post('/v1/privacy/process').set(as('plat')).expect(201);
