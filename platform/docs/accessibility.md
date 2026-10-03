@@ -7,7 +7,7 @@ real captioned video, people). The native mobile apps do not exist. This documen
 ## Enforced / provided by the platform
 | Need | Mechanism |
 |---|---|
-| Captions/transcripts | Transcript required for every mandatory video before a version can enter review (production default; `ACCESSIBILITY_ENFORCE`); **captions (WebVTT, label `captions`) are delivered and shown on the video; a missing captions file is an advisory finding, not yet blocking (WCAG 1.2.2 needs it: institute decision)**; report at `GET /authoring/versions/:id/accessibility` |
+| Captions/transcripts | Transcript required for every mandatory video before a version can enter review (production default; `ACCESSIBILITY_ENFORCE`); **captions (WebVTT, label `captions`) are delivered and shown on the video in the learner's caption language, with size and background choices; the video engine now generates them from the reviewed narration; a missing captions file is an advisory finding, not yet blocking (WCAG 1.2.2 needs it: institute decision)**; report at `GET /authoring/versions/:id/accessibility` |
 | Screen-reader access to interactions | Every interaction must have a text prompt (blocking check); quality gate requires audio descriptions for visual-only scenes |
 | Audio-only and low-bandwidth | `audio` and `360p` renditions (advisory checks); low-bandwidth playback mode returns audio + transcript first |
 | Hindi/English parity | Separate reviewed tracks; Hindi fidelity gate; Hindi quiz/assignment text; glossary lock |

@@ -359,7 +359,9 @@ Submission requires a passed quiz. On submission the topic completes, the next t
 
 ### 5.5 Offline learning **[tested]**
 
-A client registers a device (RSA public key, 2048+ bits, max 3 devices), then requests a time-limited licence for a topic; the licence contains the content key wrapped for that device only. `POST /v1/offline/devices` `{"deviceId","publicKeyPem"}`; `POST /v1/offline/licenses` `{"deviceId","topicId"}`; `GET /v1/offline/licenses`; `POST /v1/offline/devices/<id>/revoke`. Licences expire after `OFFLINE_DAYS` (default 7) and stop working when the entitlement ends.
+A client registers a device (RSA public key, 2048+ bits, max 3 devices), then requests a time-limited licence for a topic; the licence contains the content key wrapped for that device only. `POST /v1/offline/devices` `{"deviceId","publicKeyPem"}`; `POST /v1/offline/licenses` `{"deviceId","topicId"}`
+
+The learner web app does this for the learner: **Topic → Save for offline**, then **Downloads** to watch, check access or remove. It also offers Hindi, caption choices, QR check-in with the camera, single sign-on and a phone layout; see [Learner experience](06-learner-experience.md). Staff: **Entitlements** (find a learner's access, pause, extend, revoke, unlock a topic) and **Reports** are in the staff console. Adaptive video: [07](07-adaptive-video.md). API schemas: [08](08-api-contracts.md) and `docs/openapi.json`.; `GET /v1/offline/licenses`; `POST /v1/offline/devices/<id>/revoke`. Licences expire after `OFFLINE_DAYS` (default 7) and stop working when the entitlement ends.
 
 ---
 
